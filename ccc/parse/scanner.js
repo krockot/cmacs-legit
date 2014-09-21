@@ -11,13 +11,24 @@ goog.require('goog.object')
 
 
 /**
+ * The set of characters we treat as line terminators.
+ *
+ * @private {string}
+ * @const
+ */
+var LINE_TERMINATORS_ = '\n\v\f\r\x85\u2028\u2029';
+
+
+
+/**
  * The result of a single transition step.
  *
  * @typedef {{
- *   token: (!ccc.parse.Token|undefined),
+ *   token: (!ccc.parse.TokenType|undefined),
  *   state: (!Transition_|undefined),
+ *   terminate: boolean,
  *   advance: boolean,
- *   terminate: boolean
+ *   discard: boolean
  * }}
  * @private
  */
@@ -53,7 +64,8 @@ var MatchFunction_;
  *   match: MatchFunction_,
  *   token: (ccc.parse.TokenType|undefined),
  *   state: (!Transition_|undefined),
- *   passive: (boolean|undefined)
+ *   advance: (boolean|undefined),
+ *   discard: (boolean|undefined)
  * }}
  */
 var TransitionRule_;
@@ -101,7 +113,10 @@ var START_STATE_ = (function() {
   var eof = function(x) { return x.length == 0; };
 
   /** @type {!MatchFunction_} */
-  var space = any(' \t\f\r\n\v\xa0\u2029\u202f\u3000\u2000\u2001\u2002' +
+  var lineEnding = any(LINE_TERMINATORS_);
+
+  /** @type {!MatchFunction_} */
+  var space = any(' \t\f\r\n\v\x85\xa0\u2029\u202f\u3000\u2000\u2001\u2002' +
       '\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a\u200b');
 
   /** @type {!MatchFunction_} */
@@ -142,51 +157,86 @@ var START_STATE_ = (function() {
    * @return {!Transition_}
    */
   var makeState = function(rules) {
-    // TODO(krockot): Implement.
-    return function(input) {
+    var fn = function(input) {
+      var match = goog.array.find(rules, function(rule) {
+        return rule.match(input);
+      });
+      if (goog.isNull(match)) {
+        throw new Error('Unexpected \'' + input + '\' character in input.');
+      }
       return {
-        advance: true,
-        state: S['clean'],
-        terminate: false
+        state: S[match.state],
+        token: match.token,
+        terminate: false,
+        advance: goog.isDef(match.advance) ? match.advance : true,
+        discard: !!match.discard
       };
     };
+    if (goog.DEBUG) {
+      fn.__rules__ = rules;
+    }
+    return fn;
   };
 
   /**
    * Constructs a series of states which match a strict sequence.
    * Returns the first constructed state in the sequence. If the full sequence
-   * is matched by this series, the given result will be used to emit a token
+   * is matched by the series, the given result will be used to emit a token
    * and/or transition the state.
    *
    * @param {!Array.<!MatchFunction_>} sequence The sequence of matching
-   *     functions to apply.
+   *     functions to apply in-order over the input.
    * @param {!{
    *    token: (ccc.parse.TokenType|undefined),
    *    state: (!Transition_|undefined)
-   *  }} result
+   *  }} result The token and/or state to use upon successful match.
+   * @return {!Transition_}
    */
-  var makeSequencedStates = function(sequence, result) {
-    // TODO(krockot): Implement.
-    return makeState([]);
+  var makeStateSequence = function(sequence, result) {
+    goog.asserts.assert(sequence.length > 1,
+        'makeStateSequence excepts at least 2 sequence elements.');
+    var parts = sequence.map(function(fn, index) {
+      return {
+        result: {
+          terminate: false,
+          advance: true,
+          discard: false
+        },
+        transition: function(input) {
+          if (fn(input)) {
+            return parts[index].result;
+          }
+          throw new Error('Unexpected \'' + input + '\' character in input.');
+        }
+      };
+    });
+    var numParts = parts.length;
+    for (var i = 0; i < numParts - 1; ++i) {
+      parts[i].result.state = parts[i + 1].transition;
+    }
+    var lastPart = parts[numParts - 1];
+    lastPart.result.state = S[result.state];
+    lastPart.result.token = result.token;
+    return parts[0].transition;
   };
 
   // Clean state between tokens.
   S['clean'] = makeState([
-    { match: space },
-    { match: eof, state: S['success'] },
+    { match: space, discard: true },
+    { match: eof, state: 'success' },
     { match: any('(['), token: T.OPEN_LIST },
     { match: any(')]'), token: T.CLOSE_FORM },
     { match: single('\''), token: T.QUOTE },
     { match: single('`'), token: T.QUASIQUOTE },
-    { match: single(';'), state: S['eatComment'] },
-    { match: single('#'), state: S['hash'] },
-    { match: single('"'), state: S['stringLiteral'] },
-    { match: single('|'), state: S['quotedSymbol'] },
-    { match: single(','), state: S['unquote'] },
-    { match: single('.'), state: S['dot'] },
-    { match: any('-+'), state: S['sign'] },
-    { match: digit, state: S['decimalLiteral'] },
-    { match: whatever, state: S['symbol'] }
+    { match: single(';'), state: 'eatComment', discard: true },
+    { match: single('#'), state: 'hash' },
+    { match: single('"'), state: 'stringLiteral' },
+    { match: single('|'), state: 'quotedSymbol' },
+    { match: single(','), state: 'unquote' },
+    { match: single('.'), state: 'dot' },
+    { match: any('-+'), state: 'sign' },
+    { match: digit, state: 'decimalLiteral' },
+    { match: whatever, state: 'symbol' }
   ]);
 
   // Final state. Should only be reachable on EOF in a clean state.
@@ -197,64 +247,69 @@ var START_STATE_ = (function() {
   // Chew up input until we reach an officially sanctioned line terminator.
   // {@see http://www.unicode.org/reports/tr14/tr14-32.html}
   S['eatComment'] = makeState([
-    { match: any('\n\v\f\r\x85\u2028\u2029'), state: S['clean'] },
-    { match: whatever }
+    { match: lineEnding, state: 'clean', discard: true },
+    { match: whatever, discard: true }
   ]);
 
   // Reached when reading a '#' from a clean state.
   S['hash'] = makeState([
     { match: single(';'), token: T.OMIT_DATUM },
     { match: any('(['), token: T.OPEN_VECTOR },
-    { match: any('tT'), state: S['hashT'] },
-    { match: any('fF'), state: S['hashF'] },
-    { match: single('?'), state: S['hash?'] },
-    { match: single('\\'), state: S['charLiteral'] },
-    { match: any('dD'), state: S['forcedDecimalLiteralStart'] },
-    { match: any('bB'), state: S['binaryLiteralStart'] },
-    { match: any('oO'), state: S['octalLiteralStart'] },
-    { match: any('xX'), state: S['hexLiteralStart'] }
+    { match: any('tT'), state: 'hashT' },
+    { match: any('fF'), state: 'hashF' },
+    { match: single('?'), state: 'hash?' },
+    { match: single('\\'), state: 'charLiteral' },
+    { match: any('dD'), state: 'forcedDecimalLiteralStart' },
+    { match: any('bB'), state: 'binaryLiteralStart' },
+    { match: any('oO'), state: 'octalLiteralStart' },
+    { match: any('xX'), state: 'hexLiteralStart' }
   ]);
   S['hashT'] = makeState([
-    { match: delimiter, passive: true, token: T.TRUE }
+    { match: delimiter, advance: false, token: T.TRUE }
   ]);
   S['hashF'] = makeState([
-    { match: delimiter, passive: true, token: T.FALSE }
+    { match: delimiter, advance: false, token: T.FALSE }
   ]);
   S['hash?'] = makeState([
-    { match: delimiter, passive: true, token: T.UNSPECIFIED }
+    { match: delimiter, advance: false, token: T.UNSPECIFIED }
   ]);
 
   // Things that happen between double quotes.
   S['stringLiteral'] = makeState([
     { match: single('\"'), token: T.STRING_LITERAL },
-    { match: single('\\'), state: S['stringEscape'] },
+    { match: single('\\'), state: 'stringEscape' },
     { match: whatever }
   ]);
   S['stringEscape'] = makeState([
-    { match: single('x'), state: S['stringEscape8BitCode'] },
-    { match: single('u'), state: S['stringEscape16BitCode'] },
-    { match: whatever, state: S['stringLiteral'] }
+    { match: single('x'), state: 'stringEscape8BitCode' },
+    { match: single('u'), state: 'stringEscape16BitCode' },
+    { match: whatever, state: 'stringLiteral' }
   ]);
-  S['stringEscape8BitCode'] = makeSequencedStates([hex, hex],
-      { state: S['stringLiteral'] });
-  S['stringEscape16BitCode'] = makeSequencedStates([hex, hex, hex, hex],
-      { state: S['stringLiteral'] });
+  S['stringEscape8BitCode'] = makeStateSequence([hex, hex],
+      { state: 'stringLiteral' });
+  S['stringEscape16BitCode'] = makeStateSequence([hex, hex, hex, hex],
+      { state: 'stringLiteral' });
 
   // Things that happen between symbol quotations (|).
   S['quotedSymbol'] = makeState([
     { match: single('|'), token: T.QUOTED_SYMBOL },
-    { match: single('\\'), state: S['quotedSymbolEscape'] },
+    { match: single('\\'), state: 'quotedSymbolEscape' },
     { match: whatever }
   ]);
   S['quotedSymbolEscape'] = makeState([
-    { match: single('x'), state: S['quotedSymbolEscape8BitCode'] },
-    { match: single('u'), state: S['quotedSymbolEscape16BitCode'] },
-    { match: whatever, state: S['quotedSymbol'] }
+    { match: single('x'), state: 'quotedSymbolEscape8BitCode' },
+    { match: single('u'), state: 'quotedSymbolEscape16BitCode' },
+    { match: whatever, state: 'quotedSymbol' }
   ]);
-  S['quotedSymbolEscape8BitCode'] = makeSequencedStates([hex, hex],
-      { state: S['quotedSymbol'] });
-  S['quotedSymbolEscape16BitCode'] = makeSequencedStates([hex, hex, hex, hex],
-      { state: S['quotedSymbol'] });
+  S['quotedSymbolEscape8BitCode'] = makeStateSequence([hex, hex],
+      { state: 'quotedSymbol' });
+  S['quotedSymbolEscape16BitCode'] = makeStateSequence([hex, hex, hex, hex],
+      { state: 'quotedSymbol' });
+
+  S['symbol'] = makeState([
+    { match: delimiter, advance: false, token: T.SYMBOL },
+    { match: whatever }
+  ]);
 
   return S['clean'];
 }());
@@ -278,6 +333,43 @@ ccc.parse.Scanner = function(input) {
    * @private {!Transition_}
    */
   this.state_ = START_STATE_;
+
+  /**
+   * The current line number within the input.
+   * @private {number}
+   */
+  this.line_ = 1;
+
+  /**
+   * The current column within the input.
+   * @private {number}
+   */
+  this.column_ = 1;
+
+  /**
+   * The current absolute index into the input.
+   * @private {number}
+   */
+  this.index_ = 0;
+
+  /**
+   * The index within the input where the current token started, or null
+   * if there is no current token.
+   * @private {?number}
+   */
+  this.tokenIndex_ = null;
+
+  /**
+   * The line number on which the current token started, if any.
+   * @private {number}
+   */
+  this.tokenLine_ = 1;
+
+  /**
+   * The column at which the current token started, if any.
+   * @private {number}
+   */
+  this.tokenColumn_ = 1;
 };
 
 
@@ -288,5 +380,68 @@ ccc.parse.Scanner = function(input) {
  * @public
  */
 ccc.parse.Scanner.prototype.getNextToken = function() {
-  return null;
+  var timeout = 20;
+  try {
+    // Tracks whether the previous character was a CR. Ugh.
+    var hadCarriageReturn = false;
+    while (timeout--) {
+      var c = this.input_.charAt(this.index_);
+      var result = this.state_(c);
+      if (result.terminate) {
+        return null;
+      }
+      // State transition if necessary
+      var oldState = this.state_;
+      if (goog.isDef(result.state)) {
+        this.state_ = result.state;
+      }
+      // Either the input should be advanced or the state should change
+      // (or both). If neither happens, we have a problem.
+      goog.asserts.assert(result.advance || this.state_ != oldState ||
+          goog.isDef(result.token), 'Probably stuck in an infinite loop.');
+      // Advance the input if it's called for.
+      if (result.advance) {
+        // Mark the start of a new token's text if necessary.
+        if (!result.discard && goog.isNull(this.tokenIndex_)) {
+          this.tokenIndex_ = this.index_;
+          this.tokenLine_ = this.line_;
+          this.tokenColumn_ = this.column_;
+        }
+        this.index_++;
+        // If we had a CR but not an LF, insert a newline for the CR.
+        if (hadCarriageReturn && c != '\n') {
+          this.line_++;
+          this.column_ = 1;
+        }
+        hadCarriageReturn = false;
+        // If it's a newline, add a newline (unless it's CR)!
+        if (LINE_TERMINATORS_.indexOf(c) >= 0) {
+          if (c == '\r') {
+            hadCarriageReturn = true;
+          } else {
+            this.line_++;
+            this.column_ = 1;
+          }
+        } else {
+          this.column_++;
+        }
+      }
+      // Finally emit a token if we need to.
+      if (goog.isDef(result.token)) {
+        goog.asserts.assert(!goog.isNull(this.tokenIndex_),
+            'Trying to emit an empty token: ' + result.token);
+        var token = new ccc.parse.Token(result.token,
+            this.input_.substring(this.tokenIndex_, this.index_),
+            this.tokenLine_,
+            this.tokenColumn_);
+        this.state_ = START_STATE_;
+        this.tokenIndex_ = null;
+        return token;
+      }
+    }
+    return null;
+  } catch (e) {
+    throw new Error('Error (Line ' + this.line_ + ', Col ' + this.column_ +
+        '): ' + e.message);
+  }
 };

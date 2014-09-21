@@ -20,6 +20,10 @@ _COMPILE_TARGETS = [
 ]
 
 
+# List of source roots within the project.
+_SOURCE_PATHS = ['ccc', 'cmacs']
+
+
 _OUTPUT_ZIP_FILENAME = 'cmacs.zip'
 _MANIFEST_FILENAME = 'manifest.json'
 
@@ -63,7 +67,7 @@ def _FindClosureCompiler():
 
 def _CompileJs(closure_library_root,
                closure_compiler_jar,
-               source_root,
+               src_paths,
                externs_root,
                entry_point,
                output_filename,
@@ -82,11 +86,11 @@ def _CompileJs(closure_library_root,
       '--define=goog.DEBUG=%s' % ('true' if debug else 'false'),
       os.path.join(closure_library_root, 'closure', 'goog', 'base.js'),
       os.path.join(closure_library_root, '**.js'),
-      os.path.join(source_root, '**.js'),
       '!**.js',
-      '--externs', os.path.join(externs_root, '**.js')])
+      '--externs', os.path.join(externs_root, '**.js')] +
+        [os.path.join(path, '**.js') for path in src_paths])
 
-def _BuildJsOutputs(src_path, externs_path, out_path, debug):
+def _BuildJsOutputs(src_paths, externs_path, out_path, debug):
   closure_library_root = (os.environ.get('CLOSURE_LIBRARY_ROOT') or
                           _FindClosureLibrary())
   if closure_library_root is None:
@@ -103,7 +107,7 @@ def _BuildJsOutputs(src_path, externs_path, out_path, debug):
     output_file = os.path.join(out_path, filename)
     if not _CompileJs(closure_library_root,
                       closure_compiler_jar,
-                      src_path,
+                      src_paths,
                       externs_path,
                       namespace,
                       output_file,
@@ -142,12 +146,13 @@ def _BuildCmacs(version, debug):
       inspect.currentframe())))
   root_path = os.path.dirname(build_script_path)
   app_path = os.path.join(root_path, 'app')
-  src_path = os.path.join(root_path, 'src')
+  src_paths = map(lambda path : os.path.join(root_path, path),
+                  _SOURCE_PATHS)
   externs_path = os.path.join(root_path, 'externs')
   out_path = os.path.join(root_path, 'out')
 
   _InitializeOutput(app_path, out_path)
-  _BuildJsOutputs(src_path, externs_path, out_path, debug)
+  _BuildJsOutputs(src_paths, externs_path, out_path, debug)
   if not debug:
     print 'Packaging ZIP file with version %s' % version
     _UpdateManifest(out_path, version)

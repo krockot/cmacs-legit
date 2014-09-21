@@ -40,6 +40,6 @@ ccc.parse.Token = function(type, text, data, line, column) {
   /** @public {number} */
   this.line = line;
 
-  /** @public {column} */
+  /** @public {number} */
   this.column = column;
 };

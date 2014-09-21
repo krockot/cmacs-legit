@@ -2,14 +2,14 @@
 
 goog.provide('cmacs.background.main')
 
-goog.require('ccc.parse.Lexer')
+goog.require('ccc.parse.Scanner')
 
 
 
 cmacs.background.main = function() {
   chrome.app.runtime.onLaunched.addListener(function() {
     goog.global.test = function(input) {
-      var lexer = new ccc.parse.Lexer(input);
+      var scanner = new ccc.parse.Scanner(input);
     };
   });
 };

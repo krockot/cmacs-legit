@@ -21,7 +21,7 @@ var ScannerState_ = {
 /**
  * Scanner is responsible for transforming an input string into a stream of
  * {@code ccc.parse.Token} objects.
- * @param {string} Input string.
+ * @param {string} input Input string.
  * @constructor
  * @public
  */

@@ -1,4 +1,6 @@
-// Cmacs project. Copyright forever, the universe.
+// The Cmacs Project.
+// Copyright forever, the universe.
+
 
 
 /**

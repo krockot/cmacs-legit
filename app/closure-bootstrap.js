@@ -1,11 +1,20 @@
-// Cmacs project. Copyright forever, the universe.
+// The Cmacs Project.
+// Copyright forever, the universe.
 
 // This file should contain any bootstrapping code that needs to run before
-// compiled Closure output.
+// compiled or uncompiled Closure output.
 
-// Unoptimized Closure base code tries to load dependencies using
-// calls to document.write. This doesn't fly for Chrome apps, and we don't
-// need anyway. This turns it off.
+
 var CLOSURE_UNCOMPILED_DEFINES = {
-  'goog.ENABLE_DEBUG_LOADER': false
+  // Unoptimized Closure base code tries to load dependencies using
+  // calls to document.write. This doesn't fly for Chrome apps, and we don't
+  // need anyway. This turns it off.
+  'goog.ENABLE_DEBUG_LOADER': false,
+};
+
+
+var CLOSURE_DEFINES = {
+  // Since we're a Chrome app, we can reassure the Closure library about the
+  // availbility of native JSON support.
+  'goog.json.USE_NATIVE_JSON': true,
 };

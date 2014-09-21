@@ -1,6 +1,6 @@
-# Cmacs project. Copyright forever, the universe.
+# The Cmacs Project.
+# Copyright forever, the universe.
 
-import distutils
 import inspect
 import itertools
 import json
@@ -84,14 +84,22 @@ def _CompileJs(closure_library_root,
       '--js_output_file', output_filename,
       '--warning_level', 'VERBOSE',
       '--language_in', 'ECMASCRIPT5_STRICT',
-      '--define=goog.json.USE_NATIVE_JSON=true',
       '--process_closure_primitives',
+      '--jscomp_error', 'accessControls',
+      '--jscomp_error', 'ambiguousFunctionDecl',
+      '--jscomp_error', 'checkTypes',
+      '--jscomp_error', 'checkVars',
+      '--jscomp_error', 'const',
+      '--jscomp_error', 'visibility',
       '--define=goog.DEBUG=%s' % ('true' if debug else 'false'),
       os.path.join(closure_library_root, 'closure', 'goog', 'base.js'),
       os.path.join(closure_library_root, '**.js'),
-      '!**.js',
+      '!%s' % os.path.join(closure_library_root, '**_test.js'),
+      '!%s' % os.path.join(closure_library_root, '**demo.js'),
       '--externs'] + externs +
-        [os.path.join(path, '**.js') for path in src_paths])
+        [os.path.join(path, '**.js') for path in src_paths] +
+        ['!%s' % os.path.join(path, '!**_test.js') for path in src_paths])
+
 
 def _BuildJsOutputs(src_paths, externs, out_path, debug):
   closure_library_root = (os.environ.get('CLOSURE_LIBRARY_ROOT') or

@@ -28,6 +28,9 @@ _OUTPUT_ZIP_FILENAME = 'cmacs.zip'
 _MANIFEST_FILENAME = 'manifest.json'
 
 
+_EXTERNS = ['chrome_apis.js']
+
+
 def _PrintError(*args):
   sys.stderr.write('ERROR: %s\n' % ' '.join(map(str, args)))
   sys.stderr.flush()
@@ -68,7 +71,7 @@ def _FindClosureCompiler():
 def _CompileJs(closure_library_root,
                closure_compiler_jar,
                src_paths,
-               externs_root,
+               externs,
                entry_point,
                output_filename,
                debug):
@@ -87,10 +90,10 @@ def _CompileJs(closure_library_root,
       os.path.join(closure_library_root, 'closure', 'goog', 'base.js'),
       os.path.join(closure_library_root, '**.js'),
       '!**.js',
-      '--externs', os.path.join(externs_root, '**.js')] +
+      '--externs'] + externs +
         [os.path.join(path, '**.js') for path in src_paths])
 
-def _BuildJsOutputs(src_paths, externs_path, out_path, debug):
+def _BuildJsOutputs(src_paths, externs, out_path, debug):
   closure_library_root = (os.environ.get('CLOSURE_LIBRARY_ROOT') or
                           _FindClosureLibrary())
   if closure_library_root is None:
@@ -108,7 +111,7 @@ def _BuildJsOutputs(src_paths, externs_path, out_path, debug):
     if not _CompileJs(closure_library_root,
                       closure_compiler_jar,
                       src_paths,
-                      externs_path,
+                      externs,
                       namespace,
                       output_file,
                       debug):
@@ -148,11 +151,11 @@ def _BuildCmacs(version, debug):
   app_path = os.path.join(root_path, 'app')
   src_paths = map(lambda path : os.path.join(root_path, path),
                   _SOURCE_PATHS)
-  externs_path = os.path.join(root_path, 'externs')
+  externs = [os.path.join(root_path, 'externs', path) for path in _EXTERNS]
   out_path = os.path.join(root_path, 'out')
 
   _InitializeOutput(app_path, out_path)
-  _BuildJsOutputs(src_paths, externs_path, out_path, debug)
+  _BuildJsOutputs(src_paths, externs, out_path, debug)
   if not debug:
     print 'Packaging ZIP file with version %s' % version
     _UpdateManifest(out_path, version)

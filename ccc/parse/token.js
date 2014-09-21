@@ -54,7 +54,4 @@ ccc.parse.Token = function(type, text, line, column) {
 
   /** @public {number} */
   this.column = column;
-
-  /** @public {!Object} */
-  this.data = {};
 };

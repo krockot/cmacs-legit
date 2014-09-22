@@ -16,7 +16,12 @@ class RequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     self.end_headers()
     test_script_path = os.path.dirname(os.path.abspath(inspect.getfile(
         inspect.currentframe())))
-    file_path = os.path.join(test_script_path, self.path[1:])
+    root_path = os.path.dirname(os.path.dirname(test_script_path))
+    # First try to locate the file in the project root, so we can fetch an
+    # updated copy without requiring a rebuild.
+    file_path = os.path.join(root_path, self.path[1:])
+    if not os.path.isfile(file_path):
+      file_path = os.path.join(test_script_path, self.path[1:])
     with open(file_path) as file:
       self.wfile.write(file.read())
 

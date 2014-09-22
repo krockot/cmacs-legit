@@ -28,7 +28,7 @@ var E = function(tokenType, opt_text, opt_line, opt_column) {
   }
 };
 
-var scannerTest = function(string, expectations) {
+var S = function(string, expectations) {
   var scanner = new ccc.parse.Scanner(string);
   expectations.forEach(function(expectation) {
     var token = scanner.getNextToken();
@@ -38,14 +38,18 @@ var scannerTest = function(string, expectations) {
   assertNull(scanner.getNextToken());
 };
 
-var M = function(name, string, expectations) {
-  window['test' + name] = function() {
-    scannerTest(string, expectations);
-  };
-};
-
-
 // Actual tests below this line.
 
-M('EmptyProgram', '', []);
+function testEmptyProgram() {
+  S('', []);
+}
 
+function testWhitespace() {
+  S(' \n\r\n\r\v\f\t\x85\xa0\u2000\u3000', []);
+}
+
+function testSymbol() {
+  S('hello', [
+    E(T.SYMBOL, 'hello'),
+  ]);
+}

@@ -32,6 +32,17 @@ walk a localized chunk of the file system to find the items for you. It might
 fail, but at least it will fail early and obviously, and you have some recourse
 (see above.)
 
+Once you're ready to build, you can run:
+
+    python build/build.py debug
+
+Or if you want to generate a ZIP file to be packaged up (why?), you can present
+a version number instead:
+
+    python build/build.py 0.1.2.3
+
+You probably just want a debug build.
+
 Testing
 -------
 

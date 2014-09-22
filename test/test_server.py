@@ -9,6 +9,9 @@ import os
 
 class RequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
   def do_GET(self):
+    if self.path == '/':
+      self.path = '/index.html'
+      return self.do_GET()
     filename = os.path.basename(self.path)
     _, ext = os.path.splitext(filename)
     self.send_response(200)

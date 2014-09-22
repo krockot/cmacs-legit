@@ -11,8 +11,8 @@ Chrome platform, you have integrated native support for webby development.
 
 Welcome, discerning hackers, to the future.
 
-Build
------
+Building
+--------
 
 Building Cmacs is annoying, mostly because it requires Java to run the
 Closure compiler. Gross! It's worth the trouble though, because Closure is so
@@ -39,7 +39,19 @@ walk a localized chunk of the file system to find the items for you. It might
 fail, but at least it will fail early and obviously, and you have some recourse
 (see above.)
 
-WTF Do I Do With It?
---------------------
+Testing
+-------
 
-If you have to ask, the answer is probably, "Nothing. Thanks for stopping by!"
+Once everything is built, you can run the test server:
+
+    python out/test/test_server.py
+
+This will serve JsUnit tests over HTTP on port 4444. Any changes which affect
+dependencies may require a rebuild, but otherwise test pages can be reloaded
+to reflect the current state of the local source tree.
+
+The root path of the test server serves a list of links to individual test
+modules.
+
+The test server needs to be restarted if its source is changed or the set
+of extant test modules has changed.

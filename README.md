@@ -15,8 +15,7 @@ Building
 --------
 
 Building Cmacs is annoying, mostly because it requires Java to run the
-Closure compiler. Gross! It's worth the trouble though, because Closure is so
-much nicer than vanilla JavaScript.
+Closure compiler.
 
 Here's a complete list of prerequisites:
 

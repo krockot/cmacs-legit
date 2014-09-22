@@ -9,6 +9,8 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import urllib
+import urlparse
 import zipfile
 
 
@@ -36,10 +38,13 @@ def _PrintError(*args):
   sys.stderr.flush()
 
 
-def _InitializeOutput(app_path, out_path):
+def _InitializeOutput(app_path, test_path, out_path):
   if os.path.isdir(out_path):
     shutil.rmtree(out_path)
-  shutil.copytree(app_path, out_path)
+  app_out_path = os.path.join(out_path, 'app')
+  test_out_path = os.path.join(out_path, 'test')
+  shutil.copytree(app_path, app_out_path)
+  shutil.copytree(test_path, test_out_path);
 
 
 def _FindTarget(predicate):
@@ -98,15 +103,10 @@ def _CompileJs(closure_library_root,
       '!%s' % os.path.join(closure_library_root, '**demo.js'),
       '--externs'] + externs +
         [os.path.join(path, '**.js') for path in src_paths] +
-        ['!%s' % os.path.join(path, '!**_test.js') for path in src_paths])
+        ['!%s' % os.path.join(path, '**_test.js') for path in src_paths])
 
 
-def _BuildJsOutputs(src_paths, externs, out_path, debug):
-  closure_library_root = (os.environ.get('CLOSURE_LIBRARY_ROOT') or
-                          _FindClosureLibrary())
-  if closure_library_root is None:
-    _PrintError('Unable to locate closure-library root.')
-    sys.exit(1)
+def _BuildJsOutputs(src_paths, externs, out_path, debug, closure_library_root):
   closure_compiler_jar = (os.environ.get('CLOSURE_COMPILER_JAR') or
                           _FindClosureCompiler())
   if closure_compiler_jar is None:
@@ -115,7 +115,7 @@ def _BuildJsOutputs(src_paths, externs, out_path, debug):
   print 'Using closure-library at %s' % closure_library_root
   print 'Using compiler.jar at %s' % closure_compiler_jar
   for namespace, filename in _COMPILE_TARGETS:
-    output_file = os.path.join(out_path, filename)
+    output_file = os.path.join(out_path, 'app', filename)
     if not _CompileJs(closure_library_root,
                       closure_compiler_jar,
                       src_paths,
@@ -126,17 +126,61 @@ def _BuildJsOutputs(src_paths, externs, out_path, debug):
       sys.exit(1)
 
 
+def _BuildTestSuite(src_paths, out_path, closure_library_root):
+  closure_copy = os.path.join(out_path, 'closure-library')
+  shutil.copytree(closure_library_root, closure_copy)
+  print 'Calculating test deps...'
+  deps_roots = []
+  for path in src_paths:
+    deps_roots.extend(['-d', path])
+  subprocess.call([
+      'python', '%s/closure/bin/calcdeps.py' % closure_library_root,
+      '--output_file', os.path.join(out_path, 'deps.js'),
+      '-o', 'deps',
+      '-d', closure_library_root] + deps_roots)
+  template = ('<!doctype html><html><head>' +
+      '<title>Cmacs Test Suite: %s</title><head>' +
+      '<script src="/closure-library/closure/goog/base.js"></script>' +
+      '<script src="/deps.js"></script>' +
+      '<script src="%s"></script></head><body></body></html>')
+  print 'Setting up test server resources...'
+  with open(os.path.join(out_path, 'generated_test_setup.js'), 'w') as setup:
+    setup.write('function GENERATE_TEST_LINKS() {\n');
+    for path in src_paths:
+      for root, dirs, files in os.walk(path):
+        test_files = [file for file in
+                      filter(lambda f: f.endswith('_test.js'), files)]
+        for filename in test_files:
+          full_path = os.path.join(root, filename)
+          base_path = os.path.commonprefix([root, out_path])
+          rel_path = root[len(base_path):]
+          out_file_path = os.path.join(out_path, rel_path, filename)
+          out_dir = os.path.join(out_path, rel_path)
+          suite_name, _ = os.path.splitext(filename)
+          if not os.path.isdir(out_dir):
+            os.makedirs(out_dir)
+          shutil.copy(full_path, out_file_path)
+          html_file = '%s.html' % suite_name
+          setup.write('document.write("<a href=\'/%s\'>%s</a><br/>");\n' %
+              (os.path.join(rel_path, html_file),
+               os.path.join(rel_path, suite_name)))
+          with open(os.path.join(out_dir, html_file), 'w') as html_file:
+              html_file.write(template % (suite_name, filename))
+    setup.write('}')
+
+
 def _UpdateManifest(out_path, version):
-  with open(os.path.join(out_path, _MANIFEST_FILENAME)) as manifest_file:
+  with open(os.path.join(out_path, 'app', _MANIFEST_FILENAME)) as manifest_file:
     manifest = json.load(manifest_file)
   if 'key' in manifest:
     del manifest['key']
   manifest['version'] = version
-  with open(os.path.join(out_path, _MANIFEST_FILENAME), 'w') as manifest_file:
+  with open(os.path.join(out_path, 'app', _MANIFEST_FILENAME),
+            'w') as manifest_file:
     json.dump(manifest, manifest_file, indent=2)
 
 
-def _CreateZipFile(path):
+def _CreateZipFile(path, dest_dir):
   tmpdir = tempfile.mkdtemp()
   try:
     filename = os.path.join(tmpdir, _OUTPUT_ZIP_FILENAME)
@@ -147,7 +191,7 @@ def _CreateZipFile(path):
         arc_path = full_path[len(path):]
         zip.write(full_path, arc_path)
     zip.close()
-    shutil.copy(filename, os.path.join(path, _OUTPUT_ZIP_FILENAME))
+    shutil.copy(filename, os.path.join(dest_dir, _OUTPUT_ZIP_FILENAME))
   finally:
     shutil.rmtree(tmpdir)
 
@@ -157,17 +201,26 @@ def _BuildCmacs(version, debug):
       inspect.currentframe())))
   root_path = os.path.dirname(build_script_path)
   app_path = os.path.join(root_path, 'app')
+  test_path = os.path.join(root_path, 'test')
   src_paths = map(lambda path : os.path.join(root_path, path),
                   _SOURCE_PATHS)
   externs = [os.path.join(root_path, 'externs', path) for path in _EXTERNS]
   out_path = os.path.join(root_path, 'out')
 
-  _InitializeOutput(app_path, out_path)
-  _BuildJsOutputs(src_paths, externs, out_path, debug)
+  closure_library_root = (os.environ.get('CLOSURE_LIBRARY_ROOT') or
+                          _FindClosureLibrary())
+  if closure_library_root is None:
+    _PrintError('Unable to locate closure-library root.')
+    sys.exit(1)
+
+  _InitializeOutput(app_path, test_path, out_path)
+  _BuildTestSuite(src_paths, os.path.join(out_path, 'test'),
+                  closure_library_root)
+  _BuildJsOutputs(src_paths, externs, out_path, debug, closure_library_root)
   if not debug:
     print 'Packaging ZIP file with version %s' % version
     _UpdateManifest(out_path, version)
-    _CreateZipFile(out_path)
+    _CreateZipFile(os.path.join(out_path, 'app'), out_path)
   print 'Success!'
 
 
@@ -179,5 +232,5 @@ if __name__ == '__main__':
       debug = True
     else:
       version = sys.argv[1]
-  _BuildCmacs(version=version, debug=debug)
+  _BuildCmacs(version, debug)
 

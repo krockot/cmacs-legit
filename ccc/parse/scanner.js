@@ -63,7 +63,7 @@ var MatchFunction_;
  * @typedef {{
  *   match: MatchFunction_,
  *   token: (ccc.parse.TokenType|undefined),
- *   state: (!Transition_|undefined),
+ *   state: (string|undefined),
  *   advance: (boolean|undefined),
  *   discard: (boolean|undefined)
  * }}
@@ -165,7 +165,7 @@ var START_STATE_ = (function() {
         throw new Error('Unexpected \'' + input + '\' character in input.');
       }
       return {
-        state: S[match.state],
+        state: goog.isDef(match.state) ? S[match.state] : undefined,
         token: match.token,
         terminate: false,
         advance: goog.isDef(match.advance) ? match.advance : true,
@@ -188,7 +188,7 @@ var START_STATE_ = (function() {
    *     functions to apply in-order over the input.
    * @param {!{
    *    token: (ccc.parse.TokenType|undefined),
-   *    state: (!Transition_|undefined)
+   *    state: (string|undefined)
    *  }} result The token and/or state to use upon successful match.
    * @return {!Transition_}
    */
@@ -215,7 +215,8 @@ var START_STATE_ = (function() {
       parts[i].result.state = parts[i + 1].transition;
     }
     var lastPart = parts[numParts - 1];
-    lastPart.result.state = S[result.state];
+    lastPart.result.state =
+        goog.isDef(result.state) ? S[result.state] : undefined;
     lastPart.result.token = result.token;
     return parts[0].transition;
   };

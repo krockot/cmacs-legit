@@ -1,13 +1,7 @@
 Cmacs
 =====
 
-Cmacs is an integrated Ccc runtime and development environment for Chrome.
-There is an obvious inference I'm trying to draw out of you by naming this
-Cmacs. You get it or you don't.
-
-Your init file lives in the cloud and syncs across all of your devices.
-You can load trusted plugins directly over HTTP/S. Since it's built on the
-Chrome platform, you have integrated native support for webby development.
+Cmacs is a great mistery.
 
 Welcome, discerning hackers, to the future.
 

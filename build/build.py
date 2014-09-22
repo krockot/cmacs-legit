@@ -128,16 +128,18 @@ def _BuildJsOutputs(src_paths, externs, out_path, debug, closure_library_root):
 
 def _BuildTestSuite(src_paths, out_path, closure_library_root):
   closure_copy = os.path.join(out_path, 'closure-library')
+  src_copies = []
   shutil.copytree(closure_library_root, closure_copy)
   print 'Calculating test deps...'
-  deps_roots = []
+  deps_roots = [closure_copy]
   for path in src_paths:
-    deps_roots.extend(['-d', path])
+    src_copy = os.path.join(out_path, os.path.basename(path))
+    shutil.copytree(path, src_copy)
+    deps_roots.extend(['-d', src_copy])
   subprocess.call([
       'python', '%s/closure/bin/calcdeps.py' % closure_library_root,
       '--output_file', os.path.join(out_path, 'deps.js'),
-      '-o', 'deps',
-      '-d', closure_library_root] + deps_roots)
+      '-o', 'deps'] + deps_roots)
   template = ('<!doctype html><html><head>' +
       '<title>Cmacs Test Suite: %s</title><head>' +
       '<script src="/closure-library/closure/goog/base.js"></script>' +
@@ -151,15 +153,12 @@ def _BuildTestSuite(src_paths, out_path, closure_library_root):
         test_files = [file for file in
                       filter(lambda f: f.endswith('_test.js'), files)]
         for filename in test_files:
-          full_path = os.path.join(root, filename)
           base_path = os.path.commonprefix([root, out_path])
           rel_path = root[len(base_path):]
-          out_file_path = os.path.join(out_path, rel_path, filename)
           out_dir = os.path.join(out_path, rel_path)
           suite_name, _ = os.path.splitext(filename)
           if not os.path.isdir(out_dir):
             os.makedirs(out_dir)
-          shutil.copy(full_path, out_file_path)
           html_file = '%s.html' % suite_name
           setup.write('document.write("<a href=\'/%s\'>%s</a><br/>");\n' %
               (os.path.join(rel_path, html_file),

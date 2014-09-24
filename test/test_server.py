@@ -14,19 +14,22 @@ class RequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
       return self.do_GET()
     filename = os.path.basename(self.path)
     _, ext = os.path.splitext(filename)
-    self.send_response(200)
-    self.send_header('Content-type', mimetypes.types_map[ext])
-    self.end_headers()
     test_script_path = os.path.dirname(os.path.abspath(inspect.getfile(
         inspect.currentframe())))
     root_path = os.path.dirname(os.path.dirname(test_script_path))
     # First try to locate the file in the project root, so we can fetch an
     # updated copy without requiring a rebuild.
-    file_path = os.path.join(root_path, self.path[1:])
-    if not os.path.isfile(file_path):
-      file_path = os.path.join(test_script_path, self.path[1:])
-    with open(file_path) as file:
-      self.wfile.write(file.read())
+    try:
+      file_path = os.path.join(root_path, self.path[1:])
+      if not os.path.isfile(file_path):
+        file_path = os.path.join(test_script_path, self.path[1:])
+      with open(file_path) as file:
+        self.send_response(200)
+        self.send_header('Content-type', mimetypes.types_map[ext])
+        self.end_headers()
+        self.wfile.write(file.read())
+    except:
+      self.send_response(404)
 
 if __name__ == '__main__':
   mimetypes.init()

@@ -28,6 +28,7 @@ ccc.parse.TokenType = {
   STRING_LITERAL: 13,
   NUMERIC_LITERAL: 14,
   QUOTED_SYMBOL: 15,
+  DOT: 16
 };
 
 

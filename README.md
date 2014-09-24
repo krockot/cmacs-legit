@@ -1,7 +1,7 @@
 Cmacs
 =====
 
-Cmacs is a great mistery.
+Cmacs is a great mystery.
 
 Welcome, discerning hackers, to the future.
 

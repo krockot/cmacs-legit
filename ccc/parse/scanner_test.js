@@ -55,11 +55,14 @@ var S = function(string, expectations) {
 
 // Actual tests below this line.
 
-function testSimpleTokens() {
+function testWhitespace() {
   S('', [
     ]);
   S(' \n\r\n\r\v\f\t\x85\xa0\u2000\u3000', [
     ]);
+}
+
+function testLists() {
   S('(', [
     E(T.OPEN_LIST)]);
   S(')', [
@@ -71,27 +74,48 @@ function testSimpleTokens() {
   S(' ( ) ', [
     E(T.OPEN_LIST),
     E(T.CLOSE_FORM)]);
+}
+
+function testBooleans() {
   S('#t #T', [
     E(T.TRUE),
     E(T.TRUE)]);
   S('#f #F', [
     E(T.FALSE),
     E(T.FALSE)]);
+}
+
+function testUnspecified() {
   S('#?', [
     E(T.UNSPECIFIED)]);
+}
+
+function testVector() {
   S('#( #[', [
     E(T.OPEN_VECTOR),
     E(T.OPEN_VECTOR)]);
+}
+
+function testQuotes() {
   S('\'', [
     E(T.QUOTE)]);
   S('`', [
     E(T.QUASIQUOTE)]);
+}
+
+function testStrings() {
   S('"Hello, world!"', [
     E(T.STRING_LITERAL, '"Hello, world!"')]);
-  S('a_symbol', [
-    E(T.SYMBOL, 'a_symbol')]);
+}
+
+function testQuotedSymbols() {
   S('|a symbol|', [
     E(T.QUOTED_SYMBOL, '|a symbol|')]);
+}
+
+function testSymbols() {
+  S('a_symbol', [
+    E(T.SYMBOL, 'a_symbol')]);
 }
 
 function testDelimiters() {
@@ -169,4 +193,111 @@ function testLineBreaks() {
   S('#t\v\f\n\r\x85\u2028\u2029#t', [
     E(T.TRUE, '#t', 1, 1),
     E(T.TRUE, '#t', 8, 1)])
+}
+
+function testUnquotes() {
+  S(',', [
+    E(T.UNQUOTE)]);
+  S(',a b', [
+    E(T.UNQUOTE),
+    E(T.SYMBOL, 'a'),
+    E(T.SYMBOL, 'b')]);
+  S(',@', [
+    E(T.UNQUOTE_SPLICING)]);
+  S(',@e', [
+    E(T.UNQUOTE_SPLICING),
+    E(T.SYMBOL, 'e')]);
+}
+
+function testDots() {
+  S('.', [
+    E(T.DOT)]);
+  S('.a', [
+   E(T.SYMBOL, '.a')]);
+  S('. a', [
+    E(T.DOT),
+    E(T.SYMBOL, 'a')]);
+  S('.9', [
+    E(T.NUMERIC_LITERAL, '.9')]);
+  S('.0a', [
+    E(T.SYMBOL, '.0a')]);
+}
+
+function testSigns() {
+  S('-', [
+    E(T.SYMBOL, '-')]);
+  S('+', [
+    E(T.SYMBOL, '+')]);
+  S('-a', [
+    E(T.SYMBOL, '-a')]);
+  S('+-', [
+    E(T.SYMBOL, '+-')]);
+  S('-0', [
+    E(T.NUMERIC_LITERAL, '-0')]);
+  S('+9', [
+    E(T.NUMERIC_LITERAL, '+9')]);
+  S('-9a', [
+    E(T.SYMBOL, '-9a')]);
+  S('-+0', [
+    E(T.SYMBOL, '-+0')]);
+  S('+.', [
+    E(T.SYMBOL, '+.')]);
+  S('-.3', [
+    E(T.NUMERIC_LITERAL, '-.3')]);
+  S('-.x', [
+    E(T.SYMBOL, '-.x')]);
+  S('+.(1)', [
+    E(T.SYMBOL, '+.'),
+    E(T.OPEN_LIST),
+    E(T.NUMERIC_LITERAL, '1'),
+    E(T.CLOSE_FORM)]);
+}
+
+function testDecimalNumbers() {
+  S('1 2', [
+    E(T.NUMERIC_LITERAL, '1'),
+    E(T.NUMERIC_LITERAL, '2')]);
+  S('.1 1.', [
+    E(T.NUMERIC_LITERAL, '.1'),
+    E(T.NUMERIC_LITERAL, '1.')]);
+  S('6.022e23', [
+    E(T.NUMERIC_LITERAL, '6.022e23')]);
+  S('-1e+10', [
+    E(T.NUMERIC_LITERAL, '-1e+10')]);
+  S('--1e+10', [
+    E(T.SYMBOL, '--1e+10')]);
+  S('-1e++10', [
+    E(T.SYMBOL, '-1e++10')]);
+  S('-1e+10e4', [
+    E(T.SYMBOL, '-1e+10e4')]);
+  S('-1e+10.3', [
+    E(T.SYMBOL, '-1e+10.3')]);
+  S('7e(', [
+    E(T.SYMBOL, '7e'),
+    E(T.OPEN_LIST)]);
+}
+
+function testNumberBases() {
+  S(' #b101', [
+    E(T.NUMERIC_LITERAL, '#b101')]);
+  S(' #banana', [
+    F]);
+  S('#b102', [
+    F]);
+  S('#b-', [
+    F]);
+  S('#b-0110', [
+    E(T.NUMERIC_LITERAL, '#b-0110')]);
+  S('#o12345670', [
+    E(T.NUMERIC_LITERAL)]);
+  S('#o8', [
+    F]);
+  S('#xdeadbeef', [
+    E(T.NUMERIC_LITERAL, '#xdeadbeef')]);
+  S('#x-deadbeef', [
+    E(T.NUMERIC_LITERAL, '#x-deadbeef')]);
+  S('#x+deadbeef', [
+    E(T.NUMERIC_LITERAL, '#x+deadbeef')]);
+  S('#x--deadbeef', [
+    F]);
 }

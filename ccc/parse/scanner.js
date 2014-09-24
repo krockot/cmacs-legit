@@ -5,6 +5,7 @@ goog.provide('ccc.parse.Scanner');
 
 goog.require('ccc.parse.Token');
 goog.require('ccc.parse.TokenType');
+goog.require('goog.array');
 goog.require('goog.asserts');
 goog.require('goog.object')
 
@@ -153,8 +154,8 @@ var START_STATE_ = (function() {
    *
    * Rules which emit a token also implicitly transition back to clean state.
    *
+   * @param {string} name The name of the state.
    * @param {!Array.<!TransitionRule_>} rules The list of rules for this state.
-   * @return {!Transition_}
    */
   var makeState = function(name, rules) {
     var fn = function(input) {
@@ -172,9 +173,7 @@ var START_STATE_ = (function() {
         discard: !!match.discard
       };
     };
-    if (goog.DEBUG) {
-      fn.__name__ = name;
-    }
+    fn.__name__ = name;
     S[name] = fn;
   };
 
@@ -184,13 +183,13 @@ var START_STATE_ = (function() {
    * is matched by the series, the given result will be used to emit a token
    * and/or transition the state.
    *
+   * @param {string} name The name of the initial state.
    * @param {!Array.<!MatchFunction_>} sequence The sequence of matching
    *     functions to apply in-order over the input.
    * @param {!{
    *    token: (ccc.parse.TokenType|undefined),
    *    state: (string|undefined)
    *  }} result The token and/or state to use upon successful match.
-   * @return {!Transition_}
    */
   var makeStateSequence = function(name, sequence, result) {
     goog.asserts.assert(sequence.length > 1,
@@ -210,12 +209,10 @@ var START_STATE_ = (function() {
         }
       };
     });
+    parts[0].transition.__name__ = name;
     var numParts = parts.length;
     for (var i = 0; i < numParts - 1; ++i) {
       parts[i].result.state = parts[i + 1].transition;
-    }
-    if (goog.DEBUG) {
-      parts[0].transition.__name__ = name;
     }
     var lastPart = parts[numParts - 1];
     lastPart.result.state =
@@ -247,9 +244,7 @@ var START_STATE_ = (function() {
   S['success'] = function(unused) {
     return { advance: false, terminate: true };
   };
-  if (goog.DEBUG) {
-    S['success'].__name__ = 'success';
-  }
+  S['success'].__name__ = 'success';
 
   // Chew up input until we reach an officially sanctioned line terminator.
   // {@see http://www.unicode.org/reports/tr14/tr14-32.html}
@@ -267,7 +262,6 @@ var START_STATE_ = (function() {
     { match: any('fF'), state: 'hashF' },
     { match: single('?'), state: 'hash?' },
     { match: single('\\'), state: 'charLiteral' },
-    { match: any('dD'), state: 'forcedDecimalLiteralStart' },
     { match: any('bB'), state: 'binaryLiteralStart' },
     { match: any('oO'), state: 'octalLiteralStart' },
     { match: any('xX'), state: 'hexLiteralStart' }
@@ -314,9 +308,123 @@ var START_STATE_ = (function() {
   makeStateSequence('quotedSymbolEscape16BitCode', [hex, hex, hex, hex],
       { state: 'quotedSymbol' });
 
+  // A popular default state to enter when input is otherwise uninteresting.
   makeState('symbol', [
     { match: delimiter, advance: false, token: T.SYMBOL },
     { match: whatever }
+  ]);
+
+  // Ambiguous unquote state. Either this is ,@ or it's treated as a standalone
+  // unquote regardless of whatever follows it.
+  makeState('unquote', [
+    { match: single('@'), token: T.UNQUOTE_SPLICING },
+    { match: whatever, advance: false, token: T.UNQUOTE }
+  ]);
+
+  // Ambiguous dot state. This may be the start of a numeric literal or symbol,
+  // or it may be a cons expression.
+  makeState('dot', [
+    { match: digit, state: 'decimalLiteralFraction' },
+    { match: delimiter, token: T.DOT },
+    { match: whatever, state: 'symbol' }
+  ]);
+
+  // Sign characters may be standalone symbols or the beginnings of a numeric
+  // literal.
+  makeState('sign', [
+    { match: digit, state: 'decimalLiteral' },
+    { match: single('.'), state: 'decimalLiteralFractionStart' },
+    { match: delimiter, advance: false, token: T.SYMBOL },
+    { match: whatever, state: 'symbol' }
+  ]);
+
+  // A state in which we already have at least one decimal digit scanned,
+  // but we haven't yet reached a decimal point.
+  makeState('decimalLiteral', [
+    { match: digit },
+    { match: any('eE'), state: 'exponentStart' },
+    { match: single('.'), state: 'decimalLiteralFraction' },
+    { match: delimiter, advance: false, token: T.NUMERIC_LITERAL },
+    { match: whatever, state: 'symbol' }
+  ]);
+
+  // A state in which we have a decimal point but no leading digits; in order
+  // for this to become a real numeric literal we must read at least one digit
+  // immediately. This state is reachable from a clean ".", "-.", or "+." input.
+  makeState('decimalLiteralFractionStart', [
+    { match: digit, state: 'decimalLiteralFraction' },
+    { match: delimiter, advance: false, token: T.SYMBOL },
+    { match: whatever, state: 'symbol' }
+  ]);
+
+  // A state in which we've already scanned at least one fractional digit.
+  makeState('decimalLiteralFraction', [
+    { match: digit },
+    { match: any('eE'), state: 'exponentStart' },
+    { match: delimiter, advance: false, token: T.NUMERIC_LITERAL },
+    { match: whatever, state: 'symbol' }
+  ]);
+
+  // We've read an [eE] from a possible numeric literal.
+  makeState('exponentStart', [
+    { match: any('-+'), state: 'exponentStartDigit' },
+    { match: digit, state: 'exponent' },
+    { match: delimiter, advance: false, token: T.SYMBOL },
+    { match: whatever, state: 'symbol' }
+  ]);
+
+  // We've read [eE] and [-+] so now we must either read a digit or this isn't
+  // a numeric literal.
+  makeState('exponentStartDigit', [
+    { match: digit, state: 'exponent' },
+    { match: delimiter, advance: false, token: T.SYMBOL },
+    { match: whatever, state: 'symbol' }
+  ]);
+
+  // A real exponent. Scan only digits up to delimiter or fall back to symbol.
+  makeState('exponent', [
+    { match: digit },
+    { match: delimiter, advance: false, token: T.NUMERIC_LITERAL },
+    { match: whatever, state: 'symbol' }
+  ]);
+
+  // Immediately following a #[bB] we require a sign or digit.
+  makeState('binaryLiteralStart', [
+    { match: any('-+'), state: 'binaryLiteralDigit' },
+    { match: any('01'), state: 'binaryLiteral' }
+  ]);
+  makeState('binaryLiteralDigit', [
+    { match: any('01'), state: 'binaryLiteral' }
+  ]);
+  makeState('binaryLiteral', [
+    { match: any('01') },
+    { match: delimiter, token: T.NUMERIC_LITERAL }
+  ]);
+
+  // Immediately following a #[oO] we require a sign or digit.
+  makeState('octalLiteralStart', [
+    { match: any('-+'), state: 'octalLiteralDigit' },
+    { match: any('01234567'), state: 'octalLiteral' },
+  ]);
+  makeState('octalLiteralDigit', [
+    { match: any('01234567'), state: 'octalLiteral' }
+  ]);
+  makeState('octalLiteral', [
+    { match: any('01234567') },
+    { match: delimiter, token: T.NUMERIC_LITERAL }
+  ]);
+
+  // Immediately following a #[xX] we require a sign or digit.
+  makeState('hexLiteralStart', [
+    { match: any('-+'), state: 'hexLiteralDigit' },
+    { match: hex, state: 'hexLiteral' },
+  ]);
+  makeState('hexLiteralDigit', [
+    { match: hex, state: 'hexLiteral' }
+  ]);
+  makeState('hexLiteral', [
+    { match: hex },
+    { match: delimiter, token: T.NUMERIC_LITERAL }
   ]);
 
   return S['clean'];
@@ -452,7 +560,6 @@ ccc.parse.Scanner.prototype.getNextToken = function() {
         return token;
       }
     }
-    return null;
   } catch (e) {
     throw new Error('Error (Line ' + this.line_ + ', Col ' + this.column_ +
         '): ' + e.message);

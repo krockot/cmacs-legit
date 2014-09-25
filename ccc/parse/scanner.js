@@ -135,7 +135,7 @@ var START_STATE_ = (function() {
   var hex = any('0123456789abcdefABCDEF');
 
   /** @type {!MatchFunction_} */
-  var whatever = function(x) { return true; };
+  var whatever = function(x) { return x.length == 1; };
 
   /* Shorthand for token types within this scope. */
   var T = ccc.parse.TokenType;
@@ -157,7 +157,7 @@ var START_STATE_ = (function() {
    * @param {string} name The name of the state.
    * @param {!Array.<!TransitionRule_>} rules The list of rules for this state.
    */
-  var makeState = function(name, rules) {
+  var D = function(name, rules) {
     var fn = function(input) {
       var match = goog.array.find(rules, function(rule) {
         return rule.match(input);
@@ -177,52 +177,8 @@ var START_STATE_ = (function() {
     S[name] = fn;
   };
 
-  /**
-   * Constructs a series of states which match a strict sequence.
-   * Returns the first constructed state in the sequence. If the full sequence
-   * is matched by the series, the given result will be used to emit a token
-   * and/or transition the state.
-   *
-   * @param {string} name The name of the initial state.
-   * @param {!Array.<!MatchFunction_>} sequence The sequence of matching
-   *     functions to apply in-order over the input.
-   * @param {!{
-   *    token: (ccc.parse.TokenType|undefined),
-   *    state: (string|undefined)
-   *  }} result The token and/or state to use upon successful match.
-   */
-  var makeStateSequence = function(name, sequence, result) {
-    goog.asserts.assert(sequence.length > 1,
-        'makeStateSequence excepts at least 2 sequence elements.');
-    var parts = sequence.map(function(fn, index) {
-      return {
-        result: {
-          terminate: false,
-          advance: true,
-          discard: false
-        },
-        transition: function(input) {
-          if (fn(input)) {
-            return parts[index].result;
-          }
-          throw new Error('Unexpected \'' + input + '\' character in input.');
-        }
-      };
-    });
-    parts[0].transition.__name__ = name;
-    var numParts = parts.length;
-    for (var i = 0; i < numParts - 1; ++i) {
-      parts[i].result.state = parts[i + 1].transition;
-    }
-    var lastPart = parts[numParts - 1];
-    lastPart.result.state =
-        goog.isDef(result.state) ? S[result.state] : undefined;
-    lastPart.result.token = result.token;
-    S[name] = parts[0].transition;
-  };
-
   // Clean state between tokens.
-  makeState('clean', [
+  D('clean', [
     { match: space, discard: true },
     { match: eof, state: 'success' },
     { match: any('(['), token: T.OPEN_LIST },
@@ -248,14 +204,14 @@ var START_STATE_ = (function() {
 
   // Chew up input until we reach an officially sanctioned line terminator.
   // {@see http://www.unicode.org/reports/tr14/tr14-32.html}
-  makeState('eatComment', [
+  D('eatComment', [
     { match: lineEnding, state: 'clean', discard: true },
     { match: eof, state: 'clean', advance: false },
     { match: whatever, discard: true }
   ]);
 
   // Reached when reading a '#' from a clean state.
-  makeState('hash', [
+  D('hash', [
     { match: single(';'), token: T.OMIT_DATUM },
     { match: any('(['), token: T.OPEN_VECTOR },
     { match: any('tT'), state: 'hashT' },
@@ -266,64 +222,69 @@ var START_STATE_ = (function() {
     { match: any('oO'), state: 'octalLiteralStart' },
     { match: any('xX'), state: 'hexLiteralStart' }
   ]);
-  makeState('hashT', [
+  D('hashT', [
     { match: delimiter, advance: false, token: T.TRUE }
   ]);
-  makeState('hashF', [
+  D('hashF', [
     { match: delimiter, advance: false, token: T.FALSE }
   ]);
-  makeState('hash?', [
+  D('hash?', [
     { match: delimiter, advance: false, token: T.UNSPECIFIED }
   ]);
 
   // Things that happen between double quotes.
-  makeState('stringLiteral', [
+  D('stringLiteral', [
     { match: single('\"'), token: T.STRING_LITERAL },
     { match: single('\\'), state: 'stringEscape' },
     { match: whatever }
   ]);
-  makeState('stringEscape', [
-    { match: single('x'), state: 'stringEscape8BitCode' },
-    { match: single('u'), state: 'stringEscape16BitCode' },
+  D('stringEscape', [
+    { match: single('x'), state: 'strEscape8Bit1' },
+    { match: single('u'), state: 'strEscape16Bit1' },
     { match: whatever, state: 'stringLiteral' }
   ]);
-  makeStateSequence('stringEscape8BitCode', [hex, hex],
-      { state: 'stringLiteral' });
-  makeStateSequence('stringEscape16BitCode', [hex, hex, hex, hex],
-      { state: 'stringLiteral' });
+  D('strEscape8Bit1', { match: hex, state: 'strEscape8Bit2' });
+  D('strEscape8Bit2', { match: hex, state: 'stringLiteral' });
+  D('strEscape16Bit1', { match: hex, state: 'strEscape16Bit2' });
+  D('strEscape16Bit2', { match: hex, state: 'strEscape16Bit3' });
+  D('strEscape16Bit3', { match: hex, state: 'strEscape16Bit4' });
+  D('strEscape16Bit4', { match: hex, state: 'stringLiteral' });
 
   // Things that happen between symbol quotations (|).
-  makeState('quotedSymbol', [
+  D('quotedSymbol', [
     { match: single('|'), token: T.QUOTED_SYMBOL },
     { match: single('\\'), state: 'quotedSymbolEscape' },
     { match: whatever }
   ]);
-  makeState('quotedSymbolEscape', [
-    { match: single('x'), state: 'quotedSymbolEscape8BitCode' },
-    { match: single('u'), state: 'quotedSymbolEscape16BitCode' },
+  D('quotedSymbolEscape', [
+    { match: single('x'), state: 'qsEscape8Bit1' },
+    { match: single('u'), state: 'qsEscape16Bit1' },
     { match: whatever, state: 'quotedSymbol' }
   ]);
-  makeStateSequence('quotedSymbolEscape8BitCode', [hex, hex],
-      { state: 'quotedSymbol' });
-  makeStateSequence('quotedSymbolEscape16BitCode', [hex, hex, hex, hex],
-      { state: 'quotedSymbol' });
+  D('qsEscape8Bit1', { match: hex, state: 'qsEscape8Bit2' });
+  D('qsEscape8Bit2', { match: hex, state: 'quotedSymbol' });
+  D('qsEscape16Bit1', { match: hex, state: 'qsEscape16Bit2' });
+  D('qsEscape16Bit2', { match: hex, state: 'qsEscape16Bit3' });
+  D('qsEscape16Bit3', { match: hex, state: 'qsEscape16Bit4' });
+  D('qsEscape16Bit4', { match: hex, state: 'quotedSymbol' });
 
   // A popular default state to enter when input is otherwise uninteresting.
-  makeState('symbol', [
+  D('symbol', [
     { match: delimiter, advance: false, token: T.SYMBOL },
     { match: whatever }
   ]);
 
   // Ambiguous unquote state. Either this is ,@ or it's treated as a standalone
   // unquote regardless of whatever follows it.
-  makeState('unquote', [
+  D('unquote', [
     { match: single('@'), token: T.UNQUOTE_SPLICING },
-    { match: whatever, advance: false, token: T.UNQUOTE }
+    { match: whatever, advance: false, token: T.UNQUOTE },
+    { match: eof, advance: false, token: T.UNQUOTE }
   ]);
 
   // Ambiguous dot state. This may be the start of a numeric literal or symbol,
   // or it may be a cons expression.
-  makeState('dot', [
+  D('dot', [
     { match: digit, state: 'decimalLiteralFraction' },
     { match: delimiter, token: T.DOT },
     { match: whatever, state: 'symbol' }
@@ -331,7 +292,7 @@ var START_STATE_ = (function() {
 
   // Sign characters may be standalone symbols or the beginnings of a numeric
   // literal.
-  makeState('sign', [
+  D('sign', [
     { match: digit, state: 'decimalLiteral' },
     { match: single('.'), state: 'decimalLiteralFractionStart' },
     { match: delimiter, advance: false, token: T.SYMBOL },
@@ -340,7 +301,7 @@ var START_STATE_ = (function() {
 
   // A state in which we already have at least one decimal digit scanned,
   // but we haven't yet reached a decimal point.
-  makeState('decimalLiteral', [
+  D('decimalLiteral', [
     { match: digit },
     { match: any('eE'), state: 'exponentStart' },
     { match: single('.'), state: 'decimalLiteralFraction' },
@@ -351,14 +312,14 @@ var START_STATE_ = (function() {
   // A state in which we have a decimal point but no leading digits; in order
   // for this to become a real numeric literal we must read at least one digit
   // immediately. This state is reachable from a clean ".", "-.", or "+." input.
-  makeState('decimalLiteralFractionStart', [
+  D('decimalLiteralFractionStart', [
     { match: digit, state: 'decimalLiteralFraction' },
     { match: delimiter, advance: false, token: T.SYMBOL },
     { match: whatever, state: 'symbol' }
   ]);
 
   // A state in which we've already scanned at least one fractional digit.
-  makeState('decimalLiteralFraction', [
+  D('decimalLiteralFraction', [
     { match: digit },
     { match: any('eE'), state: 'exponentStart' },
     { match: delimiter, advance: false, token: T.NUMERIC_LITERAL },
@@ -366,7 +327,7 @@ var START_STATE_ = (function() {
   ]);
 
   // We've read an [eE] from a possible numeric literal.
-  makeState('exponentStart', [
+  D('exponentStart', [
     { match: any('-+'), state: 'exponentStartDigit' },
     { match: digit, state: 'exponent' },
     { match: delimiter, advance: false, token: T.SYMBOL },
@@ -375,57 +336,89 @@ var START_STATE_ = (function() {
 
   // We've read [eE] and [-+] so now we must either read a digit or this isn't
   // a numeric literal.
-  makeState('exponentStartDigit', [
+  D('exponentStartDigit', [
     { match: digit, state: 'exponent' },
     { match: delimiter, advance: false, token: T.SYMBOL },
     { match: whatever, state: 'symbol' }
   ]);
 
   // A real exponent. Scan only digits up to delimiter or fall back to symbol.
-  makeState('exponent', [
+  D('exponent', [
     { match: digit },
     { match: delimiter, advance: false, token: T.NUMERIC_LITERAL },
     { match: whatever, state: 'symbol' }
   ]);
 
   // Immediately following a #[bB] we require a sign or digit.
-  makeState('binaryLiteralStart', [
+  D('binaryLiteralStart', [
     { match: any('-+'), state: 'binaryLiteralDigit' },
     { match: any('01'), state: 'binaryLiteral' }
   ]);
-  makeState('binaryLiteralDigit', [
+  D('binaryLiteralDigit', [
     { match: any('01'), state: 'binaryLiteral' }
   ]);
-  makeState('binaryLiteral', [
+  D('binaryLiteral', [
     { match: any('01') },
     { match: delimiter, token: T.NUMERIC_LITERAL }
   ]);
 
   // Immediately following a #[oO] we require a sign or digit.
-  makeState('octalLiteralStart', [
+  D('octalLiteralStart', [
     { match: any('-+'), state: 'octalLiteralDigit' },
     { match: any('01234567'), state: 'octalLiteral' },
   ]);
-  makeState('octalLiteralDigit', [
+  D('octalLiteralDigit', [
     { match: any('01234567'), state: 'octalLiteral' }
   ]);
-  makeState('octalLiteral', [
+  D('octalLiteral', [
     { match: any('01234567') },
     { match: delimiter, token: T.NUMERIC_LITERAL }
   ]);
 
   // Immediately following a #[xX] we require a sign or digit.
-  makeState('hexLiteralStart', [
+  D('hexLiteralStart', [
     { match: any('-+'), state: 'hexLiteralDigit' },
     { match: hex, state: 'hexLiteral' },
   ]);
-  makeState('hexLiteralDigit', [
+  D('hexLiteralDigit', [
     { match: hex, state: 'hexLiteral' }
   ]);
-  makeState('hexLiteral', [
+  D('hexLiteral', [
     { match: hex },
     { match: delimiter, token: T.NUMERIC_LITERAL }
   ]);
+
+  // Immediately following a "#\". We'll build some kind of character
+  // literal here.
+  D('charLiteral', [
+    { match: single('n'), state: 'cl-n' },
+    { match: single('s'), state: 'cl-s' },
+    { match: whatever, token: T.CHAR_LITERAL }
+  ]);
+
+  // #\n, #\newline, or error.
+  D('cl-n', [
+    { match: single('e'), state: 'cl-ne' },
+    { match: delimiter, advance: false, token: T.CHAR_LITERAL }
+  ]);
+  D('cl-ne', [{ match: single('w'), state: 'cl-new' }]);
+  D('cl-new', [{ match: single('l'), state: 'cl-newl' }]);
+  D('cl-newl', [{ match: single('i'), state: 'cl-newli' }]);
+  D('cl-newli', [{ match: single('n'), state: 'cl-newlin' }]);
+  D('cl-newlin', [{ match: single('e'), state: 'cl-newline' }]);
+  D('cl-newline', [{
+    match: delimiter, advance: false, token: T.CHAR_LITERAL
+  }]);
+
+  // #\s, #\space, or error.
+  D('cl-s', [
+    { match: single('p'), state: 'cl-sp' },
+    { match: delimiter, advance: false, token: T.CHAR_LITERAL }
+  ]);
+  D('cl-sp', [{ match: single('a'), state: 'cl-spa' }]);
+  D('cl-spa', [{ match: single('c'), state: 'cl-spac' }]);
+  D('cl-spac', [{ match: single('e'), state: 'cl-space' }]);
+  D('cl-space', [{ match: delimiter, advance: false, token: T.CHAR_LITERAL }]);
 
   return S['clean'];
 }());

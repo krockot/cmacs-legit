@@ -280,24 +280,50 @@ function testDecimalNumbers() {
 function testNumberBases() {
   S(' #b101', [
     E(T.NUMERIC_LITERAL, '#b101')]);
-  S(' #banana', [
-    F]);
-  S('#b102', [
-    F]);
-  S('#b-', [
-    F]);
+  S(' #banana', [F]);
+  S('#b102', [F]);
+  S('#b-', [F]);
   S('#b-0110', [
     E(T.NUMERIC_LITERAL, '#b-0110')]);
   S('#o12345670', [
     E(T.NUMERIC_LITERAL)]);
-  S('#o8', [
-    F]);
+  S('#o8', [F]);
   S('#xdeadbeef', [
     E(T.NUMERIC_LITERAL, '#xdeadbeef')]);
   S('#x-deadbeef', [
     E(T.NUMERIC_LITERAL, '#x-deadbeef')]);
   S('#x+deadbeef', [
     E(T.NUMERIC_LITERAL, '#x+deadbeef')]);
-  S('#x--deadbeef', [
-    F]);
+  S('#x--deadbeef', [F]);
+}
+
+function testCharLiterals() {
+  S('#\\a', [
+    E(T.CHAR_LITERAL, '#\\a', 1, 1)]);
+  S('#\\b #T', [
+    E(T.CHAR_LITERAL, '#\\b', 1, 1),
+    E(T.TRUE, '#T', 1, 5)]);
+  S('#\\ ', [
+    E(T.CHAR_LITERAL, '#\\ ')]);
+  S('#\\s', [
+    E(T.CHAR_LITERAL, '#\\s')]);
+  S('#\\s[', [
+    E(T.CHAR_LITERAL, '#\\s'),
+    E(T.OPEN_LIST)]);
+  S('#\\space', [
+    E(T.CHAR_LITERAL, '#\\space')]);
+  S('#\\newline', [
+    E(T.CHAR_LITERAL, '#\\newline')]);
+  S('#\\n', [
+    E(T.CHAR_LITERAL, '#\\n')]);
+  S('#\\n(', [
+    E(T.CHAR_LITERAL, '#\\n'),
+    E(T.OPEN_LIST)]);
+  S('#\\newlolz', [F]);
+  S('#\\newlines', [F]);
+  S('#\\shark', [F]);
+  S('#\\spaced', [F]);
+  S('#\\newline(', [
+    E(T.CHAR_LITERAL, '#\\newline'),
+    E(T.OPEN_LIST)]);
 }

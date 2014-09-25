@@ -129,7 +129,9 @@ def _BuildJsOutputs(src_paths, externs, out_path, debug, closure_library_root):
 def _BuildTestSuite(src_paths, out_path, closure_library_root):
   closure_copy = os.path.join(out_path, 'closure-library')
   src_copies = []
-  shutil.copytree(closure_library_root, closure_copy)
+  def ignore_dot_files(d, files):
+    return [f for f in files if not f.startswith('.')]
+  shutil.copytree(closure_library_root, closure_copy, ignore=ignore_dot_files)
   print 'Calculating test deps...'
   deps_roots = [closure_copy]
   for path in src_paths:

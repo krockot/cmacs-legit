@@ -5,6 +5,7 @@ import inspect
 import itertools
 import json
 import os
+import posixpath
 import shutil
 import subprocess
 import sys
@@ -97,12 +98,10 @@ def _CompileJs(closure_library_root,
       '--jscomp_error', 'const',
       '--jscomp_error', 'visibility',
       '--define=goog.DEBUG=%s' % ('true' if debug else 'false'),
-      os.path.join(closure_library_root, 'closure', 'goog', 'base.js'),
-      os.path.join(closure_library_root, '**.js'),
+      closure_library_root,
       '!%s' % os.path.join(closure_library_root, '**_test.js'),
       '!%s' % os.path.join(closure_library_root, '**demo.js'),
-      '--externs'] + externs +
-        [os.path.join(path, '**.js') for path in src_paths] +
+      '--externs'] + externs + src_paths +
         ['!%s' % os.path.join(path, '**_test.js') for path in src_paths])
 
 
@@ -129,8 +128,19 @@ def _BuildJsOutputs(src_paths, externs, out_path, debug, closure_library_root):
 def _BuildTestSuite(src_paths, out_path, closure_library_root):
   closure_copy = os.path.join(out_path, 'closure-library')
   src_copies = []
+
   def ignore_dot_files(d, files):
     return [f for f in files if f.startswith('.')]
+
+  def purify_path(path, components=None):
+    if components is None:
+      components = []
+    parent, leaf = os.path.split(path)
+    components.insert(0, leaf)
+    if parent == '':
+      return posixpath.join(*components)
+    return purify_path(parent, components)
+
   shutil.copytree(closure_library_root, closure_copy, ignore=ignore_dot_files)
   print 'Calculating test deps...'
   deps_roots = [closure_copy]
@@ -139,7 +149,8 @@ def _BuildTestSuite(src_paths, out_path, closure_library_root):
     shutil.copytree(path, src_copy)
     deps_roots.extend(['-d', src_copy])
   subprocess.call([
-      'python', '%s/closure/bin/calcdeps.py' % closure_library_root,
+      'python',
+      os.path.join(closure_library_root, 'closure', 'bin', 'calcdeps.py'),
       '--output_file', os.path.join(out_path, 'deps.js'),
       '-o', 'deps'] + deps_roots)
   template = ('<!doctype html><html><head>' +
@@ -163,8 +174,8 @@ def _BuildTestSuite(src_paths, out_path, closure_library_root):
             os.makedirs(out_dir)
           html_file = '%s.html' % suite_name
           setup.write('document.write("<a href=\'/%s\'>%s</a><br/>");\n' %
-              (os.path.join(rel_path, html_file),
-               os.path.join(rel_path, suite_name)))
+              (purify_path(os.path.join(rel_path, html_file)),
+               purify_path(os.path.join(rel_path, suite_name))))
           with open(os.path.join(out_dir, html_file), 'w') as html_file:
               html_file.write(template % (suite_name, filename))
     setup.write('}')

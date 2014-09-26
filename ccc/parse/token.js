@@ -79,15 +79,15 @@ var extractTokenData_ = (function() {
   var transforms = {};
 
   var baseFilters = {
-    2: /[^01]/,
-    8: /[^0-7]/,
-    16: /[^0-9a-f]/i,
-    36: /[^0-9a-z]/i
+    2: /^[01]+$/,
+    8: /^[0-7]+$/,
+    16: /^[0-9a-f]+$/i,
+    36: /^[0-9a-z]+$/i
    };
   var strictParseInt = function(text, base) {
     goog.asserts.assert(goog.object.containsKey(baseFilters, base),
         'Invalid integer base.');
-    goog.asserts.assert(!text.match(baseFilters[base]),
+    goog.asserts.assert(text.match(baseFilters[base]),
         'Invalid integer string.');
     return parseInt(text, base);
   };
@@ -165,7 +165,12 @@ var extractTokenData_ = (function() {
       var baseChar = text.charAt(1);
       goog.asserts.assert(goog.object.containsKey(bases, baseChar),
           'Invalid base prefix on numeric literal.');
-      value = strictParseInt(text.substr(2), bases[baseChar]);
+      var digits = text.substr(2);
+      var firstChar = digits.charAt(0);
+      if (firstChar == '-' || firstChar == '+') {
+        digits = text.substr(3);
+      }
+      value = strictParseInt(digits, bases[baseChar]);
     } else {
       value = Number(text);
     }

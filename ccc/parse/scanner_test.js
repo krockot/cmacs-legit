@@ -106,11 +106,37 @@ function testQuotes() {
 function testStrings() {
   S('"Hello, world!"', [
     E(T.STRING_LITERAL, '"Hello, world!"')]);
+  S('"\\"Hello, world!\\""', [
+    E(T.STRING_LITERAL, '"\\"Hello, world!\\""')]);
+  S('"EOF', [F]);
+  S('"Hey\\n"', [
+    E(T.STRING_LITERAL, '"Hey\\n"')]);
+  S('"test\\x3dhappy"', [
+    E(T.STRING_LITERAL, '"test\\x3dhappy"')]);
+  S('"test\\x"', [F]);
+  S('"test\\x1"', [F]);
+  S('"test\\x1g"', [F]);
+  S('"test\\ubar', [F]);
+  S('"ok\\u1abfok"', [
+    E(T.STRING_LITERAL, '"ok\\u1abfok"')]);
+  S('"||"', [
+    E(T.STRING_LITERAL, '"||"')]);
 }
 
 function testQuotedSymbols() {
   S('|a symbol|', [
     E(T.QUOTED_SYMBOL, '|a symbol|')]);
+  S('|such eof', [F]);
+  S('|\\||', [
+    E(T.QUOTED_SYMBOL, '|\\||')]);
+  S('|\\xabhey|', [
+    E(T.QUOTED_SYMBOL, '|\\xabhey|')]);
+  S('|\\xazhey|', [F]);
+  S('|\\u1234hey|', [
+    E(T.QUOTED_SYMBOL, '|\\u1234hey|')]);
+  S('|\\u123whey|', [F]);
+  S('|""|', [
+    E(T.QUOTED_SYMBOL, '|""|')]);
 }
 
 function testSymbols() {

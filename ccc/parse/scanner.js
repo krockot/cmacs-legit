@@ -243,12 +243,12 @@ var START_STATE_ = (function() {
     { match: single('u'), state: 'strEscape16Bit1' },
     { match: whatever, state: 'stringLiteral' }
   ]);
-  D('strEscape8Bit1', { match: hex, state: 'strEscape8Bit2' });
-  D('strEscape8Bit2', { match: hex, state: 'stringLiteral' });
-  D('strEscape16Bit1', { match: hex, state: 'strEscape16Bit2' });
-  D('strEscape16Bit2', { match: hex, state: 'strEscape16Bit3' });
-  D('strEscape16Bit3', { match: hex, state: 'strEscape16Bit4' });
-  D('strEscape16Bit4', { match: hex, state: 'stringLiteral' });
+  D('strEscape8Bit1', [{ match: hex, state: 'strEscape8Bit2' }]);
+  D('strEscape8Bit2', [{ match: hex, state: 'stringLiteral' }]);
+  D('strEscape16Bit1', [{ match: hex, state: 'strEscape16Bit2' }]);
+  D('strEscape16Bit2', [{ match: hex, state: 'strEscape16Bit3' }]);
+  D('strEscape16Bit3', [{ match: hex, state: 'strEscape16Bit4' }]);
+  D('strEscape16Bit4', [{ match: hex, state: 'stringLiteral' }]);
 
   // Things that happen between symbol quotations (|).
   D('quotedSymbol', [
@@ -261,12 +261,12 @@ var START_STATE_ = (function() {
     { match: single('u'), state: 'qsEscape16Bit1' },
     { match: whatever, state: 'quotedSymbol' }
   ]);
-  D('qsEscape8Bit1', { match: hex, state: 'qsEscape8Bit2' });
-  D('qsEscape8Bit2', { match: hex, state: 'quotedSymbol' });
-  D('qsEscape16Bit1', { match: hex, state: 'qsEscape16Bit2' });
-  D('qsEscape16Bit2', { match: hex, state: 'qsEscape16Bit3' });
-  D('qsEscape16Bit3', { match: hex, state: 'qsEscape16Bit4' });
-  D('qsEscape16Bit4', { match: hex, state: 'quotedSymbol' });
+  D('qsEscape8Bit1', [{ match: hex, state: 'qsEscape8Bit2' }]);
+  D('qsEscape8Bit2', [{ match: hex, state: 'quotedSymbol' }]);
+  D('qsEscape16Bit1', [{ match: hex, state: 'qsEscape16Bit2' }]);
+  D('qsEscape16Bit2', [{ match: hex, state: 'qsEscape16Bit3' }]);
+  D('qsEscape16Bit3', [{ match: hex, state: 'qsEscape16Bit4' }]);
+  D('qsEscape16Bit4', [{ match: hex, state: 'quotedSymbol' }]);
 
   // A popular default state to enter when input is otherwise uninteresting.
   D('symbol', [

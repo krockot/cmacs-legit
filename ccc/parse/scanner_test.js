@@ -361,4 +361,22 @@ function testCharLiterals() {
   S('#\\newline(', [
     E(T.CHAR_LITERAL, '#\\newline'),
     E(T.OPEN_LIST)]);
+  S('#\\xa', [F]);
+  S('#\\ua', [F]);
+  S('#\\x(', [
+    E(T.CHAR_LITERAL, '#\\x'),
+    E(T.OPEN_LIST)]);
+  S('#\\u(', [
+    E(T.CHAR_LITERAL, '#\\u'),
+    E(T.OPEN_LIST)]);
+  S('#\\xff', [
+    E(T.CHAR_LITERAL, '#\\xff')]);
+  S('#\\xff)', [
+    E(T.CHAR_LITERAL, '#\\xff'),
+    E(T.CLOSE_FORM)]);
+  S('#\\u03bb', [
+    E(T.CHAR_LITERAL, '#\\u03bb')]);
+  S('#\\u03bb]', [
+    E(T.CHAR_LITERAL, '#\\u03bb'),
+    E(T.CLOSE_FORM)]);
 }

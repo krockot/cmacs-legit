@@ -391,8 +391,10 @@ var START_STATE_ = (function() {
   // Immediately following a "#\". We'll build some kind of character
   // literal here.
   D('charLiteral', [
-    { match: single('n'), state: 'cl-n' },
-    { match: single('s'), state: 'cl-s' },
+    { match: any('nN'), state: 'cl-n' },
+    { match: any('sS'), state: 'cl-s' },
+    { match: any('xX'), state: 'cl-x' },
+    { match: any('uU'), state: 'cl-u' },
     { match: whatever, token: T.CHAR_LITERAL }
   ]);
 
@@ -419,6 +421,24 @@ var START_STATE_ = (function() {
   D('cl-spa', [{ match: single('c'), state: 'cl-spac' }]);
   D('cl-spac', [{ match: single('e'), state: 'cl-space' }]);
   D('cl-space', [{ match: delimiter, advance: false, token: T.CHAR_LITERAL }]);
+
+  // #\x, #\xNN, or error.
+  D('cl-x', [
+    { match: hex, state: 'cl-x2' },
+    { match: delimiter, advance: false, token: T.CHAR_LITERAL }
+  ]);
+  D('cl-x2', [{ match: hex, state: 'cl-x3' }]);
+  D('cl-x3', [{ match: delimiter, advance: false, token: T.CHAR_LITERAL }]);
+
+  // #\u, #\uNNNN, or error.
+  D('cl-u', [
+    { match: hex, state: 'cl-u2' },
+    { match: delimiter, advance: false, token: T.CHAR_LITERAL }
+  ]);
+  D('cl-u2', [{ match: hex, state: 'cl-u3' }]);
+  D('cl-u3', [{ match: hex, state: 'cl-u4' }]);
+  D('cl-u4', [{ match: hex, state: 'cl-u5' }]);
+  D('cl-u5', [{ match: delimiter, advance: false, token: T.CHAR_LITERAL }]);
 
   return S['clean'];
 }());

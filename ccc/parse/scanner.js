@@ -7,7 +7,7 @@ goog.require('ccc.parse.Token');
 goog.require('ccc.parse.TokenType');
 goog.require('goog.array');
 goog.require('goog.asserts');
-goog.require('goog.object')
+goog.require('goog.object');
 
 
 
@@ -252,7 +252,7 @@ var START_STATE_ = (function() {
 
   // Things that happen between symbol quotations (|).
   D('quotedSymbol', [
-    { match: single('|'), token: T.QUOTED_SYMBOL },
+    { match: single('|'), token: T.SYMBOL },
     { match: single('\\'), state: 'quotedSymbolEscape' },
     { match: whatever }
   ]);
@@ -490,6 +490,7 @@ ccc.parse.Scanner = function(input) {
 
 /**
  * Attempts to fetch the next available token from the input.
+ *
  * @return {ccc.parse.Token} token The next token in the stream, or
  *     {@code null} if no more tokens are left.
  * @public

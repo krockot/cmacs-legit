@@ -1,10 +1,10 @@
 // The Cmacs Project.
 // Copyright forever, the universe.
 
-goog.require('ccc.parse.Scanner')
-goog.require('ccc.parse.Token')
-goog.require('ccc.parse.TokenType')
-goog.require('goog.testing.jsunit')
+goog.require('ccc.parse.Scanner');
+goog.require('ccc.parse.Token');
+goog.require('ccc.parse.TokenType');
+goog.require('goog.testing.jsunit');
 
 
 var T;
@@ -134,18 +134,18 @@ function testStrings() {
 
 function testQuotedSymbols() {
   S('|a symbol|', [
-    E(T.QUOTED_SYMBOL, '|a symbol|')]);
+    E(T.SYMBOL, '|a symbol|')]);
   S('|such eof', [F]);
   S('|\\||', [
-    E(T.QUOTED_SYMBOL, '|\\||')]);
+    E(T.SYMBOL, '|\\||')]);
   S('|\\xabhey|', [
-    E(T.QUOTED_SYMBOL, '|\\xabhey|')]);
+    E(T.SYMBOL, '|\\xabhey|')]);
   S('|\\xazhey|', [F]);
   S('|\\u1234hey|', [
-    E(T.QUOTED_SYMBOL, '|\\u1234hey|')]);
+    E(T.SYMBOL, '|\\u1234hey|')]);
   S('|\\u123whey|', [F]);
   S('|""|', [
-    E(T.QUOTED_SYMBOL, '|""|')]);
+    E(T.SYMBOL, '|""|')]);
 }
 
 function testSymbols() {
@@ -165,7 +165,7 @@ function testDelimiters() {
     E(T.STRING_LITERAL, '"world"', 1, 6)]);
   S('hello|ccc|', [
     E(T.SYMBOL, 'hello'),
-    E(T.QUOTED_SYMBOL, '|ccc|')]);
+    E(T.SYMBOL, '|ccc|')]);
   S('h[i\n]', [
     E(T.SYMBOL, 'h', 1, 1),
     E(T.OPEN_LIST, '[', 1, 2),

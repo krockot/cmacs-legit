@@ -391,10 +391,10 @@ var START_STATE_ = (function() {
   // Immediately following a "#\". We'll build some kind of character
   // literal here.
   D('charLiteral', [
-    { match: any('nN'), state: 'cl-n' },
-    { match: any('sS'), state: 'cl-s' },
-    { match: any('xX'), state: 'cl-x' },
-    { match: any('uU'), state: 'cl-u' },
+    { match: single('n'), state: 'cl-n' },
+    { match: single('s'), state: 'cl-s' },
+    { match: single('x'), state: 'cl-x' },
+    { match: single('u'), state: 'cl-u' },
     { match: whatever, token: T.CHAR_LITERAL }
   ]);
 

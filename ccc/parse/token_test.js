@@ -111,7 +111,7 @@ function testCharLiterals() {
   CHAR('#\\A', 65);
   CHAR('#\\x', 120);
   CHAR('#\\u', 117);
-  CHAR('#\\X1b', 27);
+  CHAR('#\\x1b', 27);
   CHAR('#\\xfF', 255);
   CHAR_F('#\\xgg');
   CHAR('#\\u03bb', 0x03bb);

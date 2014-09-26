@@ -5,6 +5,7 @@ import BaseHTTPServer
 import inspect
 import mimetypes
 import os
+from urlparse import urlparse
 
 
 class RequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
@@ -12,6 +13,7 @@ class RequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     if self.path == '/':
       self.path = '/index.html'
       return self.do_GET()
+    self.path = urlparse(self.path).path
     filename = os.path.basename(self.path)
     _, ext = os.path.splitext(filename)
     test_script_path = os.path.dirname(os.path.abspath(inspect.getfile(

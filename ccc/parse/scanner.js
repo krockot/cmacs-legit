@@ -4,6 +4,7 @@
 goog.provide('ccc.parse.Scanner');
 
 goog.require('ccc.parse.Token');
+goog.require('ccc.parse.TokenReader');
 goog.require('ccc.parse.TokenType');
 goog.require('goog.array');
 goog.require('goog.asserts');
@@ -469,6 +470,7 @@ var START_STATE_ = (function() {
  *
  * @param {string} input Input string.
  * @constructor
+ * @implements {ccc.parse.TokenReader}
  * @public
  */
 ccc.parse.Scanner = function(input) {
@@ -526,14 +528,8 @@ ccc.parse.Scanner = function(input) {
 };
 
 
-/**
- * Attempts to fetch the next available token from the input.
- *
- * @return {ccc.parse.Token} token The next token in the stream, or
- *     {@code null} if no more tokens are left.
- * @public
- */
-ccc.parse.Scanner.prototype.getNextToken = function() {
+/** @override */
+ccc.parse.Scanner.prototype.readToken = function() {
   try {
     while (true) {
       var c = this.input_.charAt(this.index_);

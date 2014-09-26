@@ -16,7 +16,7 @@ var setUp = function() {
 // Expect a specific token with optional details.
 var E = function(tokenType, opt_text, opt_line, opt_column) {
   return function(scanner) {
-    var token = scanner.getNextToken();
+    var token = scanner.readToken();
     assertNotNull('Ran out of tokens!', token);
     assertEquals(tokenType, token.type);
     if (goog.isDef(opt_text)) {
@@ -35,7 +35,7 @@ var E = function(tokenType, opt_text, opt_line, opt_column) {
 // Expectation of an exception.
 var F = function(scanner) {
   try {
-    scanner.getNextToken();
+    scanner.readToken();
   } catch (e) {
     return false;
   }
@@ -49,7 +49,7 @@ var S = function(string, expectations) {
     shouldTestForNull = checkExpectation(scanner);
   });
   if (shouldTestForNull) {
-    assertNull(scanner.getNextToken());
+    assertNull(scanner.readToken());
   }
 };
 

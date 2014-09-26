@@ -88,12 +88,21 @@ function testBooleans() {
 function testUnspecified() {
   S('#?', [
     E(T.UNSPECIFIED)]);
+  S('#?(', [
+    E(T.UNSPECIFIED),
+    E(T.OPEN_LIST)]);
 }
 
 function testVector() {
   S('#( #[', [
     E(T.OPEN_VECTOR),
     E(T.OPEN_VECTOR)]);
+  S('#(#(', [
+    E(T.OPEN_VECTOR),
+    E(T.OPEN_VECTOR)]);
+  S('#((', [
+    E(T.OPEN_VECTOR),
+    E(T.OPEN_LIST)]);
 }
 
 function testQuotes() {

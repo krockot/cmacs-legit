@@ -108,7 +108,9 @@ ccc.parse.Token.BASE_PREFIX_MAP_ = {
   o: 8,
   O: 8,
   x: 16,
-  X: 16
+  X: 16,
+  z: 36,
+  Z: 36
 };
 
 

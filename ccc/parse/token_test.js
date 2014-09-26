@@ -100,6 +100,11 @@ function testNumericLiterals() {
   NUMBER_F('#o678');
   NUMBER('#xabcdef123', 46118400291);
   NUMBER_F('#xabcdefg');
+  NUMBER_F('#z12@');
+  NUMBER('#z10', 36);
+  NUMBER('#z42', 146);
+  NUMBER('#z1984', 58612);
+  NUMBER('#zztop', 1671433);
 }
 
 function testCharLiterals() {

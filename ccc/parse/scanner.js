@@ -135,6 +135,10 @@ var START_STATE_ = (function() {
   var hex = any('0123456789abcdefABCDEF');
 
   /** @type {!MatchFunction_} */
+  var alnum = any(
+      '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ');
+
+  /** @type {!MatchFunction_} */
   var whatever = function(x) { return x.length == 1; };
 
   /* Shorthand for token types within this scope. */
@@ -220,7 +224,8 @@ var START_STATE_ = (function() {
     { match: single('\\'), state: 'charLiteral' },
     { match: any('bB'), state: 'binaryLiteralStart' },
     { match: any('oO'), state: 'octalLiteralStart' },
-    { match: any('xX'), state: 'hexLiteralStart' }
+    { match: any('xX'), state: 'hexLiteralStart' },
+    { match: any('zZ'), state: 'base36LiteralStart' },
   ]);
   D('hashT', [
     { match: delimiter, advance: false, token: T.TRUE }
@@ -386,6 +391,19 @@ var START_STATE_ = (function() {
   D('hexLiteral', [
     { match: hex },
     { match: delimiter, token: T.NUMERIC_LITERAL }
+  ]);
+
+  // Immediately following a #[zZ] we require a sign or alnum.
+  D('base36LiteralStart', [
+    { match: any('-+'), state: 'base36LiteralDigit' },
+    { match: alnum, state: 'base36Literal' }
+  ]);
+  D('base36LiteralDigit', [
+    { match: alnum, state: 'base36Literal' }
+  ]);
+  D('base36Literal', [
+    { match: alnum },
+    { match: delimiter, advance: false, token: T.NUMERIC_LITERAL }
   ]);
 
   // Immediately following a "#\". We'll build some kind of character

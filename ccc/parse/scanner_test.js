@@ -330,6 +330,9 @@ function testNumberBases() {
   S('#x+deadbeef', [
     E(T.NUMERIC_LITERAL, '#x+deadbeef')]);
   S('#x--deadbeef', [F]);
+  S('#z0123465789kjndfiwepsdfjadf', [
+    E(T.NUMERIC_LITERAL, '#z0123465789kjndfiwepsdfjadf')]);
+  S('#z0123465789kjn^dfiwepsdfjadf', [F]);
 }
 
 function testCharLiterals() {

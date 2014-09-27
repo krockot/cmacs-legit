@@ -35,7 +35,7 @@ function justFail(reason) {
 var OPEN_LIST = function(bracket) {
   return new ccc.parse.Token(K.OPEN_LIST, bracket, 1, 1);
 };
-var CLOSE_LIST = function(bracket) {
+var CLOSE_FORM = function(bracket) {
   return new ccc.parse.Token(K.CLOSE_LIST, bracket, 1, 1);
 };
 var QUOTE = function() { return new ccc.parse.Token(K.QUOTE, '\'', 1, 1); };
@@ -75,7 +75,7 @@ var DOT = function() { return new ccc.parse.Token(K.DOT, '.', 1, 1); };
 // Some additional shortcuts
 
 var NIL = ccc.base.NIL;
-var UNSPECIFIED = ccc.base.UNSPECIFIED;
+var UNSPEC = ccc.base.UNSPECIFIED;
 var T = ccc.base.T;
 var F = ccc.base.F;
 
@@ -105,7 +105,7 @@ var E = function(match) {
 };
 
 // Expect failure on readObject.
-var F = function(parser) {
+var FAIL = function(parser) {
   return new goog.Promise(function(resolve, reject) {
     parser.readObject().then(
         reject.bind(null, 'Expected failure, got success.'),
@@ -144,12 +144,12 @@ var P = function(tokens, expectations) {
 
 function testDumbParser() {
   P([
-    K.OPEN_LIST,
-    K.SYMBOL,
-    K.CLOSE_FORM
+    TRUE(),
+    FALSE(),
+    UNSPECIFIED()
   ], [
-    E(NIL),
-    E(NIL),
-    E(NIL)
+    E(T),
+    E(F),
+    E(UNSPEC)
   ]);
 }

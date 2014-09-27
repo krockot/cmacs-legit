@@ -109,6 +109,10 @@ ccc.parse.Parser.prototype.processToken_ = function(token) {
       production = new ccc.base.Symbol(token.data.name);
       break;
     case T.CHAR_LITERAL:
+      goog.asserts.assert(goog.isDef(token.data.value),
+          'Invalid character literal.');
+      production = new ccc.base.Char(token.data.value);
+      break;
     case T.STRING_LITERAL:
       goog.asserts.assert(goog.isDef(token.data.value),
           'Invalid string literal.');

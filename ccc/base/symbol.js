@@ -63,8 +63,8 @@ ccc.base.Symbol.escapeName_ = function(name) {
   var escaped = '';
   for (var i = 0; i < name.length; ++i) {
     var c = name.charAt(i);
-    if (goog.object.containsKey(ccc.base.String.ESCAPE_MAP_, c))
-      escaped += ccc.base.String.ESCAPE_MAP_[c];
+    if (goog.object.containsKey(ccc.base.Symbol.ESCAPE_MAP_, c))
+      escaped += ccc.base.Symbol.ESCAPE_MAP_[c];
     else
       escaped += c;
   }

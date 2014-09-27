@@ -83,6 +83,16 @@ ccc.base.Object.prototype.isSymbol = function() {
 
 
 /**
+ * Indicates if this object is a Char.
+ *
+ * @return {boolean}
+ */
+ccc.base.Object.prototype.isChar = function() {
+  return false;
+};
+
+
+/**
  * The global NIL object.
  *
  * @public {!ccc.base.Object}

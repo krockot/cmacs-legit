@@ -4,6 +4,7 @@
 goog.provide('ccc.parse.ParserTest');
 goog.setTestOnly('ccc.parse.ParserTest');
 
+goog.require('ccc.base.Char');
 goog.require('ccc.base.NIL');
 goog.require('ccc.base.Object');
 goog.require('ccc.base.String');
@@ -153,12 +154,14 @@ function testBasicObjects() {
     FALSE(),
     UNSPECIFIED(),
     STRING_LITERAL("Hello, world!"),
-    SYMBOL('hello-world')
+    SYMBOL('hello-world'),
+    CHAR_LITERAL(10)
   ], [
     E(T),
     E(F),
     E(UNSPEC),
     E(new ccc.base.String('Hello, world!')),
-    E(new ccc.base.Symbol('hello-world'))
+    E(new ccc.base.Symbol('hello-world')),
+    E(new ccc.base.Char(10))
   ]);
 }

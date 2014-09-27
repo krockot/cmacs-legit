@@ -153,10 +153,12 @@ function testBasicObjects() {
     FALSE(),
     UNSPECIFIED(),
     STRING_LITERAL("Hello, world!"),
+    SYMBOL('hello-world')
   ], [
     E(T),
     E(F),
     E(UNSPEC),
-    E(new ccc.base.String('Hello, world!'))
+    E(new ccc.base.String('Hello, world!')),
+    E(new ccc.base.Symbol('hello-world'))
   ]);
 }

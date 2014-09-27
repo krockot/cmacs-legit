@@ -13,7 +13,7 @@ goog.require('goog.object');
  *
  * @param {string} value
  * @constructor
- * @extends {ccc.base.OBject}
+ * @extends {ccc.base.Object}
  * @public
  */
 ccc.base.String = function(value) {
@@ -38,6 +38,16 @@ ccc.base.String.prototype.eqv = function(other) {
 /** @override */
 ccc.base.String.prototype.isString = function() {
   return true;
+};
+
+
+/**
+ * Returns the underlying native string value.
+ *
+ * @return {string}
+ */
+ccc.base.String.prototype.value = function() {
+  return this.value_;
 };
 
 

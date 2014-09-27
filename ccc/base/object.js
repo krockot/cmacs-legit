@@ -93,6 +93,16 @@ ccc.base.Object.prototype.isChar = function() {
 
 
 /**
+ * Indicates if this object is a Number.
+ *
+ * @return {boolean}
+ */
+ccc.base.Object.prototype.isNumber = function() {
+  return false;
+};
+
+
+/**
  * The global NIL object.
  *
  * @public {!ccc.base.Object}

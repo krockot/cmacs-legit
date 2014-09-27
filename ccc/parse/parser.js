@@ -5,6 +5,7 @@ goog.provide('ccc.parse.Parser');
 
 goog.require('ccc.base.F');
 goog.require('ccc.base.NIL');
+goog.require('ccc.base.Number');
 goog.require('ccc.base.Object');
 goog.require('ccc.base.String');
 goog.require('ccc.base.Symbol');
@@ -119,6 +120,10 @@ ccc.parse.Parser.prototype.processToken_ = function(token) {
       production = new ccc.base.String(token.data.value);
       break;
     case T.NUMERIC_LITERAL:
+      goog.asserts.assert(goog.isDef(token.data.value),
+          'Invalid numeric literal.');
+      production = new ccc.base.Number(token.data.value);
+      break;
     case T.OPEN_LIST:
     case T.OPEN_VECTOR:
     case T.CLOSE_FORM:

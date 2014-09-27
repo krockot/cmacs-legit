@@ -6,6 +6,7 @@ import itertools
 import json
 import os
 import posixpath
+import re
 import shutil
 import subprocess
 import sys
@@ -126,7 +127,7 @@ def _BuildJsOutputs(src_paths, externs, out_path, debug, closure_library_root):
 
 
 def _BuildTestSuite(src_paths, out_path, closure_library_root):
-  closure_copy = os.path.join(out_path, 'closure-library')
+  closure_copy = os.path.join(out_path, 'closure')
   src_copies = []
 
   def ignore_dot_files(d, files):
@@ -141,7 +142,9 @@ def _BuildTestSuite(src_paths, out_path, closure_library_root):
       return posixpath.join(*components)
     return purify_path(parent, components)
 
-  shutil.copytree(closure_library_root, closure_copy, ignore=ignore_dot_files)
+  shutil.copytree(os.path.join(closure_library_root, 'closure'),
+                  closure_copy,
+                  ignore=ignore_dot_files)
   print 'Calculating test deps...'
   deps_roots = [closure_copy]
   for path in src_paths:
@@ -155,30 +158,42 @@ def _BuildTestSuite(src_paths, out_path, closure_library_root):
       '-o', 'deps'] + deps_roots)
   template = ('<!doctype html><html><head>' +
       '<title>Cmacs Test Suite: %s</title><head>' +
-      '<script src="/closure-library/closure/goog/base.js"></script>' +
+      '<script src="/closure/goog/base.js"></script>' +
       '<script src="/deps.js"></script>' +
-      '<script src="%s"></script></head><body></body></html>')
+      '<script>goog.require(\'%s\');</script></head><body></body></html>')
   print 'Setting up test server resources...'
-  with open(os.path.join(out_path, 'generated_test_setup.js'), 'w') as setup:
-    setup.write('function GENERATE_TEST_LINKS() {\n');
+  with open(os.path.join(out_path, 'alltests.js'), 'w') as testList:
+    testList.write('_allTests = [')
     for path in src_paths:
       for root, dirs, files in os.walk(path):
         test_files = [file for file in
                       filter(lambda f: f.endswith('_test.js'), files)]
         for filename in test_files:
+          with open(os.path.join(root, filename)) as test_script:
+            provide = re.search(
+                'goog\\.provide\\([\'"]([^\'"]+)[\'"]\\);',
+                test_script.read())
+            if not provide.groups():
+              print 'WARNING: No namespace provided by %s' % filename
+              test_namespace = 'please.fixme'
+            else:
+              test_namespace = provide.group(1)
           base_path = os.path.commonprefix([root, out_path])
           rel_path = root[len(base_path):]
           out_dir = os.path.join(out_path, rel_path)
           suite_name, _ = os.path.splitext(filename)
           if not os.path.isdir(out_dir):
             os.makedirs(out_dir)
-          html_file = '%s.html' % suite_name
-          setup.write('document.write("<a href=\'/%s\'>%s</a><br/>");\n' %
-              (purify_path(os.path.join(rel_path, html_file)),
-               purify_path(os.path.join(rel_path, suite_name))))
-          with open(os.path.join(out_dir, html_file), 'w') as html_file:
-              html_file.write(template % (suite_name, filename))
-    setup.write('}')
+          html_filename = '%s.html' % suite_name
+          if os.path.isfile(os.path.join(root, html_filename)):
+            os.copy(os.path.join(root, html_filename),
+                    os.path.join(out_dir, html_filename))
+          else:
+            with open(os.path.join(out_dir, html_filename), 'w') as html_file:
+              html_file.write(template % (suite_name, test_namespace))
+          testList.write('"%s",' %
+                         purify_path(os.path.join(rel_path, html_filename)))
+    testList.write('];\n')
 
 
 def _UpdateManifest(out_path, version):

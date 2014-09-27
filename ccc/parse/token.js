@@ -7,7 +7,6 @@ goog.provide('ccc.parse.TokenType');
 goog.require('goog.object');
 
 
-
 /**
  * Token type.
  *
@@ -32,7 +31,6 @@ ccc.parse.TokenType = {
   NUMERIC_LITERAL: 14,
   DOT: 15
 };
-
 
 
 /**
@@ -103,14 +101,33 @@ ccc.parse.Token.BASE_PATTERNS_ = {
  * @const
  */
 ccc.parse.Token.BASE_PREFIX_MAP_ = {
-  b: 2,
-  B: 2,
-  o: 8,
-  O: 8,
-  x: 16,
-  X: 16,
-  z: 36,
-  Z: 36
+  'b': 2,
+  'B': 2,
+  'o': 8,
+  'O': 8,
+  'x': 16,
+  'X': 16,
+  'z': 36,
+  'Z': 36
+};
+
+
+/**
+ * Map of bracket type identifiers.
+ *
+ * @private {!Object.<string, number>}
+ * @const
+ */
+ccc.parse.Token.BRACKET_TYPES_ = {
+  '(': 0,
+  '#(': 0,
+  ')': 0,
+  '[': 1,
+  '#[': 1,
+  ']': 1,
+  '{': 2,
+  '#{': 2,
+  '}': 2
 };
 
 
@@ -191,7 +208,7 @@ ccc.parse.Token.getSymbolData_ = function(text) {
   goog.asserts.assert(text.charAt(text.length - 1) == '|',
       'Invalid quoted symbol text.');
   return {
-    name: ccc.parse.Token.unescapeString_(text.substring(1, text.length - 1))
+    'name': ccc.parse.Token.unescapeString_(text.substring(1, text.length - 1))
   };
 };
 
@@ -209,7 +226,7 @@ ccc.parse.Token.getStringData_ = function(text) {
   goog.asserts.assert(text.charAt(text.length - 1) == '"',
       'Invalid string literal text.');
   return {
-    value: ccc.parse.Token.unescapeString_(text.substring(1, text.length - 1))
+    'value': ccc.parse.Token.unescapeString_(text.substring(1, text.length - 1))
   };
 };
 
@@ -240,7 +257,7 @@ ccc.parse.Token.getNumericData_ = function(text) {
     value = Number(text);
   }
   goog.asserts.assert(!isNaN(value), 'Invalid numeric literal.');
-  return { value: value };
+  return { 'value': value };
 };
 
 
@@ -252,25 +269,40 @@ ccc.parse.Token.getNumericData_ = function(text) {
  */
 ccc.parse.Token.getCharacterData_ = function(text) {
   if (text.length == 3) {
-    return { value: text.charCodeAt(2) };
+    return { 'value': text.charCodeAt(2) };
   }
   if (text.substr(2) == 'newline') {
-    return { value: 10 };
+    return { 'value': 10 };
   }
   if (text.substr(2) == 'space') {
-    return { value: 32 };
+    return { 'value': 32 };
   }
   var c = text.charAt(2);
   if (c == 'x') {
     goog.asserts.assert(text.length == 5, 'Invalid character literal.');
-    return { value: ccc.parse.Token.strictParseInt_(text.substr(3), 16) };
+    return { 'value': ccc.parse.Token.strictParseInt_(text.substr(3), 16) };
   }
   if (c == 'u') {
     goog.asserts.assert(text.length == 7, 'Invalid character literal.');
-    return { value: ccc.parse.Token.strictParseInt_(text.substr(3), 16) };
+    return { 'value': ccc.parse.Token.strictParseInt_(text.substr(3), 16) };
   }
   goog.asserts.assert(false, 'Invalid character literal.');
   throw new Error('Not reached.');
+};
+
+
+/**
+ * Extracts a bracket type identifier from an opening or closing token.
+ * These IDs can be used to validate matching pairs during parsing.
+ *
+ * @param {string} text The text of the bracket token.
+ * @return {!{type: number}}
+ */
+ccc.parse.Token.getBracketData_ = function(text) {
+  goog.asserts.assert(
+      goog.object.containsKey(ccc.parse.Token.BRACKET_TYPES_, text),
+      'Invalid bracket token.');
+  return { 'type': ccc.parse.Token.BRACKET_TYPES_[text] };
 };
 
 
@@ -294,6 +326,10 @@ ccc.parse.Token.getData_ = function(type, text) {
       return ccc.parse.Token.getNumericData_(text);
     case ccc.parse.TokenType.CHAR_LITERAL:
       return ccc.parse.Token.getCharacterData_(text);
+    case ccc.parse.TokenType.OPEN_LIST:
+    case ccc.parse.TokenType.OPEN_VECTOR:
+    case ccc.parse.TokenType.CLOSE_FORM:
+      return ccc.parse.Token.getBracketData_(text);
     default:
       return {};
   }

@@ -6,10 +6,11 @@ goog.provide('ccc.parse.Scanner');
 goog.require('ccc.parse.Token');
 goog.require('ccc.parse.TokenReader');
 goog.require('ccc.parse.TokenType');
+goog.require('goog.Promise');
 goog.require('goog.array');
 goog.require('goog.asserts');
 goog.require('goog.object');
-
+goog.require('goog.promise.Resolver');
 
 
 /**
@@ -474,14 +475,13 @@ var START_STATE_ = (function() {
  * Scanner is responsible for transforming an input string into a stream of
  * {@code ccc.parse.Token} objects.
  *
- * @param {string} input Input string.
  * @constructor
  * @implements {ccc.parse.TokenReader}
  * @public
  */
-ccc.parse.Scanner = function(input) {
+ccc.parse.Scanner = function() {
   /** @private {string} */
-  this.input_ = input;
+  this.input_ = '';
 
   /**
    * The current state of the scanner.
@@ -531,19 +531,71 @@ ccc.parse.Scanner = function(input) {
    * @private {boolean}
    */
   this.readCRLast_ = false;
+
+  /**
+   * The pending readToken promise, if any. This will be resolved either once
+   * a new token is available or EOF is set.
+   * @private {goog.promise.Resolver.<ccc.parse.Token>}
+   */
+  this.pendingRead_ = null;
+
+  /**
+   * Indicates if EOF has been set on the scanner.
+   * @private {boolean}
+   */
+  this.eof_ = false;
 };
 
 
-/** @override */
-ccc.parse.Scanner.prototype.readToken = function() {
+/**
+ * Sets EOF on the scanner. Once EOF is set, it cannot be unset and no new
+ * data can be fed to the scanner.
+ *
+ * @public
+ */
+ccc.parse.Scanner.prototype.setEof = function() {
+  this.eof_ = true;
+  this.tryResolveRead_();
+};
+
+
+/**
+ * Appends new data to the Scanner's input. This will throw if EOF has been set.
+ *
+ * @param {string} input
+ * @public
+ */
+ccc.parse.Scanner.prototype.feed = function(input) {
+  if (this.eof_)
+    throw new Error('Cannot feed Scanner at EOF.');
+  this.input_ += input;
+  this.tryResolveRead_();
+};
+
+
+/**
+ * Tries to resolve a pending read if there is one.
+ *
+ * @return {!goog.Promise.<ccc.parse.Token>} The pending read's promise.
+ * @private
+ */
+ccc.parse.Scanner.prototype.tryResolveRead_ = function() {
+  if (goog.isNull(this.pendingRead_))
+    return goog.Promise.resolve(/** @type {ccc.parse.Token} */ (null));
   try {
     while (true) {
       var c = this.input_.charAt(this.index_);
-      var result = this.state_(c);
-      if (result.terminate) {
-        return null;
+      // We've run out of data! Do not try to perform a state transition unless
+      // we really hit EOF.
+      if (c == '' && !this.eof_) {
+        return this.pendingRead_.promise;
       }
-      // State transition if necessary
+      var result = this.state_(c);
+      // Clean break on EOF. Resolve to null to signal end of token stream.
+      if (result.terminate) {
+        return this.resolveReadWithToken_(null);
+      }
+      // Transition state if necessary.
       var oldState = this.state_;
       if (goog.isDef(result.state)) {
         this.state_ = result.state;
@@ -591,11 +643,55 @@ ccc.parse.Scanner.prototype.readToken = function() {
             this.tokenColumn_);
         this.state_ = START_STATE_;
         this.tokenIndex_ = null;
-        return token;
+        this.input_ = this.input_.substr(this.index_);
+        this.index_ = 0;
+        return this.resolveReadWithToken_(token);
       }
     }
   } catch (e) {
-    throw new Error('Error (Line ' + this.line_ + ', Col ' + this.column_ +
-        '): ' + e.message);
+    e.message = '[Line ' + this.line_ + ', Col ' + this.column_ + '] ' +
+        e.message;
+    return this.rejectReadWithError_(e);
   }
+};
+
+
+/**
+ * Resolves the pending read and resets it to null.
+ *
+ * @param {ccc.parse.Token} token
+ * @return {!goog.Promise.<ccc.parse.Token>} The resolved promise.
+ * @private
+ */
+ccc.parse.Scanner.prototype.resolveReadWithToken_ = function(token) {
+  goog.asserts.assert(!goog.isNull(this.pendingRead_));
+  var read = this.pendingRead_;
+  this.pendingRead_ = null;
+  read.resolve(token);
+  return read.promise;
+};
+
+
+/**
+ * Rejects the pending read with an Error.
+ *
+ * @param {!Error} reason
+ * @return {!goog.Promise.<ccc.parse.Token>} The rejected promise.
+ * @private
+ */
+ccc.parse.Scanner.prototype.rejectReadWithError_ = function(reason) {
+  goog.asserts.assert(!goog.isNull(this.pendingRead_));
+  var read = this.pendingRead_;
+  this.pendingRead_ = null;
+  read.reject(reason);
+  return read.promise;
+};
+
+
+/** @override */
+ccc.parse.Scanner.prototype.readToken = function() {
+  if (!goog.isNull(this.pendingRead_))
+    throw new Error('Read already pending.');
+  this.pendingRead_ = goog.Promise.withResolver();
+  return this.tryResolveRead_();
 };

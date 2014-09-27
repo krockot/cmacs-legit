@@ -29,5 +29,12 @@ ccc.parse.Parser = function(tokenReader) {
 
 /** @override */
 ccc.parse.Parser.prototype.readObject = function() {
+  var object
+  while (true) {
+    var token = this.tokenReader_.readToken();
+    if (goog.isNull(token)) {
+      return null;
+    }
+  }
   return null;
 };

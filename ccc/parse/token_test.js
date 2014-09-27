@@ -1,17 +1,16 @@
 // The Cmacs Project.
 // Copyright forever, the universe.
 
+goog.provide('ccc.parse.TokenTest');
+goog.setTestOnly('ccc.parse.TokenTest');
+
 goog.require('ccc.parse.Token');
 goog.require('ccc.parse.TokenType');
 goog.require('goog.object');
 goog.require('goog.testing.jsunit');
 
 
-var T;
-
-var setUp = function() {
-  T = ccc.parse.TokenType;
-}
+var T = ccc.parse.TokenType;
 
 // Given a token type and text, expect an exact value for attached token data.
 var E = function(type, text, expectedData) {

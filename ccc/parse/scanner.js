@@ -79,8 +79,7 @@ var TransitionRule_;
  * The start state of the scanner. This construction hides all the details
  * of intermediate states between start and termination.
  *
- * @type {!Transition_}
- * @private
+ * @private {!Transition_}
  * @const
  */
 var START_STATE_ = (function() {

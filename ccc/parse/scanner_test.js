@@ -31,21 +31,19 @@ var justFail = function(reason) {
 // Expect a specific token with optional details.
 var E = function(tokenType, opt_text, opt_line, opt_column) {
   return function(scanner) {
-    return new goog.Promise(function(resolve, reject) {
-      scanner.readToken().then(function(token) {
-        assertNotNull('Ran out of tokens!', token);
-        assertEquals(tokenType, token.type);
-        if (goog.isDef(opt_text)) {
-          assertEquals(opt_text, token.text);
-        }
-        if (goog.isDef(opt_line)) {
-          assertEquals(opt_line, token.line);
-        }
-        if (goog.isDef(opt_column)) {
-          assertEquals(opt_column, token.column)
-        }
-        resolve(true);
-      }, reject);
+    return scanner.readToken().then(function(token) {
+      assertNotNull('Ran out of tokens!', token);
+      assertEquals(tokenType, token.type);
+      if (goog.isDef(opt_text)) {
+        assertEquals(opt_text, token.text);
+      }
+      if (goog.isDef(opt_line)) {
+        assertEquals(opt_line, token.line);
+      }
+      if (goog.isDef(opt_column)) {
+        assertEquals(opt_column, token.column)
+      }
+      return true;
     });
   };
 };
@@ -68,8 +66,7 @@ var S = function(string, expectations) {
   return new goog.Promise(function(resolve, reject) {
     var checkExpectations = function(expectations) {
       if (expectations.length == 0) {
-        var token = scanner.readToken();
-        token.then(function(token) {
+        scanner.readToken().then(function(token) {
           assertNull(token);
           resolve(null);
         }, reject);

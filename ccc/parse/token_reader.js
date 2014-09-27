@@ -8,17 +8,19 @@ goog.require('ccc.parse.Token');
 
 
 /**
- * Generic token reader interface.
+ * Token reader interface.
+ *
+ * {@code TokenReader} consumers should call {@code readToken} when they
+ * want a new Token from the underlying stream. If no more Tokens are
+ * available, {@code readToken} returns {@code null}.
  *
  * @interface
+ * @public
  */
 ccc.parse.TokenReader = function() {};
 
 
 /**
- * Attempts to fetch the next available token from the input. Returns
- * {@code null} if there are no tokens left in the stream.
- *
  * @type {function():ccc.parse.Token}
  * @public
  */

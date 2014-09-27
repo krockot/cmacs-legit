@@ -8,17 +8,19 @@ goog.require('ccc.base.Object');
 
 
 /**
- * Generic Object reader interface.
+ * Object reader interface.
+ *
+ * {@code ObjectReader} consumers should call {@code readObject} when they
+ * want a new Object from the underlying stream. If no more Objects are
+ * available, {@code readObject} returns {@code null}.
  *
  * @interface
+ * @public
  */
 ccc.parse.ObjectReader = function() {};
 
 
 /**
- * Attempts to fetch the next available {@code ccc.base.Object} from the input.
- * Returns {@code null} if there are no more objects available.
- *
  * @type {function():ccc.base.Object}
  * @public
  */

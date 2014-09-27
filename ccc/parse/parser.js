@@ -13,8 +13,8 @@ goog.require('ccc.parse.TokenType');
 
 /**
  * Parser for ccc code. This reads tokens from a {@code ccc.parse.TokenReader}
- * and supplies top-level program forms ({@code ccc.base.Object} instances)
- * as a {@code ccc.parse.ObjectReader}.
+ * and supplies top-level forms ({@code ccc.base.Object} instances) via its
+ * {@code ccc.parse.ObjectReader} interface.
  *
  * @param {!ccc.parse.TokenReader} tokenReader Food supply for the Parser.
  * @constructor

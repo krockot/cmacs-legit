@@ -178,6 +178,25 @@ function testDelimiters() {
     E(T.TRUE),
     E(T.QUOTE),
     E(T.SYMBOL, 'foo')]);
+  S('foo,bar', [
+    E(T.SYMBOL, 'foo'),
+    E(T.UNQUOTE),
+    E(T.SYMBOL, 'bar')]);
+  S('foo,@bar', [
+    E(T.SYMBOL, 'foo'),
+    E(T.UNQUOTE_SPLICING),
+    E(T.SYMBOL, 'bar')]);
+  S('foo;nope', [
+    E(T.SYMBOL, 'foo')]);
+  S('foo`bar', [
+    E(T.SYMBOL, 'foo'),
+    E(T.QUASIQUOTE),
+    E(T.SYMBOL, 'bar')]);
+  S('foo{bar}', [
+    E(T.SYMBOL, 'foo'),
+    E(T.OPEN_LIST),
+    E(T.SYMBOL, 'bar'),
+    E(T.CLOSE_FORM)]);
 }
 
 function testComments() {

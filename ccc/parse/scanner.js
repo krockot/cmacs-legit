@@ -122,10 +122,16 @@ var START_STATE_ = (function() {
       '\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a\u200b');
 
   /** @type {!MatchFunction_} */
+  var opener = any('([{');
+
+  /** @type {!MatchFunction_} */
+  var closer = any(')]}');
+
+  /** @type {!MatchFunction_} */
   var delimiter = (function() {
-    var special = any('()[]|;"\'');
+    var special = any('|;"\',`');
     return function(x) {
-      return eof(x) || space(x) || special(x);
+      return eof(x) || space(x) || opener(x) || closer(x) || special(x);
     };
   }());
 
@@ -186,8 +192,8 @@ var START_STATE_ = (function() {
   D('clean', [
     { match: space, discard: true },
     { match: eof, state: 'success' },
-    { match: any('(['), token: T.OPEN_LIST },
-    { match: any(')]'), token: T.CLOSE_FORM },
+    { match: opener, token: T.OPEN_LIST },
+    { match: closer, token: T.CLOSE_FORM },
     { match: single('\''), token: T.QUOTE },
     { match: single('`'), token: T.QUASIQUOTE },
     { match: single(';'), state: 'eatComment', discard: true },
@@ -218,7 +224,7 @@ var START_STATE_ = (function() {
   // Reached when reading a '#' from a clean state.
   D('hash', [
     { match: single(';'), token: T.OMIT_DATUM },
-    { match: any('(['), token: T.OPEN_VECTOR },
+    { match: opener, token: T.OPEN_VECTOR },
     { match: any('tT'), state: 'hashT' },
     { match: any('fF'), state: 'hashF' },
     { match: single('?'), state: 'hash?' },

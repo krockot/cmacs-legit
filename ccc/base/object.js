@@ -15,7 +15,17 @@ goog.provide('ccc.base.Object');
  * @constructor
  * @public
  */
-ccc.base.Object = function() {
+ccc.base.Object = function() {};
+
+
+/**
+ * Returns a string representation of this object for logging and debugging
+ * display. All derived object types should override this.
+ *
+ * @return {string}
+ */
+ccc.base.Object.prototype.toString = function() {
+  return '#<object>';
 };
 
 
@@ -52,6 +62,15 @@ ccc.base.Object.prototype.equal = function(other) {
 };
 
 
+/**
+ * Indicates if this object is a String.
+ *
+ * @return {boolean}
+ */
+ccc.base.Object.prototype.isString = function() {
+  return false;
+};
+
 
 /**
  * The global NIL object.
@@ -60,6 +79,9 @@ ccc.base.Object.prototype.equal = function(other) {
  * @const
  */
 ccc.base.NIL = new ccc.base.Object();
+
+
+ccc.base.NIL.toString = function() { return '()'; };
 
 
 /**
@@ -71,6 +93,9 @@ ccc.base.NIL = new ccc.base.Object();
 ccc.base.UNSPECIFIED = new ccc.base.Object();
 
 
+ccc.base.UNSPECIFIED.toString = function() { return '#?'; };
+
+
 /**
  * The global T (#t) object.
  *
@@ -80,6 +105,9 @@ ccc.base.UNSPECIFIED = new ccc.base.Object();
 ccc.base.T = new ccc.base.Object();
 
 
+ccc.base.T.toString = function() { return '#t'; };
+
+
 /**
  * The global F (#f) object.
  *
@@ -87,3 +115,6 @@ ccc.base.T = new ccc.base.Object();
  * @const
  */
 ccc.base.F = new ccc.base.Object();
+
+
+ccc.base.F.toString = function() { return '#f'; };

@@ -6,6 +6,7 @@ goog.setTestOnly('ccc.parse.ParserTest');
 
 goog.require('ccc.base.NIL');
 goog.require('ccc.base.Object');
+goog.require('ccc.base.String');
 goog.require('ccc.parse.Parser');
 goog.require('ccc.parse.Token');
 goog.require('ccc.parse.TokenReader');
@@ -98,7 +99,11 @@ var E = function(match) {
   return function(parser) {
     return parser.readObject().then(function(object) {
       assertNotNull('Ran out of parsed objects!', object);
-      assert('Object mismatch', object.equal(match));
+      if (!object.equal(match)) {
+        fail('Object mismatch:\n' +
+             '  Expected: ' + match.toString() +
+             '\n  Actual: ' + object.toString() + '\n');
+      }
       return true;
     });
   };
@@ -142,14 +147,16 @@ var P = function(tokens, expectations) {
 
 // Tests below this line
 
-function testDumbParser() {
+function testBasicObjects() {
   P([
     TRUE(),
     FALSE(),
-    UNSPECIFIED()
+    UNSPECIFIED(),
+    STRING_LITERAL("Hello, world!"),
   ], [
     E(T),
     E(F),
-    E(UNSPEC)
+    E(UNSPEC),
+    E(new ccc.base.String('Hello, world!'))
   ]);
 }

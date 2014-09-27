@@ -3,8 +3,12 @@
 
 goog.provide('ccc.parse.Parser');
 
+goog.require('ccc.base.F');
 goog.require('ccc.base.NIL');
 goog.require('ccc.base.Object');
+goog.require('ccc.base.String');
+goog.require('ccc.base.T');
+goog.require('ccc.base.UNSPECIFIED');
 goog.require('ccc.parse.ObjectReader');
 goog.require('ccc.parse.Token');
 goog.require('ccc.parse.TokenReader');
@@ -101,6 +105,10 @@ ccc.parse.Parser.prototype.processToken_ = function(token) {
     case T.SYMBOL:
     case T.CHAR_LITERAL:
     case T.STRING_LITERAL:
+      goog.asserts.assert(goog.isDef(token.data.value),
+          'Invalid string literal.');
+      production = new ccc.base.String(token.data.value);
+      break;
     case T.NUMERIC_LITERAL:
     case T.OPEN_LIST:
     case T.OPEN_VECTOR:

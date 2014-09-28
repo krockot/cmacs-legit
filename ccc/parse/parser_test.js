@@ -86,12 +86,19 @@ var UNSPEC = ccc.base.UNSPECIFIED;
 var T = ccc.base.T;
 var F = ccc.base.F;
 
-var Symbol_ = ccc.base.Symbol;
-var String_ = ccc.base.String;
-var Char_ = ccc.base.Char;
-var Number_ = ccc.base.Number;
-var Vector_ = ccc.base.Vector;
-var Pair_ = ccc.base.Pair;
+var Symbol_ = function(name) { return new ccc.base.Symbol(name); };
+var String_ = function(value) { return new ccc.base.String(value); };
+var Number_ = function(value) { return new ccc.base.Number(value); };
+var Char_ = function(value) { return new ccc.base.Char(value); };
+var Vector_ = function(elements) { return new ccc.base.Vector(elements); };
+var Pair_ = function(car, cdr) { return new ccc.base.Pair(car, cdr); };
+var List_ = function(elements, opt_tail) {
+  var tail = goog.isDef(opt_tail) ? opt_tail : ccc.base.NIL;
+  for (var i = elements.length - 1; i >= 0; --i) {
+    tail = new ccc.base.Pair(elements[i], tail);
+  }
+  return tail;
+};
 
 // Test framework for the parser tests
 
@@ -173,10 +180,10 @@ function testSimpleData() {
     E(T),
     E(F),
     E(UNSPEC),
-    E(new String_('Hello, world!')),
-    E(new Symbol_('hello-world')),
-    E(new Char_(10)),
-    E(new Number_(-42e3))
+    E(String_('Hello, world!')),
+    E(Symbol_('hello-world')),
+    E(Char_(10)),
+    E(Number_(-42e3))
   ]);
 }
 
@@ -189,7 +196,7 @@ function testSimpleVector() {
     NUMERIC_LITERAL(42),
     CLOSE_FORM(')')
   ], [
-    E(new Vector_([T, F, UNSPEC, new Number_(42)]))
+    E(Vector_([T, F, UNSPEC, Number_(42)]))
   ]);
 }
 
@@ -205,7 +212,19 @@ function testNestedVector() {
     NUMERIC_LITERAL(42),
     CLOSE_FORM(')')
   ], [
-    E(new Vector_([T, F, new Vector_([T]), UNSPEC, new Number_(42)]))
+    E(Vector_([T, F, Vector_([T]), UNSPEC, Number_(42)]))
+  ]);
+}
+
+function testSimplePair() {
+  P([
+    OPEN_LIST('('),
+    SYMBOL('a'),
+    DOT(),
+    SYMBOL('b'),
+    CLOSE_FORM(')')
+  ], [
+    E(Pair_(Symbol_('a'), Symbol_('b')))
   ]);
 }
 
@@ -216,7 +235,7 @@ function testSimpleList() {
     FALSE(),
     CLOSE_FORM(')')
   ], [
-    E(new Pair_(T, new Pair_(F, ccc.base.NIL)))
+    E(List_([T, F]))
   ]);
 }
 
@@ -232,10 +251,7 @@ function testNestedList() {
     CLOSE_FORM(']'),
     CLOSE_FORM(')')
   ], [
-    E(new Pair_(T,
-      new Pair_(ccc.base.NIL,
-        new Pair_(new Pair_(F, new Pair_(new Number_(7), ccc.base.NIL)),
-                  ccc.base.NIL))))
+    E(List_([T, NIL, List_([F, Number_(7)])]))
   ]);
 }
 
@@ -248,11 +264,7 @@ function testDottedTail() {
     NUMERIC_LITERAL(3),
     CLOSE_FORM(']')
   ], [
-    E(new Pair_(
-        new Number_(1),
-        new Pair_(
-            new Number_(2),
-            new Number_(3)))),
+    E(List_([Number_(1), Number_(2)], Number_(3)))
   ]);
 }
 
@@ -295,4 +307,156 @@ function testDottedTailExtraTailElement() {
 function testDottedTailRequiresHeadElement() {
   P([OPEN_LIST('('), DOT(), TRUE(), CLOSE_FORM(')')],
     [FAIL]);
+}
+
+function testComplexNesting() {
+  // This is equivalent to:
+  //
+  // #t 42 (#\newline 1 #("foo" "bar" baz [#f #t . #{#? []}] #t) 3.14) ()
+  P([
+    TRUE(),
+    NUMERIC_LITERAL(42),
+    OPEN_LIST('('),
+    CHAR_LITERAL(10),
+    NUMERIC_LITERAL(1),
+    OPEN_VECTOR('('),
+    STRING_LITERAL('foo'),
+    STRING_LITERAL('bar'),
+    SYMBOL('baz'),
+    OPEN_LIST('['),
+    FALSE(),
+    TRUE(),
+    DOT(),
+    OPEN_VECTOR('{'),
+    UNSPECIFIED(),
+    OPEN_LIST('['),
+    CLOSE_FORM(']'),
+    CLOSE_FORM('}'),
+    CLOSE_FORM(']'),
+    TRUE(),
+    CLOSE_FORM(')'),
+    NUMERIC_LITERAL(3.14),
+    CLOSE_FORM(')'),
+    OPEN_LIST('{'),
+    CLOSE_FORM('}')
+  ], [
+    E(T),
+    E(Number_(42)),
+    E(List_([
+        Char_(10),
+        Number_(1),
+        Vector_([
+            String_('foo'),
+            String_('bar'),
+            Symbol_('baz'),
+            List_([F, T], Vector_([UNSPEC, NIL])),
+            T]),
+        Number_(3.14)])),
+    E(NIL)
+  ]);
+}
+
+function testExpressionComment() {
+  P([TRUE(), OMIT_DATUM(), FALSE(), TRUE()], [E(T), E(T)]);
+}
+
+function testExpressionCommentInList() {
+  P([
+    OPEN_LIST('('),
+    NUMERIC_LITERAL(1),
+    STRING_LITERAL('hey'),
+    OMIT_DATUM(),
+    CHAR_LITERAL(33),
+    DOT(),
+    SYMBOL('hay'),
+    CLOSE_FORM(')')
+  ], [
+    E(List_([Number_(1), String_('hey')], Symbol_('hay')))
+  ]);
+}
+
+function testExpressionCommentInVector() {
+  P([
+    OPEN_VECTOR('('),
+    SYMBOL('a'),
+    OMIT_DATUM(),
+    OPEN_LIST('['),
+    SYMBOL('b'),
+    SYMBOL('c'),
+    DOT(),
+    SYMBOL('d'),
+    CLOSE_FORM(']'),
+    SYMBOL('e'),
+    CLOSE_FORM(')')
+  ], [
+    E(Vector_([Symbol_('a'), Symbol_('e')]))
+  ]);
+}
+
+function testDoubleExpressionComment() {
+  // The list (a #; #; c d #; e f) should become (a f).
+  P([
+    OPEN_LIST('('),
+    SYMBOL('a'),
+    OMIT_DATUM(),
+    OMIT_DATUM(),
+    SYMBOL('c'),
+    SYMBOL('d'),
+    OMIT_DATUM(),
+    SYMBOL('e'),
+    SYMBOL('f'),
+    CLOSE_FORM(')')
+  ], [
+    E(List_([Symbol_('a'), Symbol_('f')]))
+  ])
+}
+
+function testNoExpressionCommentAtEndOfList() {
+  P([
+    OPEN_LIST('('),
+    SYMBOL('a'),
+    OMIT_DATUM(),
+    CLOSE_FORM(')'),
+  ], [
+    FAIL
+  ])
+}
+
+function testNoExpressionCommentBeforeDot() {
+  P([
+    OPEN_LIST('('),
+    SYMBOL('a'),
+    SYMBOL('b'),
+    OMIT_DATUM(),
+    DOT(),
+    SYMBOL('c'),
+    CLOSE_FORM(')'),
+  ], [
+    FAIL
+  ]);
+}
+
+function testNoExpressionCommentBeforeDottedTail() {
+  P([
+    OPEN_LIST('('),
+    SYMBOL('a'),
+    SYMBOL('b'),
+    DOT(),
+    OMIT_DATUM(),
+    SYMBOL('c'),
+    CLOSE_FORM(')')
+  ], [
+    FAIL
+  ]);
+}
+
+function testNoExpressionCommentAtEndOfVector() {
+  P([
+    OPEN_VECTOR('['),
+    SYMBOL('a'),
+    OMIT_DATUM(),
+    CLOSE_FORM(']')
+  ], [
+    FAIL
+  ]);
 }

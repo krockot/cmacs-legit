@@ -32,22 +32,36 @@ var ObjectBuilder_ = function(bracketType, build) {
   /** @public {number} */
   this.bracketType = bracketType;
 
-  /** @public {!Array.<!ccc.base.Object>} */
-  this.elements = [];
+  /** @protected {!ccc.base.Object} */
+  this.tail_ = ccc.base.NIL;
 
-  /** @public {!ccc.base.Object} */
-  this.tail = ccc.base.NIL;
+  /** @protected {!Array.<!ccc.base.Object>} */
+  this.elements_ = [];
 };
 
 
 /**
  * Produces a new {@code ccc.base.Object} upon closing the form associated with
- * this builder.
+ * this builder. If this returns {@code undefined}, no object is produced.
  *
- * @return {!ccc.base.Object}
+ * @return {!ccc.base.Object|undefined}
  */
 ObjectBuilder_.prototype.build = function() {
   throw new Error('You are making a mistake');
+};
+
+
+/**
+ * Adds an element to this builder. Returns {@code true} to indicate that
+ * the builder should produce an object immediately after this addition.
+ * Default implementation always returns {@code false}.
+ *
+ * @param {!ccc.base.Object} object
+ * @return {boolean}
+ */
+ObjectBuilder_.prototype.add = function(object) {
+  this.elements_.push(object);
+  return false;
 };
 
 
@@ -65,9 +79,9 @@ goog.inherits(ListBuilder_, ObjectBuilder_);
 
 /** @override */
 ListBuilder_.prototype.build = function() {
-  var list = this.tail;
-  for (var i = this.elements.length - 1; i >= 0; --i) {
-    list = new ccc.base.Pair(this.elements[i], list);
+  var list = this.tail_;
+  for (var i = this.elements_.length - 1; i >= 0; --i) {
+    list = new ccc.base.Pair(this.elements_[i], list);
   }
   return list;
 };
@@ -87,9 +101,9 @@ goog.inherits(VectorBuilder_, ObjectBuilder_);
 
 /** @override */
 VectorBuilder_.prototype.build = function() {
-  goog.asserts.assert(this.tail === ccc.base.NIL,
+  goog.asserts.assert(this.tail_ === ccc.base.NIL,
       'Invalid vector builder. Y u do dis?');
-  return new ccc.base.Vector(this.elements);
+  return new ccc.base.Vector(this.elements_);
 };
 
 
@@ -101,24 +115,76 @@ VectorBuilder_.prototype.build = function() {
  */
 TailBuilder_ = function(targetBuilder) {
   goog.base(this, targetBuilder.bracketType);
-  this.targetBuilder = targetBuilder;
+
+  /** @private {!ObjectBuilder_} */
+  this.targetBuilder_ = targetBuilder;
 };
 goog.inherits(TailBuilder_, ObjectBuilder_);
 
 
 /** @override */
 TailBuilder_.prototype.build = function() {
-  if (this.elements.length == 0) {
+  if (this.elements_.length == 0) {
     throw new Error('Missing tail element after dot');
   }
-  if (this.targetBuilder.elements.length == 0) {
-    throw new Error('Invalid "." usage');
+  if (this.targetBuilder_.elements_.length == 0) {
+    throw new Error('Unexpected token');
   }
-  if (this.elements.length > 1) {
-    throw new Error('Unexpected object ' + this.elements[1].toString);
+  if (this.elements_.length > 1) {
+    throw new Error('Unexpected object ' + this.elements_[1].toString());
   }
-  this.targetBuilder.tail = this.elements[0];
-  return this.targetBuilder.build();
+  this.targetBuilder_.tail_ = this.elements_[0];
+  return this.targetBuilder_.build();
+};
+
+
+/**
+ * Throws away the next datum in the token stream.
+ *
+ * @constructor
+ * @extends {ObjectBuilder_}
+ * @private
+ */
+CommentBuilder_ = function() {
+  goog.base(this, -1);
+};
+goog.inherits(CommentBuilder_, ObjectBuilder_);
+
+
+/** @override */
+CommentBuilder_.prototype.build = function() {};
+
+
+/** @override */
+CommentBuilder_.prototype.add = function(object) { return true; };
+
+
+/**
+ * Transforms the next datum in the token stream by wrapping it in a list
+ * with a given head symbol.
+ *
+ * @param {string} symbolName
+ * @extends {ObjectBuilder_}
+ * @private
+ */
+DatumTransformBuilder_ = function(symbolName) {
+  goog.base(this, -1);
+
+  /** @private {string} */
+  this.symbolName_ = symbolName;
+};
+
+
+DatumTransformBuilder_.prototype.build = function() {
+  return new ccc.base.Pair(
+      new ccc.base.Symbol(this.symbolName_),
+      new ccc.base.Pair(this.elements_[0], ccc.base.NIL));
+};
+
+
+DatumTransformBuilder_.prototype.add = function(object) {
+  this.elements_.push(object);
+  return true;
 };
 
 
@@ -149,6 +215,12 @@ ccc.parse.Parser = function(tokenReader) {
    * @private {ObjectBuilder_}
    */
   this.builder_ = null;
+
+  /**
+   * The last token that was successfully processed.
+   * @private {ccc.parse.Token}
+   */
+  this.lastToken_ = null;
 };
 
 
@@ -157,12 +229,19 @@ ccc.parse.Parser.prototype.readObject = function() {
   return this.tokenReader_.readToken().then(function(token) {
     try {
       var result = this.processToken_(token);
+      this.lastToken_ = token;
       if (goog.isDef(result)) {
         return result;
       }
     } catch (e) {
-      return goog.Promise.reject(new Error(
-          '[Line ' + token.line + ', Col ' + token.column + '] ' + e.message));
+      var message = e.message;
+      if (goog.isNull(token))
+        token = this.lastToken_;
+      if (!goog.isNull(token)) {
+        message = '[Line ' + token.line + ', Col ' + token.column + '] ' +
+            message + ' near "' + token.text + '"';
+      }
+      return goog.Promise.reject(new Error(message));
     }
     return this.readObject();
   }, null, this);
@@ -232,8 +311,12 @@ ccc.parse.Parser.prototype.processToken_ = function(token) {
     case T.CLOSE_FORM:
       goog.asserts.assert(goog.isDef(token.data.type),
           'Invalid closing bracket token.');
-      if (goog.isNull(this.builder_) ||
-          this.builder_.bracketType != token.data.type) {
+      if (!(this.builder_ instanceof ListBuilder_) &&
+          !(this.builder_ instanceof VectorBuilder_) &&
+          !(this.builder_ instanceof TailBuilder_)) {
+        throw new Error('Unexpected "' + this.lastToken_.text + '"');
+      }
+      if (this.builder_.bracketType != token.data.type) {
         throw new Error('Unbalanced "' + token.text + '"');
       }
       goog.asserts.assert(this.builderStack_.length > 0);
@@ -243,11 +326,14 @@ ccc.parse.Parser.prototype.processToken_ = function(token) {
     case T.DOT:
       if (goog.isNull(this.builder_) ||
           !(this.builder_ instanceof ListBuilder_)) {
-        throw new Error('Invalid "." usage');
+        throw new Error('Unexpected token');
       }
       this.builder_ = new TailBuilder_(this.builder_);
       break;
     case T.OMIT_DATUM:
+      this.builderStack_.push(this.builder_);
+      this.builder_ = new CommentBuilder_();
+      break;
     case T.QUOTE:
     case T.UNQUOTE:
     case T.UNQUOTE_SPLICING:
@@ -265,5 +351,11 @@ ccc.parse.Parser.prototype.processToken_ = function(token) {
     return production;
   }
 
-  this.builder_.elements.push(production);
+  if (this.builder_.add(production)) {
+    var production = this.builder_.build();
+    this.builder_ = this.builderStack_.pop();
+    if (goog.isDef(production)) {
+      return production;
+    }
+  }
 };

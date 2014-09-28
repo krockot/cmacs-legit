@@ -177,7 +177,7 @@ var RunTests = function(tests) {
 // Tests below this line
 
 function testSimpleData() {
-  RunSingleTest([
+  RunSingleTest(S([
     TRUE(),
     FALSE(),
     UNSPECIFIED(),
@@ -193,11 +193,11 @@ function testSimpleData() {
     E(Symbol_('hello-world')),
     E(Char_(10)),
     E(Number_(-42e3))
-  ]);
+  ]));
 }
 
 function testSimpleVector() {
-  RunSingleTest([
+  RunSingleTest(S([
     OPEN_VECTOR('('),
     TRUE(),
     FALSE(),
@@ -206,11 +206,11 @@ function testSimpleVector() {
     CLOSE_FORM(')')
   ], [
     E(Vector_([T, F, UNSPEC, Number_(42)]))
-  ]);
+  ]));
 }
 
 function testNestedVector() {
-  RunSingleTest([
+  RunSingleTest(S([
     OPEN_VECTOR('('),
     TRUE(),
     FALSE(),
@@ -222,11 +222,11 @@ function testNestedVector() {
     CLOSE_FORM(')')
   ], [
     E(Vector_([T, F, Vector_([T]), UNSPEC, Number_(42)]))
-  ]);
+  ]));
 }
 
 function testSimplePair() {
-  RunSingleTest([
+  RunSingleTest(S([
     OPEN_LIST('('),
     SYMBOL('a'),
     DOT(),
@@ -234,22 +234,22 @@ function testSimplePair() {
     CLOSE_FORM(')')
   ], [
     E(Pair_(Symbol_('a'), Symbol_('b')))
-  ]);
+  ]));
 }
 
 function testSimpleList() {
-  RunSingleTest([
+  RunSingleTest(S([
     OPEN_LIST('('),
     TRUE(),
     FALSE(),
     CLOSE_FORM(')')
   ], [
     E(List_([T, F]))
-  ]);
+  ]));
 }
 
 function testNestedList() {
-  RunSingleTest([
+  RunSingleTest(S([
     OPEN_LIST('('),
     TRUE(),
     OPEN_LIST('('),
@@ -261,11 +261,11 @@ function testNestedList() {
     CLOSE_FORM(')')
   ], [
     E(List_([T, NIL, List_([F, Number_(7)])]))
-  ]);
+  ]));
 }
 
 function testDottedTail() {
-  RunSingleTest([
+  RunSingleTest(S([
     OPEN_LIST('['),
     NUMERIC_LITERAL(1),
     NUMERIC_LITERAL(2),
@@ -274,57 +274,57 @@ function testDottedTail() {
     CLOSE_FORM(']')
   ], [
     E(List_([Number_(1), Number_(2)], Number_(3)))
-  ]);
+  ]));
 }
 
 function testMissingClosingBracket() {
-  RunSingleTest([OPEN_LIST('['), TRUE()], [FAIL]);
+  RunSingleTest(S([OPEN_LIST('['), TRUE()], [FAIL]));
 }
 
 function testMissingOpeningBracket() {
-  RunSingleTest([TRUE(), CLOSE_FORM(')')], [E(T), FAIL]);
+  RunSingleTest(S([TRUE(), CLOSE_FORM(')')], [E(T), FAIL]));
 }
 
 function testBracketMismatch() {
-  RunSingleTest([OPEN_LIST('['), CLOSE_FORM(')')], [FAIL]);
+  RunSingleTest(S([OPEN_LIST('['), CLOSE_FORM(')')], [FAIL]));
 }
 
 function testNil() {
-  RunSingleTest([OPEN_LIST('['), CLOSE_FORM(']')], [E(NIL)]);
+  RunSingleTest(S([OPEN_LIST('['), CLOSE_FORM(']')], [E(NIL)]));
 }
 
 function testNoDottedTailsInOuterSpace() {
-  RunSingleTest([TRUE(), FALSE(), DOT(), TRUE()],
-    [E(T), E(F), FAIL]);
+  RunSingleTest(S([TRUE(), FALSE(), DOT(), TRUE()],
+    [E(T), E(F), FAIL]));
 }
 
 function testNoDottedTailInVector() {
-  RunSingleTest(
+  RunSingleTest(S(
     [OPEN_VECTOR('('), TRUE(), FALSE(), DOT(), TRUE(), CLOSE_FORM(')')],
-    [FAIL]);
+    [FAIL]));
 }
 
 function testDottedTailMissingTailElement() {
-  RunSingleTest([OPEN_LIST('('), TRUE(), DOT(), CLOSE_FORM(')')],
-    [FAIL]);
+  RunSingleTest(S([OPEN_LIST('('), TRUE(), DOT(), CLOSE_FORM(')')],
+    [FAIL]));
 }
 
 function testDottedTailExtraTailElement() {
-  RunSingleTest(
+  RunSingleTest(S(
     [OPEN_LIST('('), TRUE(), DOT(), FALSE(), FALSE(), CLOSE_FORM(')')],
-    [FAIL]);
+    [FAIL]));
 }
 
 function testDottedTailRequiresHeadElement() {
-  RunSingleTest([OPEN_LIST('('), DOT(), TRUE(), CLOSE_FORM(')')],
-    [FAIL]);
+  RunSingleTest(S([OPEN_LIST('('), DOT(), TRUE(), CLOSE_FORM(')')],
+    [FAIL]));
 }
 
 function testComplexNesting() {
   // This is equivalent to:
   //
   // #t 42 (#\newline 1 #("foo" "bar" baz [#f #t . #{#? []}] #t) 3.14) ()
-  RunSingleTest([
+  RunSingleTest(S([
     TRUE(),
     NUMERIC_LITERAL(42),
     OPEN_LIST('('),
@@ -364,15 +364,15 @@ function testComplexNesting() {
             T]),
         Number_(3.14)])),
     E(NIL)
-  ]);
+  ]));
 }
 
 function testExpressionComment() {
-  RunSingleTest([TRUE(), OMIT_DATUM(), FALSE(), TRUE()], [E(T), E(T)]);
+  RunSingleTest(S([TRUE(), OMIT_DATUM(), FALSE(), TRUE()], [E(T), E(T)]));
 }
 
 function testExpressionCommentInList() {
-  RunSingleTest([
+  RunSingleTest(S([
     OPEN_LIST('('),
     NUMERIC_LITERAL(1),
     STRING_LITERAL('hey'),
@@ -383,11 +383,11 @@ function testExpressionCommentInList() {
     CLOSE_FORM(')')
   ], [
     E(List_([Number_(1), String_('hey')], Symbol_('hay')))
-  ]);
+  ]));
 }
 
 function testExpressionCommentInVector() {
-  RunSingleTest([
+  RunSingleTest(S([
     OPEN_VECTOR('('),
     SYMBOL('a'),
     OMIT_DATUM(),
@@ -401,12 +401,12 @@ function testExpressionCommentInVector() {
     CLOSE_FORM(')')
   ], [
     E(Vector_([Symbol_('a'), Symbol_('e')]))
-  ]);
+  ]));
 }
 
 function testDoubleExpressionComment() {
   // The list (a #; #; c d #; e f) should become (a f).
-  RunSingleTest([
+  RunSingleTest(S([
     OPEN_LIST('('),
     SYMBOL('a'),
     OMIT_DATUM(),
@@ -419,22 +419,22 @@ function testDoubleExpressionComment() {
     CLOSE_FORM(')')
   ], [
     E(List_([Symbol_('a'), Symbol_('f')]))
-  ])
+  ]));
 }
 
 function testNoExpressionCommentAtEndOfList() {
-  RunSingleTest([
+  RunSingleTest(S([
     OPEN_LIST('('),
     SYMBOL('a'),
     OMIT_DATUM(),
     CLOSE_FORM(')'),
   ], [
     FAIL
-  ])
+  ]));
 }
 
 function testNoExpressionCommentBeforeDot() {
-  RunSingleTest([
+  RunSingleTest(S([
     OPEN_LIST('('),
     SYMBOL('a'),
     SYMBOL('b'),
@@ -444,11 +444,11 @@ function testNoExpressionCommentBeforeDot() {
     CLOSE_FORM(')'),
   ], [
     FAIL
-  ]);
+  ]));
 }
 
 function testNoExpressionCommentBeforeDottedTail() {
-  RunSingleTest([
+  RunSingleTest(S([
     OPEN_LIST('('),
     SYMBOL('a'),
     SYMBOL('b'),
@@ -458,39 +458,39 @@ function testNoExpressionCommentBeforeDottedTail() {
     CLOSE_FORM(')')
   ], [
     FAIL
-  ]);
+  ]));
 }
 
 function testNoExpressionCommentAtEndOfVector() {
-  RunSingleTest([
+  RunSingleTest(S([
     OPEN_VECTOR('['),
     SYMBOL('a'),
     OMIT_DATUM(),
     CLOSE_FORM(']')
   ], [
     FAIL
-  ]);
+  ]));
 }
 
 function testNoExpressionCommentAtEof() {
-  RunSingleTest([
+  RunSingleTest(S([
     OMIT_DATUM()
   ], [
     FAIL
-  ])
+  ]));
 }
 
 function testQuote() {
-  RunSingleTest([
+  RunSingleTest(S([
     QUOTE(),
     SYMBOL('a')
   ], [
     E(List_([Symbol_('quote'), Symbol_('a')]))
-  ])
+  ]));
 }
 
 function testListQuote() {
-  RunSingleTest([
+  RunSingleTest(S([
     TRUE(),
     QUOTE(),
     OPEN_LIST('('),
@@ -507,11 +507,11 @@ function testListQuote() {
                    Symbol_('b'),
                    List_([Symbol_('quote'), Symbol_('c')])])])),
     E(F)
-  ]);
+  ]));
 }
 
 function testNestedQuotes() {
-  RunSingleTest([
+  RunSingleTest(S([
     QUOTE(),
     QUOTE(),
     QUOTE(),
@@ -521,44 +521,44 @@ function testNestedQuotes() {
              List_([Symbol_('quote'),
                     List_([Symbol_('quote'),
                            Symbol_('a')])])]))
-  ]);
+  ]));
 }
 
 function testUnquote() {
-  RunSingleTest([UNQUOTE(), SYMBOL('a')],
-    [E(List_([Symbol_('unquote'), Symbol_('a')]))])
+  RunSingleTest(S([UNQUOTE(), SYMBOL('a')],
+    [E(List_([Symbol_('unquote'), Symbol_('a')]))]));
 }
 
 function testUnquoteSplicing() {
-  RunSingleTest([UNQUOTE_SPLICING(), SYMBOL('a')],
-    [E(List_([Symbol_('unquote-splicing'), Symbol_('a')]))])
+  RunSingleTest(S([UNQUOTE_SPLICING(), SYMBOL('a')],
+    [E(List_([Symbol_('unquote-splicing'), Symbol_('a')]))]));
 }
 
 function testQuasiquote() {
-  RunSingleTest([QUASIQUOTE(), SYMBOL('a')],
-    [E(List_([Symbol_('quasiquote'), Symbol_('a')]))])
+  RunSingleTest(S([QUASIQUOTE(), SYMBOL('a')],
+    [E(List_([Symbol_('quasiquote'), Symbol_('a')]))]));
 }
 
 function testNoQuoteAtEof() {
-  RunSingleTest([SYMBOL('a'), QUOTE()], [E(Symbol_('a')), FAIL]);
+  RunSingleTest(S([SYMBOL('a'), QUOTE()], [E(Symbol_('a')), FAIL]));
 }
 
 function testNoQuoteAtEndOfList() {
-  RunSingleTest([OPEN_LIST('('), SYMBOL('a'), QUOTE(), CLOSE_FORM(')')],
-    [FAIL]);
+  RunSingleTest(S([OPEN_LIST('('), SYMBOL('a'), QUOTE(), CLOSE_FORM(')')],
+    [FAIL]));
 }
 
 function testNoQuoteAtEndOfVector() {
-  RunSingleTest([OPEN_VECTOR('('), SYMBOL('a'), QUOTE(), CLOSE_FORM(')')],
-    [FAIL]);
+  RunSingleTest(S([OPEN_VECTOR('('), SYMBOL('a'), QUOTE(), CLOSE_FORM(')')],
+    [FAIL]));
 }
 
 function testNoQuoteBeforeDot() {
-  RunSingleTest([OPEN_LIST('('), SYMBOL('a'), QUOTE(), DOT(), SYMBOL('b')],
-    [FAIL]);
+  RunSingleTest(S([OPEN_LIST('('), SYMBOL('a'), QUOTE(), DOT(), SYMBOL('b')],
+    [FAIL]));
 }
 
 function testNoQuoteBeforeDottedTail() {
-  RunSingleTest([OPEN_LIST('('), SYMBOL('a'), DOT(), QUOTE(), SYMBOL('b')],
-    [FAIL]);
+  RunSingleTest(S([OPEN_LIST('('), SYMBOL('a'), DOT(), QUOTE(), SYMBOL('b')],
+    [FAIL]));
 }

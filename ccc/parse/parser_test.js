@@ -10,6 +10,7 @@ goog.require('ccc.base.Number');
 goog.require('ccc.base.Object');
 goog.require('ccc.base.String');
 goog.require('ccc.base.Symbol');
+goog.require('ccc.base.Vector');
 goog.require('ccc.parse.Parser');
 goog.require('ccc.parse.Token');
 goog.require('ccc.parse.TokenReader');
@@ -30,7 +31,7 @@ function continueTesting() {
 }
 
 function justFail(reason) {
-  console.error(reason);
+  console.error(reason.stack);
   fail(reason);
 }
 
@@ -40,7 +41,7 @@ var OPEN_LIST = function(bracket) {
   return new ccc.parse.Token(K.OPEN_LIST, bracket, 1, 1);
 };
 var CLOSE_FORM = function(bracket) {
-  return new ccc.parse.Token(K.CLOSE_LIST, bracket, 1, 1);
+  return new ccc.parse.Token(K.CLOSE_FORM, bracket, 1, 1);
 };
 var QUOTE = function() { return new ccc.parse.Token(K.QUOTE, '\'', 1, 1); };
 var UNQUOTE = function() { return new ccc.parse.Token(K.UNQUOTE, ',', 1, 1); };
@@ -82,6 +83,12 @@ var NIL = ccc.base.NIL;
 var UNSPEC = ccc.base.UNSPECIFIED;
 var T = ccc.base.T;
 var F = ccc.base.F;
+
+var Symbol_ = ccc.base.Symbol;
+var String_ = ccc.base.String;
+var Char_ = ccc.base.Char;
+var Number_ = ccc.base.Number;
+var Vector_ = ccc.base.Vector;
 
 // Test framework for the parser tests
 
@@ -150,7 +157,7 @@ var P = function(tokens, expectations) {
 
 // Tests below this line
 
-function testBasicObjects() {
+function testSimpleData() {
   P([
     TRUE(),
     FALSE(),
@@ -158,14 +165,43 @@ function testBasicObjects() {
     STRING_LITERAL("Hello, world!"),
     SYMBOL('hello-world'),
     CHAR_LITERAL(10),
-    NUMERIC_LITERAL(-42e3)
+    NUMERIC_LITERAL(-42e3),
   ], [
     E(T),
     E(F),
     E(UNSPEC),
-    E(new ccc.base.String('Hello, world!')),
-    E(new ccc.base.Symbol('hello-world')),
-    E(new ccc.base.Char(10)),
-    E(new ccc.base.Number(-42e3))
+    E(new String_('Hello, world!')),
+    E(new Symbol_('hello-world')),
+    E(new Char_(10)),
+    E(new Number_(-42e3))
+  ]);
+}
+
+function testSimpleVector() {
+  P([
+    OPEN_VECTOR('('),
+    TRUE(),
+    FALSE(),
+    UNSPECIFIED(),
+    NUMERIC_LITERAL(42),
+    CLOSE_FORM(')')
+  ], [
+    E(new Vector_([T, F, UNSPEC, new Number_(42)]))
+  ]);
+}
+
+function testNestedVector() {
+  P([
+    OPEN_VECTOR('('),
+    TRUE(),
+    FALSE(),
+    OPEN_VECTOR('['),
+    TRUE(),
+    CLOSE_FORM(']'),
+    UNSPECIFIED(),
+    NUMERIC_LITERAL(42),
+    CLOSE_FORM(')')
+  ], [
+    E(new Vector_([T, F, new Vector_([T]), UNSPEC, new Number_(42)]))
   ]);
 }

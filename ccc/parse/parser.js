@@ -9,6 +9,7 @@ goog.require('ccc.base.Number');
 goog.require('ccc.base.Object');
 goog.require('ccc.base.String');
 goog.require('ccc.base.Symbol');
+goog.require('ccc.base.Vector');
 goog.require('ccc.base.T');
 goog.require('ccc.base.UNSPECIFIED');
 goog.require('ccc.parse.ObjectReader');
@@ -19,13 +20,99 @@ goog.require('ccc.parse.TokenType');
 
 
 /**
- * A function which is used by the Parser to accumulate generated objects.
+ * The structure used to track recursive parser state and build nested objects.
+ * One of these is created for each list- or vector- opening token.
  *
- * @typedef {function(!ccc.base.Object, !ccc.base.Object)}
+ * @param {number} bracketType The opening token's bracket type.
+ * @constructor
  * @private
  */
-var ObjectBuilder_;
+var ObjectBuilder_ = function(bracketType, build) {
+  /** @public {number} */
+  this.bracketType = bracketType;
 
+  /** @public {!Array.<!ccc.base.Object>} */
+  this.elements = [];
+
+  /** @public {!ccc.base.Object} */
+  this.tail = ccc.base.NIL;
+};
+
+
+/**
+ * Produces a new {@code ccc.base.Object} upon closing the form associated with
+ * this builder.
+ *
+ * @return {!ccc.base.Object}
+ */
+ObjectBuilder_.prototype.build = function() {
+  throw new Error('You are making a mistake.');
+};
+
+
+/**
+ * @param {number} bracketType
+ * @constructor
+ * @extends {ObjectBuilder_}
+ * @private
+ */
+var ListBuilder_ = function(bracketType) {
+  goog.base(this, bracketType);
+};
+goog.inherits(ListBuilder_, ObjectBuilder_);
+
+
+/** @override */
+ListBuilder_.prototype.build = function() {
+  // TODO(krockot): Add Pair type!
+  return ccc.base.NIL;
+};
+
+
+/**
+ * @param {number} bracketType
+ * @constructor
+ * @extends {ObjectBuilder_}
+ * @private
+ */
+var VectorBuilder_ = function(bracketType) {
+  goog.base(this, bracketType);
+};
+goog.inherits(VectorBuilder_, ObjectBuilder_);
+
+
+/** @override */
+VectorBuilder_.prototype.build = function() {
+  goog.asserts.assert(this.tail === ccc.base.NIL,
+      'Invalid vector builder. Y u do dis?');
+  return new ccc.base.Vector(this.elements);
+};
+
+
+/**
+ * @param {!ObjectBuilder_} targetBuilder
+ * @constructor
+ * @extends {ObjectBuilder_}
+ * @private
+ */
+TailBuilder_ = function(targetBuilder) {
+  // TODO(krockot): Add test for targetBuilder being a ListBuilder.
+  goog.base(this, targetBuilder.bracketType);
+  this.targetBuilder = targetBuilder;
+};
+
+
+/** @override */
+TailBuilder_.prototype.build = function() {
+  if (this.elements.length == 0) {
+    throw new Error('Missing tail element after dot.');
+  }
+  if (this.elements.length > 1) {
+    throw new Error('Unexpected object: ' + this.elements[1].toString);
+  }
+  this.targetBuilder.tail = this.elements[0];
+  return this.targetBuilder.build();
+};
 
 
 /**
@@ -55,12 +142,6 @@ ccc.parse.Parser = function(tokenReader) {
    * @private {ObjectBuilder_}
    */
   this.builder_ = null;
-
-  /**
-   * The innermost Object currently being built, if any.
-   * @private {ccc.base.Object}
-   */
-  this.accumulator_ = null;
 };
 
 
@@ -125,8 +206,28 @@ ccc.parse.Parser.prototype.processToken_ = function(token) {
       production = new ccc.base.Number(token.data.value);
       break;
     case T.OPEN_LIST:
+      goog.asserts.assert(goog.isDef(token.data.type),
+          'Invalid opening bracket token.');
+      this.builderStack_.push(this.builder_);
+      this.builder_ = new ListBuilder_(token.data.type);
+      break;
     case T.OPEN_VECTOR:
+      goog.asserts.assert(goog.isDef(token.data.type),
+          'Invalid opening bracket token.');
+      this.builderStack_.push(this.builder_);
+      this.builder_ = new VectorBuilder_(token.data.type);
+      break;
     case T.CLOSE_FORM:
+      goog.asserts.assert(goog.isDef(token.data.type),
+          'Invalid closing bracket token.');
+      if (goog.isNull(this.builder_) ||
+          this.builder_.bracketType != token.data.type) {
+        throw new Error('Unbalanced "' + token.text + '"');
+      }
+      goog.asserts.assert(this.builderStack_.length > 0);
+      production = this.builder_.build();
+      this.builder_ = this.builderStack_.pop();
+      break;
     case T.DOT:
     case T.OMIT_DATUM:
     case T.QUOTE:
@@ -146,5 +247,5 @@ ccc.parse.Parser.prototype.processToken_ = function(token) {
     return production;
   }
 
-  this.accumulator_ = this.builder_(this.accumulator_, production);
+  this.builder_.elements.push(production);
 };

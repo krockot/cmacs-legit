@@ -103,6 +103,26 @@ ccc.base.Object.prototype.isNumber = function() {
 
 
 /**
+ * Indicates if this object is a Pair.
+ *
+ * @return {boolean}
+ */
+ccc.base.Object.prototype.isPair = function() {
+  return false;
+};
+
+
+/**
+ * Indicates if this object is a Vector.
+ *
+ * @return {boolean}
+ */
+ccc.base.Object.prototype.isVector = function() {
+  return false;
+};
+
+
+/**
  * The global NIL object.
  *
  * @public {!ccc.base.Object}

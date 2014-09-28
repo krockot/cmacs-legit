@@ -11,6 +11,7 @@ goog.require('ccc.base.Object');
 goog.require('ccc.base.String');
 goog.require('ccc.base.Symbol');
 goog.require('ccc.base.Vector');
+goog.require('ccc.base.Pair');
 goog.require('ccc.parse.Parser');
 goog.require('ccc.parse.Token');
 goog.require('ccc.parse.TokenReader');
@@ -89,6 +90,7 @@ var String_ = ccc.base.String;
 var Char_ = ccc.base.Char;
 var Number_ = ccc.base.Number;
 var Vector_ = ccc.base.Vector;
+var Pair_ = ccc.base.Pair;
 
 // Test framework for the parser tests
 
@@ -203,5 +205,35 @@ function testNestedVector() {
     CLOSE_FORM(')')
   ], [
     E(new Vector_([T, F, new Vector_([T]), UNSPEC, new Number_(42)]))
+  ]);
+}
+
+function testSimpleList() {
+  P([
+    OPEN_LIST('('),
+    TRUE(),
+    FALSE(),
+    CLOSE_FORM(')')
+  ], [
+    E(new Pair_(T, new Pair_(F, ccc.base.NIL)))
+  ]);
+}
+
+function testNestedList() {
+  P([
+    OPEN_LIST('('),
+    TRUE(),
+    OPEN_LIST('('),
+    CLOSE_FORM(')'),
+    OPEN_LIST('['),
+    FALSE(),
+    NUMERIC_LITERAL('7'),
+    CLOSE_FORM(']'),
+    CLOSE_FORM(')')
+  ], [
+    E(new Pair_(T,
+      new Pair_(ccc.base.NIL,
+        new Pair_(new Pair_(F, new Pair_(new Number_(7), ccc.base.NIL)),
+                  ccc.base.NIL))))
   ]);
 }

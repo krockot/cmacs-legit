@@ -7,6 +7,7 @@ goog.require('ccc.base.F');
 goog.require('ccc.base.NIL');
 goog.require('ccc.base.Number');
 goog.require('ccc.base.Object');
+goog.require('ccc.base.Pair');
 goog.require('ccc.base.String');
 goog.require('ccc.base.Symbol');
 goog.require('ccc.base.Vector');
@@ -64,8 +65,11 @@ goog.inherits(ListBuilder_, ObjectBuilder_);
 
 /** @override */
 ListBuilder_.prototype.build = function() {
-  // TODO(krockot): Add Pair type!
-  return ccc.base.NIL;
+  var list = this.tail;
+  for (var i = this.elements.length - 1; i >= 0; --i) {
+    list = new ccc.base.Pair(this.elements[i], list);
+  }
+  return list;
 };
 
 
@@ -96,7 +100,9 @@ VectorBuilder_.prototype.build = function() {
  * @private
  */
 TailBuilder_ = function(targetBuilder) {
-  // TODO(krockot): Add test for targetBuilder being a ListBuilder.
+  if (!(targetBuilder instanceof ListBuilder_)) {
+    throw new Error('Invalid dot placement.');
+  }
   goog.base(this, targetBuilder.bracketType);
   this.targetBuilder = targetBuilder;
 };

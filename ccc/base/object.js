@@ -73,6 +73,46 @@ ccc.base.Object.prototype.isString = function() {
 
 
 /**
+ * Indicates if this object is the global NIL object.
+ *
+ * @return {boolean}
+ */
+ccc.base.Object.prototype.isNil = function() {
+  return false;
+};
+
+
+/**
+ * Indicates if this object is the global T object.
+ *
+ * @return {boolean}
+ */
+ccc.base.Object.prototype.isTrue = function() {
+  return false;
+};
+
+
+/**
+ * Indicates if this object is the global F object.
+ *
+ * @return {boolean}
+ */
+ccc.base.Object.prototype.isFalse = function() {
+  return false;
+};
+
+
+/**
+ * Indicates if this object is the global UNSPECIFIED object.
+ *
+ * @return {boolean}
+ */
+ccc.base.Object.prototype.isUnspecified = function() {
+  return false;
+};
+
+
+/**
  * Indicates if this object is a Symbol.
  *
  * @return {boolean}
@@ -134,6 +174,9 @@ ccc.base.NIL = new ccc.base.Object();
 ccc.base.NIL.toString = function() { return '()'; };
 
 
+ccc.base.NIL.isNil = function() { return true; };
+
+
 /**
  * The global UNSPECIFIED object.
  *
@@ -144,6 +187,9 @@ ccc.base.UNSPECIFIED = new ccc.base.Object();
 
 
 ccc.base.UNSPECIFIED.toString = function() { return '#?'; };
+
+
+ccc.base.UNSPECIFIED.isUnspecified = function() { return true; };
 
 
 /**
@@ -158,6 +204,9 @@ ccc.base.T = new ccc.base.Object();
 ccc.base.T.toString = function() { return '#t'; };
 
 
+ccc.base.T.isTrue = function() { return true; };
+
+
 /**
  * The global F (#f) object.
  *
@@ -168,3 +217,6 @@ ccc.base.F = new ccc.base.Object();
 
 
 ccc.base.F.toString = function() { return '#f'; };
+
+
+ccc.base.F.isFalse = function() { return true; };

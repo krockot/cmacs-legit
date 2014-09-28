@@ -167,22 +167,23 @@ CommentBuilder_.prototype.add = function(object) { return true; };
  * @extends {ObjectBuilder_}
  * @private
  */
-DatumTransformBuilder_ = function(symbolName) {
+WrapperBuilder_ = function(symbolName) {
   goog.base(this, -1);
 
   /** @private {string} */
   this.symbolName_ = symbolName;
 };
+goog.inherits(WrapperBuilder_, ObjectBuilder_);
 
 
-DatumTransformBuilder_.prototype.build = function() {
+WrapperBuilder_.prototype.build = function() {
   return new ccc.base.Pair(
       new ccc.base.Symbol(this.symbolName_),
       new ccc.base.Pair(this.elements_[0], ccc.base.NIL));
 };
 
 
-DatumTransformBuilder_.prototype.add = function(object) {
+WrapperBuilder_.prototype.add = function(object) {
   this.elements_.push(object);
   return true;
 };
@@ -299,14 +300,12 @@ ccc.parse.Parser.prototype.processToken_ = function(token) {
     case T.OPEN_LIST:
       goog.asserts.assert(goog.isDef(token.data.type),
           'Invalid opening bracket token.');
-      this.builderStack_.push(this.builder_);
-      this.builder_ = new ListBuilder_(token.data.type);
+      this.pushBuilder_(new ListBuilder_(token.data.type));
       break;
     case T.OPEN_VECTOR:
       goog.asserts.assert(goog.isDef(token.data.type),
           'Invalid opening bracket token.');
-      this.builderStack_.push(this.builder_);
-      this.builder_ = new VectorBuilder_(token.data.type);
+      this.pushBuilder_(new VectorBuilder_(token.data.type));
       break;
     case T.CLOSE_FORM:
       goog.asserts.assert(goog.isDef(token.data.type),
@@ -331,14 +330,20 @@ ccc.parse.Parser.prototype.processToken_ = function(token) {
       this.builder_ = new TailBuilder_(this.builder_);
       break;
     case T.OMIT_DATUM:
-      this.builderStack_.push(this.builder_);
-      this.builder_ = new CommentBuilder_();
+      this.pushBuilder_(new CommentBuilder_());
       break;
     case T.QUOTE:
+      this.pushBuilder_(new WrapperBuilder_('quote'));
+      break;
     case T.UNQUOTE:
+      this.pushBuilder_(new WrapperBuilder_('unquote'));
+      break;
     case T.UNQUOTE_SPLICING:
+      this.pushBuilder_(new WrapperBuilder_('unquote-splicing'));
+      break;
     case T.QUASIQUOTE:
-      throw new Error('NOT IMPLEMENTED.');
+      this.pushBuilder_(new WrapperBuilder_('quasiquote'));
+      break;
     default:
       throw new Error('Invalid token: ' + token.text);
   }
@@ -351,11 +356,25 @@ ccc.parse.Parser.prototype.processToken_ = function(token) {
     return production;
   }
 
-  if (this.builder_.add(production)) {
+  while (this.builder_.add(production)) {
     var production = this.builder_.build();
     this.builder_ = this.builderStack_.pop();
-    if (goog.isDef(production)) {
+    if (!goog.isDef(production)) {
+      return;
+    }
+    if (goog.isNull(this.builder_)) {
       return production;
     }
   }
+};
+
+
+/**
+ * Pushes the current builder onto the builder stack and switches to a new one.
+ *
+ * @param {!ObjectBuilder_} builder
+ */
+ccc.parse.Parser.prototype.pushBuilder_ = function(builder) {
+  this.builderStack_.push(this.builder_);
+  this.builder_ = builder;
 };

@@ -25,7 +25,7 @@ goog.inherits(ccc.base.Symbol, ccc.base.Object);
 
 /** @override */
 ccc.base.Symbol.prototype.toString = function() {
-  return '\'' + ccc.base.Symbol.escapeName_(this.name_);
+  return ccc.base.Symbol.escapeName_(this.name_);
 };
 
 

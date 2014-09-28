@@ -460,3 +460,94 @@ function testNoExpressionCommentAtEndOfVector() {
     FAIL
   ]);
 }
+
+function testNoExpressionCommentAtEof() {
+  P([
+    OMIT_DATUM()
+  ], [
+    FAIL
+  ])
+}
+
+function testQuote() {
+  P([
+    QUOTE(),
+    SYMBOL('a')
+  ], [
+    E(List_([Symbol_('quote'), Symbol_('a')]))
+  ])
+}
+
+function testListQuote() {
+  P([
+    TRUE(),
+    QUOTE(),
+    OPEN_LIST('('),
+    SYMBOL('a'),
+    SYMBOL('b'),
+    QUOTE(),
+    SYMBOL('c'),
+    CLOSE_FORM(')'),
+    FALSE()
+  ], [
+    E(T),
+    E(List_([Symbol_('quote'),
+            List_([Symbol_('a'),
+                   Symbol_('b'),
+                   List_([Symbol_('quote'), Symbol_('c')])])])),
+    E(F)
+  ]);
+}
+
+function testNestedQuotes() {
+  P([
+    QUOTE(),
+    QUOTE(),
+    QUOTE(),
+    SYMBOL('a')
+  ], [
+    E(List_([Symbol_('quote'),
+             List_([Symbol_('quote'),
+                    List_([Symbol_('quote'),
+                           Symbol_('a')])])]))
+  ]);
+}
+
+function testUnquote() {
+  P([UNQUOTE(), SYMBOL('a')],
+    [E(List_([Symbol_('unquote'), Symbol_('a')]))])
+}
+
+function testUnquoteSplicing() {
+  P([UNQUOTE_SPLICING(), SYMBOL('a')],
+    [E(List_([Symbol_('unquote-splicing'), Symbol_('a')]))])
+}
+
+function testQuasiquote() {
+  P([QUASIQUOTE(), SYMBOL('a')],
+    [E(List_([Symbol_('quasiquote'), Symbol_('a')]))])
+}
+
+function testNoQuoteAtEof() {
+  P([SYMBOL('a'), QUOTE()], [E(Symbol_('a')), FAIL]);
+}
+
+function testNoQuoteAtEndOfList() {
+  P([OPEN_LIST('('), SYMBOL('a'), QUOTE(), CLOSE_FORM(')')],
+    [FAIL]);
+}
+
+function testNoQuoteAtEndOfVector() {
+  P([OPEN_VECTOR('('), SYMBOL('a'), QUOTE(), CLOSE_FORM(')')],
+    [FAIL]);
+}
+
+function testNoQuoteBeforeDot() {
+  P([OPEN_LIST('('), SYMBOL('a'), QUOTE(), DOT(), SYMBOL('b')],
+    [FAIL]);
+}
+
+function testNoQuoteBeforeDottedTail() {
+  P([OPEN_LIST('('), SYMBOL('a'), DOT(), QUOTE(), SYMBOL('b')],
+    [FAIL]);
+}

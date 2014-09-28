@@ -29,7 +29,7 @@ ccc.base.Number.prototype.toString = function() {
 
 
 /** @override */
-ccc.base.Number.prototype.eqv = function(other) {
+ccc.base.Number.prototype.eq = function(other) {
   return other.isNumber() && this.value_ == other.value_;
 };
 

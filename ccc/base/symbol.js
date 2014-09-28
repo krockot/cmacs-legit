@@ -30,7 +30,7 @@ ccc.base.Symbol.prototype.toString = function() {
 
 
 /** @override */
-ccc.base.Symbol.prototype.eqv = function(other) {
+ccc.base.Symbol.prototype.eq = function(other) {
   return other.isSymbol() && this.name_ == other.name_;
 };
 

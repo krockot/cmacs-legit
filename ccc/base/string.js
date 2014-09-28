@@ -30,7 +30,7 @@ ccc.base.String.prototype.toString = function() {
 
 
 /** @override */
-ccc.base.String.prototype.eqv = function(other) {
+ccc.base.String.prototype.eq = function(other) {
   return other.isString() && this.value_ == other.value_;
 };
 

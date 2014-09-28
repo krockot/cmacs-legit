@@ -1,9 +1,7 @@
 Cmacs
 =====
 
-Cmacs is a great mystery.
-
-Welcome, discerning hackers, to the future.
+What is? Nobody know.
 
 Building
 --------

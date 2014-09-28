@@ -39,7 +39,8 @@ a version number instead:
 
     python build/build.py 0.1.2.3
 
-You probably just want a debug build.
+Versioned builds are also good for forcing an advanced compilation pass, which
+will helpfully tell you about some of the horrible things you just broke.
 
 Testing
 -------

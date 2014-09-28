@@ -171,7 +171,7 @@ var RunSingleTest = function(test) {
 
 var RunTests = function(tests) {
   asyncTestCase.waitForAsync();
-  goog.Promise.all(test).then(continueTesting, justFail);
+  goog.Promise.all(tests).then(continueTesting, justFail);
 };
 
 // Tests below this line
@@ -561,4 +561,26 @@ function testNoQuoteBeforeDot() {
 function testNoQuoteBeforeDottedTail() {
   RunSingleTest(S([OPEN_LIST('('), SYMBOL('a'), DOT(), QUOTE(), SYMBOL('b')],
     [FAIL]));
+}
+
+function testEofCases() {
+  RunTests([
+    S([OPEN_LIST('(')], [FAIL]),
+    S([OPEN_VECTOR('[')], [FAIL]),
+    S([QUOTE()], [FAIL]),
+    S([QUASIQUOTE()], [FAIL]),
+    S([UNQUOTE()], [FAIL]),
+    S([UNQUOTE_SPLICING()], [FAIL]),
+    S([CLOSE_FORM('}')], [FAIL]),
+    S([NUMERIC_LITERAL(1)], [E(Number_(1))]),
+    S([CHAR_LITERAL(65)], [E(Char_(65))]),
+    S([SYMBOL('foo')], [E(Symbol_('foo'))]),
+    S([STRING_LITERAL('hello')], [E(String_('hello'))]),
+    S([DOT()], [FAIL]),
+    S([OMIT_DATUM()], [FAIL]),
+    S([TRUE()], [E(T)]),
+    S([FALSE()], [E(F)]),
+    S([UNSPECIFIED()], [E(UNSPEC)]),
+    S([OPEN_LIST('('), OPEN_LIST('['), SYMBOL('a')], [FAIL])
+  ]);
 }

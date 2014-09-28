@@ -33,6 +33,7 @@ function continueTesting() {
 
 function justFail(reason) {
   console.error(reason.stack);
+  continueTesting();
   fail(reason);
 }
 
@@ -236,4 +237,62 @@ function testNestedList() {
         new Pair_(new Pair_(F, new Pair_(new Number_(7), ccc.base.NIL)),
                   ccc.base.NIL))))
   ]);
+}
+
+function testDottedTail() {
+  P([
+    OPEN_LIST('['),
+    NUMERIC_LITERAL(1),
+    NUMERIC_LITERAL(2),
+    DOT(),
+    NUMERIC_LITERAL(3),
+    CLOSE_FORM(']')
+  ], [
+    E(new Pair_(
+        new Number_(1),
+        new Pair_(
+            new Number_(2),
+            new Number_(3)))),
+  ]);
+}
+
+function testMissingClosingBracket() {
+  P([OPEN_LIST('['), TRUE()], [FAIL]);
+}
+
+function testMissingOpeningBracket() {
+  P([TRUE(), CLOSE_FORM(')')], [E(T), FAIL]);
+}
+
+function testBracketMismatch() {
+  P([OPEN_LIST('['), CLOSE_FORM(')')], [FAIL]);
+}
+
+function testNil() {
+  P([OPEN_LIST('['), CLOSE_FORM(']')], [E(NIL)]);
+}
+
+function testNoDottedTailsInOuterSpace() {
+  P([TRUE(), FALSE(), DOT(), TRUE()],
+    [E(T), E(F), FAIL]);
+}
+
+function testNoDottedTailInVector() {
+  P([OPEN_VECTOR('('), TRUE(), FALSE(), DOT(), TRUE(), CLOSE_FORM(')')],
+    [FAIL]);
+}
+
+function testDottedTailMissingTailElement() {
+  P([OPEN_LIST('('), TRUE(), DOT(), CLOSE_FORM(')')],
+    [FAIL]);
+}
+
+function testDottedTailExtraTailElement() {
+  P([OPEN_LIST('('), TRUE(), DOT(), FALSE(), FALSE(), CLOSE_FORM(')')],
+    [FAIL]);
+}
+
+function testDottedTailRequiresHeadElement() {
+  P([OPEN_LIST('('), DOT(), TRUE(), CLOSE_FORM(')')],
+    [FAIL]);
 }

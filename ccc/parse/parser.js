@@ -47,7 +47,7 @@ var ObjectBuilder_ = function(bracketType, build) {
  * @return {!ccc.base.Object}
  */
 ObjectBuilder_.prototype.build = function() {
-  throw new Error('You are making a mistake.');
+  throw new Error('You are making a mistake');
 };
 
 
@@ -100,21 +100,22 @@ VectorBuilder_.prototype.build = function() {
  * @private
  */
 TailBuilder_ = function(targetBuilder) {
-  if (!(targetBuilder instanceof ListBuilder_)) {
-    throw new Error('Invalid dot placement.');
-  }
   goog.base(this, targetBuilder.bracketType);
   this.targetBuilder = targetBuilder;
 };
+goog.inherits(TailBuilder_, ObjectBuilder_);
 
 
 /** @override */
 TailBuilder_.prototype.build = function() {
   if (this.elements.length == 0) {
-    throw new Error('Missing tail element after dot.');
+    throw new Error('Missing tail element after dot');
+  }
+  if (this.targetBuilder.elements.length == 0) {
+    throw new Error('Invalid "." usage');
   }
   if (this.elements.length > 1) {
-    throw new Error('Unexpected object: ' + this.elements[1].toString);
+    throw new Error('Unexpected object ' + this.elements[1].toString);
   }
   this.targetBuilder.tail = this.elements[0];
   return this.targetBuilder.build();
@@ -154,9 +155,14 @@ ccc.parse.Parser = function(tokenReader) {
 /** @override */
 ccc.parse.Parser.prototype.readObject = function() {
   return this.tokenReader_.readToken().then(function(token) {
-    var result = this.processToken_(token);
-    if (goog.isDef(result)) {
-      return result;
+    try {
+      var result = this.processToken_(token);
+      if (goog.isDef(result)) {
+        return result;
+      }
+    } catch (e) {
+      return goog.Promise.reject(new Error(
+          '[Line ' + token.line + ', Col ' + token.column + '] ' + e.message));
     }
     return this.readObject();
   }, null, this);
@@ -176,7 +182,7 @@ ccc.parse.Parser.prototype.processToken_ = function(token) {
 
   if (goog.isNull(token)) {
     if (!goog.isNull(this.builder_))
-      throw new Error('Unexpected end of input.');
+      throw new Error('Unexpected end of input');
     return null;
   }
 
@@ -235,6 +241,12 @@ ccc.parse.Parser.prototype.processToken_ = function(token) {
       this.builder_ = this.builderStack_.pop();
       break;
     case T.DOT:
+      if (goog.isNull(this.builder_) ||
+          !(this.builder_ instanceof ListBuilder_)) {
+        throw new Error('Invalid "." usage');
+      }
+      this.builder_ = new TailBuilder_(this.builder_);
+      break;
     case T.OMIT_DATUM:
     case T.QUOTE:
     case T.UNQUOTE:

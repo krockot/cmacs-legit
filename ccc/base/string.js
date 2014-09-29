@@ -62,10 +62,7 @@ ccc.base.String.escapeValue_ = function(value) {
   var escaped = '';
   for (var i = 0; i < value.length; ++i) {
     var c = value.charAt(i);
-    if (goog.object.containsKey(ccc.base.String.ESCAPE_MAP_, c))
-      escaped += ccc.base.String.ESCAPE_MAP_[c];
-    else
-      escaped += c;
+    escaped += goog.object.get(ccc.base.String.ESCAPE_MAP_, c, c);
   }
   return escaped;
 };

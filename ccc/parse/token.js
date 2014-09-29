@@ -182,10 +182,8 @@ ccc.parse.Token.unescapeString_ = function(text) {
       goog.asserts.assert(!isNaN(value), 'Invalid escape sequence.');
       output += String.fromCharCode(value);
       i += 4;
-    } else if (goog.object.containsKey(ccc.parse.Token.ESCAPES_, e)) {
-      output += ccc.parse.Token.ESCAPES_[e];
     } else {
-      output += e;
+      output += goog.object.get(ccc.parse.Token.ESCAPES_, e, e);
     }
   }
   return output;

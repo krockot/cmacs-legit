@@ -163,6 +163,16 @@ ccc.base.Object.prototype.isVector = function() {
 
 
 /**
+ * Indicates if this object is an Environment.
+ *
+ * @return {boolean}
+ */
+ccc.base.Object.prototype.isEnvironment = function() {
+  return false;
+};
+
+
+/**
  * The global NIL object.
  *
  * @public {!ccc.base.Object}

@@ -1,0 +1,64 @@
+// The Cmacs Project.
+// Copyright forever, the universe.
+
+goog.provide('ccc.base.Environment');
+
+goog.require('ccc.base.Object');
+goog.require('goog.object');
+
+
+
+/**
+ * An Environment provides the evaluation context for an expression. It consists
+ * of an innermost set of bindings and an optional link to a parent environment.
+ *
+ * @param {!ccc.base.Environment=} opt_parent The parent environment.
+ * @constructor
+ * @extends {ccc.base.Object}
+ * @public
+ */
+ccc.base.Environment = function(opt_parent) {
+  /** @private {ccc.base.Environment} */
+  this.parent_ = goog.isDef(opt_parent) ? opt_parent : null;
+
+  /**
+   * The set of active bindings local to this environment.
+   * @private {!Object.<string, !ccc.base.Object>}
+   */
+  this.bindings_ = {};
+};
+
+
+/** @overwrite */
+ccc.base.Environment.prototype.toString = function() {
+  return '#<environment>';
+};
+
+
+/** @overwrite */
+ccc.base.Environment.prototype.isEnvironment = function() {
+  return true;
+};
+
+
+/**
+ * Binds a name to a value in the local frame of this environment.
+ *
+ * @param {string} name
+ * @param {!ccc.base.Object} value
+ */
+ccc.base.Environment.prototype.set = function(name, value) {
+  this.bindings_[name] = value;
+};
+
+
+/**
+ * Gets the value bound to a name or {@code null} if no such binding exists.
+ *
+ * @param {string} name
+ */
+ccc.base.Environment.prototype.get = function(name) {
+  if (goog.object.containsKey(this.bindings_, name)) {
+    return this.bindings_[name];
+  }
+};

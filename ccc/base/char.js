@@ -70,8 +70,9 @@ ccc.base.Char.prototype.stringValue = function() {
  * @return {string}
  */
 ccc.base.Char.getCharName_ = function(value) {
-  if (goog.object.containsKey(ccc.base.Char.CHAR_NAME_MAP_, value)) {
-    return ccc.base.Char.CHAR_NAME_MAP_[value];
+  var charName = goog.object.get(ccc.base.Char.CHAR_NAME_MAP_, value);
+  if (goog.isDef(charName)) {
+    return charName;
   }
   if (value < 16) {
     return 'x0' + value.toString(16);

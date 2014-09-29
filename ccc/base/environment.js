@@ -2,6 +2,8 @@
 // Copyright forever, the universe.
 
 goog.provide('ccc.base.Environment');
+goog.provide('ccc.base.BasicEnvironment');
+goog.provide('ccc.base.StandardEnvironment');
 
 goog.require('ccc.base.Object');
 goog.require('goog.object');
@@ -62,3 +64,37 @@ ccc.base.Environment.prototype.get = function(name) {
     return this.bindings_[name];
   }
 };
+
+
+
+/**
+ * A BasicEnvironment is an Environment with basic builtin syntax keyword
+ * (define, lambda, etc.) bindings.
+ *
+ * @constructor
+ * @extends {ccc.base.Environment}
+ * @public
+ */
+ccc.base.BasicEnvironment = function() {
+  goog.base(this);
+
+  // TODO(krockot): Bind basic syntax keywords.
+};
+goog.inherits(ccc.base.BasicEnvironment, ccc.base.Environment);
+
+
+
+/**
+ * A StandardEnvironment is a BasicEnvironment with the addition of standard
+ * library function bindings.
+ *
+ * @constructor
+ * @extends {ccc.base.BasicEnvironment}
+ * @public
+ */
+ccc.base.StandardEnvironment = function() {
+  goog.base(this);
+
+  // TODO(krockot): Load standard library.
+};
+goog.inherits(ccc.base.StandardEnvironment, ccc.base.BasicEnvironment);

@@ -7,6 +7,7 @@ goog.provide('ccc.base.T');
 goog.provide('ccc.base.UNSPECIFIED');
 goog.provide('ccc.base.Object');
 
+goog.require('goog.Promise');
 
 
 /**
@@ -23,6 +24,7 @@ ccc.base.Object = function() {};
  * display. All derived object types should override this.
  *
  * @return {string}
+ * @public
  */
 ccc.base.Object.prototype.toString = function() {
   return '#<object>';
@@ -34,6 +36,7 @@ ccc.base.Object.prototype.toString = function() {
  *
  * @param {!ccc.base.Object} other
  * @return {boolean}
+ * @public
  */
 ccc.base.Object.prototype.eq = function(other) {
   return this === other;
@@ -45,6 +48,7 @@ ccc.base.Object.prototype.eq = function(other) {
  *
  * @param {!ccc.base.Object} other
  * @return {boolean}
+ * @public
  */
 ccc.base.Object.prototype.eqv = function(other) {
   return this.eq(other);
@@ -56,6 +60,7 @@ ccc.base.Object.prototype.eqv = function(other) {
  *
  * @param {!ccc.base.Other} other
  * @return {boolean}
+ * @public
  */
 ccc.base.Object.prototype.equal = function(other) {
   return this.eqv(other);
@@ -63,9 +68,13 @@ ccc.base.Object.prototype.equal = function(other) {
 
 
 /**
+ * Evaluates this object
+
+/**
  * Indicates if this object is a String.
  *
  * @return {boolean}
+ * @public
  */
 ccc.base.Object.prototype.isString = function() {
   return false;
@@ -76,6 +85,7 @@ ccc.base.Object.prototype.isString = function() {
  * Indicates if this object is the global NIL object.
  *
  * @return {boolean}
+ * @public
  */
 ccc.base.Object.prototype.isNil = function() {
   return false;
@@ -86,6 +96,7 @@ ccc.base.Object.prototype.isNil = function() {
  * Indicates if this object is the global T object.
  *
  * @return {boolean}
+ * @public
  */
 ccc.base.Object.prototype.isTrue = function() {
   return false;
@@ -96,6 +107,7 @@ ccc.base.Object.prototype.isTrue = function() {
  * Indicates if this object is the global F object.
  *
  * @return {boolean}
+ * @public
  */
 ccc.base.Object.prototype.isFalse = function() {
   return false;
@@ -106,6 +118,7 @@ ccc.base.Object.prototype.isFalse = function() {
  * Indicates if this object is the global UNSPECIFIED object.
  *
  * @return {boolean}
+ * @public
  */
 ccc.base.Object.prototype.isUnspecified = function() {
   return false;
@@ -116,6 +129,7 @@ ccc.base.Object.prototype.isUnspecified = function() {
  * Indicates if this object is a Symbol.
  *
  * @return {boolean}
+ * @public
  */
 ccc.base.Object.prototype.isSymbol = function() {
   return false;
@@ -126,6 +140,7 @@ ccc.base.Object.prototype.isSymbol = function() {
  * Indicates if this object is a Char.
  *
  * @return {boolean}
+ * @public
  */
 ccc.base.Object.prototype.isChar = function() {
   return false;
@@ -136,6 +151,7 @@ ccc.base.Object.prototype.isChar = function() {
  * Indicates if this object is a Number.
  *
  * @return {boolean}
+ * @public
  */
 ccc.base.Object.prototype.isNumber = function() {
   return false;
@@ -146,6 +162,7 @@ ccc.base.Object.prototype.isNumber = function() {
  * Indicates if this object is a Pair.
  *
  * @return {boolean}
+ * @public
  */
 ccc.base.Object.prototype.isPair = function() {
   return false;
@@ -156,6 +173,7 @@ ccc.base.Object.prototype.isPair = function() {
  * Indicates if this object is a Vector.
  *
  * @return {boolean}
+ * @public
  */
 ccc.base.Object.prototype.isVector = function() {
   return false;
@@ -166,9 +184,50 @@ ccc.base.Object.prototype.isVector = function() {
  * Indicates if this object is an Environment.
  *
  * @return {boolean}
+ * @public
  */
 ccc.base.Object.prototype.isEnvironment = function() {
   return false;
+};
+
+
+/**
+ * Indicates if this object is applicable (i.e. callable with {@code apply}).
+ *
+ * @return {boolean}
+ * @public
+ */
+ccc.base.Object.prototype.isApplicable = function() {
+  return false;
+};
+
+
+/**
+ * Apply this object. Should only be called if {@code isApplicable} returns
+ * {@code true}.
+ *
+ * @param {!ccc.base.Environment} environment The environment in which this
+ *     object application is to be initiated.
+ * @param {!ccc.base.Object} args The arguments to apply.
+ * @return {!goog.Promise.<!ccc.base.Object>}
+ * @public
+ */
+ccc.base.Object.prototype.apply = function(environment, args) {
+  return goog.Promise.reject(new Error('Object is not applicable.'));
+};
+
+
+/**
+ * Evaluate this object.
+ *
+ * @param {!ccc.base.Environment} environment The environment in which this
+ *     object should be evaluated.
+ * @return {!goog.Promise.<!ccc.base.Object>}
+ * @public
+ */
+ccc.base.Object.prototype.eval = function(environment) {
+  return goog.Promise.reject(
+      new Error('Object ' + this.toString() + ' cannot be evaluated.'));
 };
 
 
@@ -181,10 +240,18 @@ ccc.base.Object.prototype.isEnvironment = function() {
 ccc.base.NIL = new ccc.base.Object();
 
 
+/** @override */
 ccc.base.NIL.toString = function() { return '()'; };
 
 
+/** @override */
 ccc.base.NIL.isNil = function() { return true; };
+
+
+/** @override */
+ccc.base.NIL.eval = function(environment) {
+  return goog.Promise.resolve(this);
+};
 
 
 /**
@@ -196,10 +263,18 @@ ccc.base.NIL.isNil = function() { return true; };
 ccc.base.UNSPECIFIED = new ccc.base.Object();
 
 
+/** @override */
 ccc.base.UNSPECIFIED.toString = function() { return '#?'; };
 
 
+/** @override */
 ccc.base.UNSPECIFIED.isUnspecified = function() { return true; };
+
+
+/** @override */
+ccc.base.UNSPECIFIED.eval = function(environment) {
+  return goog.Promise.resolve(this);
+};
 
 
 /**
@@ -211,10 +286,16 @@ ccc.base.UNSPECIFIED.isUnspecified = function() { return true; };
 ccc.base.T = new ccc.base.Object();
 
 
+/** @override */
 ccc.base.T.toString = function() { return '#t'; };
 
 
+/** @override */
 ccc.base.T.isTrue = function() { return true; };
+
+
+/** @override */
+ccc.base.T.eval = function(environment) { return goog.Promise.resolve(this); };
 
 
 /**
@@ -226,7 +307,13 @@ ccc.base.T.isTrue = function() { return true; };
 ccc.base.F = new ccc.base.Object();
 
 
+/** @override */
 ccc.base.F.toString = function() { return '#f'; };
 
 
+/** @override */
 ccc.base.F.isFalse = function() { return true; };
+
+
+/** @override */
+ccc.base.F.eval = function(environment) { return goog.Promise.resolve(this); };

@@ -4,6 +4,7 @@
 goog.provide('ccc.base.Symbol');
 
 goog.require('ccc.base.Object');
+goog.require('goog.Promise');
 goog.require('goog.object');
 
 
@@ -48,6 +49,12 @@ ccc.base.Symbol.prototype.isSymbol = function() {
  */
 ccc.base.Symbol.prototype.name = function() {
   return this.name_;
+};
+
+
+/** @override */
+ccc.base.Symbol.prototype.eval = function(environment) {
+  return goog.Promise.reject('NYI');
 };
 
 

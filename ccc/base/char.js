@@ -4,6 +4,7 @@
 goog.provide('ccc.base.Char');
 
 goog.require('ccc.base.Object');
+goog.require('goog.Promise');
 goog.require('goog.object');
 
 
@@ -58,6 +59,12 @@ ccc.base.Char.prototype.value = function() {
  */
 ccc.base.Char.prototype.stringValue = function() {
   return String.fromCharCode(this.value());
+};
+
+
+/** @override */
+ccc.base.Char.prototype.eval = function(environment) {
+  return goog.Promise.resolve(this);
 };
 
 

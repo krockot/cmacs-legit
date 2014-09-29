@@ -47,14 +47,9 @@ Testing
 
 Once everything is built, you can run the test server:
 
-    python out/test/test_server.py
+    python test/test_server.py
 
-This will serve JsUnit tests over HTTP on port 4444. Any changes which affect
-dependencies may require a rebuild, but otherwise test pages can be reloaded
-to reflect the current state of the local source tree.
+This will serve JsUnit tests over HTTP on port 4444.
 
-The root path of the test server serves a list of links to individual test
-modules.
-
-The test server needs to be restarted if its source is changed or the set
-of extant test modules has changed.
+You need to rebuild if you add a new test suite, but the test server can run
+continuously.

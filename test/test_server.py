@@ -18,13 +18,14 @@ class RequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     _, ext = os.path.splitext(filename)
     test_script_path = os.path.dirname(os.path.abspath(inspect.getfile(
         inspect.currentframe())))
-    root_path = os.path.dirname(os.path.dirname(test_script_path))
-    # First try to locate the file in the project root, so we can fetch an
-    # updated copy without requiring a rebuild.
+    root_path = os.path.dirname(test_script_path)
+    out_path = os.path.join(root_path, 'out')
+    # First try to locate the file in the project root, then fall back
+    # on the output path.
     try:
       file_path = os.path.join(root_path, self.path[1:])
       if not os.path.isfile(file_path):
-        file_path = os.path.join(test_script_path, self.path[1:])
+        file_path = os.path.join(out_path, 'test', self.path[1:])
       with open(file_path) as file:
         self.send_response(200)
         self.send_header('Content-type', mimetypes.types_map[ext])

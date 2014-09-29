@@ -46,7 +46,9 @@ def _InitializeOutput(app_path, test_path, out_path):
   app_out_path = os.path.join(out_path, 'app')
   test_out_path = os.path.join(out_path, 'test')
   shutil.copytree(app_path, app_out_path)
-  shutil.copytree(test_path, test_out_path);
+  os.mkdir(test_out_path)
+  shutil.copy(os.path.join(test_path, 'index.html'),
+              os.path.join(test_out_path, 'index.html'));
 
 
 def _FindTarget(predicate):
@@ -128,7 +130,6 @@ def _BuildJsOutputs(src_paths, externs, out_path, debug, closure_library_root):
 
 def _BuildTestSuite(src_paths, out_path, closure_library_root):
   closure_copy = os.path.join(out_path, 'closure')
-  src_copies = []
 
   def ignore_dot_files(d, files):
     return [f for f in files if f.startswith('.')]

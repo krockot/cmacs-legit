@@ -4,6 +4,7 @@
 goog.provide('ccc.base.EvaluatorTest');
 goog.setTestOnly('ccc.parse.EvaluatorTest');
 
+goog.require('ccc.base.Environment');
 goog.require('ccc.base.Evaluator');
 goog.require('ccc.base.Char');
 goog.require('ccc.base.F');
@@ -35,9 +36,9 @@ function justFail(reason) {
 }
 
 // Single evaluator test. Takes an input object and an expected output object.
-function E(input, expectedOutput) {
+function E(input, expectedOutput, opt_environment) {
   return new goog.Promise(function(resolve, reject) {
-    var evaluator = new ccc.base.Evaluator();
+    var evaluator = new ccc.base.Evaluator(opt_environment);
     evaluator.eval(input).then(function(result) {
       if (result.equal(expectedOutput))
         resolve(null);
@@ -71,5 +72,15 @@ function testSelfEvaluators() {
     E(ccc.base.F, ccc.base.F),
     E(ccc.base.NIL, ccc.base.NIL),
     E(ccc.base.UNSPECIFIED, ccc.base.UNSPECIFIED)
+  ]);
+}
+
+function testSymbolLookup() {
+  var environment = new ccc.base.Environment();
+  environment.set('answer', new ccc.base.Number(42));
+  environment.set('question', ccc.base.UNSPECIFIED);
+  RunTests([
+    E(new ccc.base.Symbol('answer'), new ccc.base.Number(42), environment),
+    E(new ccc.base.Symbol('question'), ccc.base.UNSPECIFIED, environment)
   ]);
 }

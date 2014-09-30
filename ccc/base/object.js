@@ -203,12 +203,36 @@ ccc.base.Object.prototype.isApplicable = function() {
 
 
 /**
+ * Indicates if this object is a Transformer.
+ *
+ * @return {boolean}
+ * @public
+ */
+ccc.base.Object.prototype.isTransformer = function() {
+  return false;
+};
+
+
+/**
+ * Compile this object.
+ *
+ * @param {!ccc.base.Environment} environment The environment in which this
+ *     object is to be compiled.
+ * @return {!goog.Promise.<!ccc.base.Object>}
+ */
+ccc.base.Object.prototype.compile = function(environment) {
+  return goog.Promise.resolve(this);
+};
+
+
+/**
  * Apply this object. Should only be called if {@code isApplicable} returns
  * {@code true}.
  *
  * @param {!ccc.base.Environment} environment The environment in which this
  *     object application is to be initiated.
- * @param {!ccc.base.Object} args The arguments to apply.
+ * @param {!ccc.base.Object} args The arguments to apply. Guaranteed to be
+ *     either a Pair or NIL.
  * @return {!goog.Promise.<!ccc.base.Object>}
  * @public
  */

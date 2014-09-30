@@ -6,6 +6,7 @@ goog.provide('ccc.base.BasicEnvironment');
 goog.provide('ccc.base.StandardEnvironment');
 
 goog.require('ccc.base.Object');
+goog.require('ccc.syntax.Define');
 goog.require('goog.object');
 
 
@@ -60,9 +61,7 @@ ccc.base.Environment.prototype.set = function(name, value) {
  * @param {string} name
  */
 ccc.base.Environment.prototype.get = function(name) {
-  if (goog.object.containsKey(this.bindings_, name)) {
-    return this.bindings_[name];
-  }
+  return goog.object.get(this.bindings_, name, null);
 };
 
 
@@ -78,7 +77,7 @@ ccc.base.Environment.prototype.get = function(name) {
 ccc.base.BasicEnvironment = function() {
   goog.base(this);
 
-  // TODO(krockot): Bind basic syntax keywords.
+  this.set('define', new ccc.syntax.Define());
 };
 goog.inherits(ccc.base.BasicEnvironment, ccc.base.Environment);
 

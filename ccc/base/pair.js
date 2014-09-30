@@ -3,6 +3,7 @@
 
 goog.provide('ccc.base.Pair');
 
+goog.require('ccc.base.NIL');
 goog.require('ccc.base.Object');
 
 
@@ -87,4 +88,21 @@ ccc.base.Pair.prototype.car = function() {
  */
 ccc.base.Pair.prototype.cdr = function() {
   return this.cdr_;
+};
+
+
+/**
+ * Creates a nested Pair sequence to represent a list of objects with an
+ * optional non-NIL tail.
+ *
+ * @param {!Array.<!ccc.base.Object>} objects
+ * @param {!ccc.base.Object=} opt_tail
+ * @return {!ccc.base.Object}
+ */
+ccc.base.Pair.makeList = function(objects, opt_tail) {
+  var list = goog.isDef(opt_tail) ? opt_tail : ccc.base.NIL;
+  for (var i = objects.length - 1; i >= 0; --i) {
+    list = new ccc.base.Pair(objects[i], list);
+  }
+  return list;
 };

@@ -15,6 +15,7 @@ goog.require('ccc.base.String');
 goog.require('ccc.base.Symbol');
 goog.require('ccc.base.T');
 goog.require('ccc.base.UNSPECIFIED');
+goog.require('ccc.base.Vector');
 goog.require('goog.Promise');
 goog.require('goog.testing.AsyncTestCase');
 goog.require('goog.testing.jsunit');
@@ -71,7 +72,9 @@ function testSelfEvaluators() {
     E(ccc.base.T, ccc.base.T),
     E(ccc.base.F, ccc.base.F),
     E(ccc.base.NIL, ccc.base.NIL),
-    E(ccc.base.UNSPECIFIED, ccc.base.UNSPECIFIED)
+    E(ccc.base.UNSPECIFIED, ccc.base.UNSPECIFIED),
+    E(new ccc.base.Vector([ccc.base.T, ccc.base.F]),
+      new ccc.base.Vector([ccc.base.T, ccc.base.F]))
   ]);
 }
 

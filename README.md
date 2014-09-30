@@ -51,5 +51,5 @@ Once everything is built, you can run the test server:
 
 This will serve JsUnit tests over HTTP on port 4444.
 
-You need to rebuild if you add a new test suite, but the test server can run
+You need to rebuild if you add a new test suite or change dependencies, but the test server can run
 continuously.

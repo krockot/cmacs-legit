@@ -5,6 +5,7 @@ goog.provide('ccc.syntax.Set');
 
 goog.require('ccc.base.NativeProcedure');
 goog.require('ccc.base.Pair');
+goog.require('ccc.base.Symbol');
 goog.require('ccc.base.Transformer');
 goog.require('ccc.base.UNSPECIFIED');
 
@@ -30,23 +31,6 @@ ccc.syntax.Set.prototype.toString = function() {
 
 /** @override */
 ccc.syntax.Set.prototype.transform = function(environment, args) {
-  return goog.Promise.resolve(
-      new ccc.base.Pair(
-          new ccc.base.NativeProcedure(ccc.syntax.Set.nativeImpl_),
-          args));
-};
-
-
-/**
- * Binds the value of the second argument to the symbol named by the first
- * argument. The binding nearest to the current environment is used.
- *
- * @param {!ccc.base.Environment} environment
- * @param {!ccc.base.Object} args
- * @return {!goog.Promise.<!ccc.base.Object>}
- * @private
- */
-ccc.syntax.Set.nativeImpl_ = function(environment, args) {
   if (!args.isPair())
     return goog.Promise.reject('set!: Invalid argument list');
   if (!args.car().isSymbol())
@@ -55,9 +39,28 @@ ccc.syntax.Set.nativeImpl_ = function(environment, args) {
     return goog.Promise.reject('set!: Missing binding value');
   if (!args.cdr().cdr().isNil())
     return goog.Promise.reject('set!: Too many arguments');
-  if (!environment.update(args.car().name(), args.cdr().car())) {
-    return goog.Promise.reject('Cannot update binding for ubound symbol \'' +
-        args.car().name());
+  return goog.Promise.resolve(
+      new ccc.base.Pair(
+          new ccc.base.NativeProcedure(
+              goog.partial(ccc.syntax.Set.updateBinding_, args.car())),
+          args.cdr()));
+};
+
+
+/**
+ * Updates the binding of the symbol named by the first argument to the value of
+ * the second argument. The binding nearest to the current environment is used.
+ *
+ * @param {!ccc.base.Symbol} symbol
+ * @param {!ccc.base.Environment} environment
+ * @param {!ccc.base.Object} args
+ * @return {!goog.Promise.<!ccc.base.Object>}
+ * @private
+ */
+ccc.syntax.Set.updateBinding_ = function(symbol, environment, args) {
+  if (!environment.update(symbol, args.car())) {
+    return goog.Promise.reject('Cannot update binding for unbound symbol \'' +
+        symbol.name());
   }
   return goog.Promise.resolve(ccc.base.UNSPECIFIED);
 };

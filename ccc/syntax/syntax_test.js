@@ -51,7 +51,30 @@ function testDefine() {
       continueTesting();
     }, fail);
   }, fail);
-};
+}
+
+function testBadDefineSyntax() {
+  asyncTestCase.waitForAsync();
+  var environment = new ccc.base.BasicEnvironment();
+  var transformer = new ccc.syntax.Define();
+  var symbol = new ccc.base.Symbol('bananas');
+
+  // Define with no arguments: FAIL!
+  transformer.transform(environment, ccc.base.NIL).then(justFail).thenCatch(
+    function() {
+      // Define with only a symbol argument: FAIL!
+      return transformer.transform(environment, ccc.base.Pair.makeList([
+          symbol]));
+  }).then(justFail).thenCatch(function() {
+    // Define a non-symbol first argument: FAIL!
+    return transformer.transform(environment, ccc.base.Pair.makeList([
+        ccc.base.T, ccc.base.T]));
+  }).then(justFail).thenCatch(function() {
+    // Define with too many arguments: FAIL!
+    return transformer.transform(environment, ccc.base.Pair.makeList([
+        symbol, ccc.base.T, ccc.base.T]));
+  }).then(justFail).thenCatch(continueTesting);
+}
 
 function testSet() {
   asyncTestCase.waitForAsync();
@@ -84,6 +107,29 @@ function testSet() {
       });
     });
   });
+}
+
+function testBadSetSyntax() {
+  asyncTestCase.waitForAsync();
+  var environment = new ccc.base.BasicEnvironment();
+  var transformer = new ccc.syntax.Set();
+  var symbol = new ccc.base.Symbol('catpants');
+
+  // Set with no arguments: FAIL!
+  transformer.transform(environment, ccc.base.NIL).then(justFail).thenCatch(
+    function() {
+      // Set with only a symbol argument: FAIL!
+      return transformer.transform(environment, ccc.base.Pair.makeList([
+          symbol]));
+  }).then(justFail).thenCatch(function() {
+    // Set a non-symbol first argument: FAIL!
+    return transformer.transform(environment, ccc.base.Pair.makeList([
+        ccc.base.T, ccc.base.T]));
+  }).then(justFail).thenCatch(function() {
+    // Set with too many arguments: FAIL!
+    return transformer.transform(environment, ccc.base.Pair.makeList([
+        symbol, ccc.base.T, ccc.base.T]));
+  }).then(justFail).thenCatch(continueTesting);
 }
 
 function testIfTrue() {
@@ -129,9 +175,6 @@ function testBadIfSyntax() {
   asyncTestCase.waitForAsync();
   var environment = new ccc.base.BasicEnvironment();
   var ifTransformer = new ccc.syntax.If();
-  var rejectSuccess = function(result) {
-    justFail('Expected failure, but got success with ' + result.toString());
-  };
 
   // If with no arguments: FAIL!
   ifTransformer.transform(environment, ccc.base.NIL).then(justFail).thenCatch(
@@ -139,13 +182,13 @@ function testBadIfSyntax() {
       // If with only a condition: FAIL!
       return ifTransformer.transform(environment, ccc.base.Pair.makeList([
           ccc.base.T]));
-  }).then(rejectSuccess).thenCatch(function() {
+  }).then(justFail).thenCatch(function() {
     // If with too many arguments: FAIL!
     return ifTransformer.transform(environment, ccc.base.Pair.makeList([
         ccc.base.T, ccc.base.T, ccc.base.T, ccc.base.T]));
-  }).then(rejectSuccess).thenCatch(function() {
+  }).then(justFail).thenCatch(function() {
     // If with weird improper list: DEFINITELY FAIL!
     return ifTransformer.transform(environment, ccc.base.Pair.makeList([
         ccc.base.T, ccc.base.T], ccc.base.T));
-  }).then(rejectSuccess).thenCatch(continueTesting);
+  }).then(justFail).thenCatch(continueTesting);
 }

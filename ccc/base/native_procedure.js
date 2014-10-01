@@ -20,6 +20,7 @@ ccc.base.NativeProcedure = function(nativeFunction) {
   /** @private {ccc.base.NativeProcedure.FunctionType} */
   this.nativeFunction_ = nativeFunction;
 };
+goog.inherits(ccc.base.NativeProcedure, ccc.base.Object);
 
 
 

@@ -5,6 +5,7 @@ goog.provide('ccc.syntax.Quote');
 
 goog.require('ccc.base.Object');
 goog.require('ccc.base.Symbol');
+goog.require('goog.Promise');
 
 
 

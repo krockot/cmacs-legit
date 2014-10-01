@@ -12,8 +12,10 @@ goog.require('ccc.base.Symbol');
 goog.require('ccc.base.UNSPECIFIED');
 goog.require('ccc.syntax.Define');
 goog.require('ccc.syntax.If');
+goog.require('ccc.syntax.Lambda');
 goog.require('ccc.syntax.Quote');
 goog.require('ccc.syntax.Set');
+goog.require('goog.Promise');
 goog.require('goog.testing.AsyncTestCase');
 goog.require('goog.testing.jsunit');
 
@@ -206,3 +208,24 @@ function testBadQuoteSyntax() {
         return quote.transform(environment, List([ccc.base.T, ccc.base.T]));
   }).then(justFail).thenCatch(continueTesting);
 }
+
+function testSimpleLambda() {
+  asyncTestCase.waitForAsync();
+  var environment = new ccc.base.BasicEnvironment();
+  var transformer = new ccc.syntax.Lambda();
+  var formals = ccc.base.NIL;
+  var body = List([ccc.base.T, new ccc.base.Number(42)]);
+  var args = List([formals], body);
+  transformer.transform(environment, args).then(function(lambda) {
+    return lambda.car().apply(environment, ccc.base.NIL).then(function(result) {
+      assertNotNull(result);
+      assert(result.isProcedure());
+      result.apply(environment, ccc.base.NIL).then(function(result) {
+        assertNotNull(result);
+        assert(result.isNumber());
+        assertEquals(42, result.value());
+      });
+    });
+  }).then(continueTesting);
+}
+

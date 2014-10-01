@@ -32,7 +32,8 @@ function continueTesting() {
 }
 
 function justFail(reason) {
-  console.error(new Error(reason));
+  asyncTestCase.continueTesting();
+  console.error(goog.isDef(reason.stack) ? reason.stack : reason);
   fail(reason);
 }
 

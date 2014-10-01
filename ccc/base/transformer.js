@@ -4,6 +4,7 @@
 goog.provide('ccc.base.Transformer');
 
 goog.require('ccc.base.Object');
+goog.require('goog.Promise');
 
 
 
@@ -16,6 +17,7 @@ goog.require('ccc.base.Object');
  */
 ccc.base.Transformer = function() {
 };
+goog.inherits(ccc.base.Transformer, ccc.base.Object);
 
 
 /** @override */

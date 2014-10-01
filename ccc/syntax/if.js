@@ -9,6 +9,7 @@ goog.require('ccc.base.Object');
 goog.require('ccc.base.Pair');
 goog.require('ccc.base.Transformer');
 goog.require('ccc.base.UNSPECIFIED');
+goog.require('goog.Promise');
 
 
 

@@ -8,6 +8,7 @@ goog.provide('ccc.base.StandardEnvironment');
 goog.require('ccc.base.Object');
 goog.require('ccc.syntax.Define');
 goog.require('ccc.syntax.If');
+goog.require('ccc.syntax.Lambda');
 goog.require('ccc.syntax.Quote');
 goog.require('ccc.syntax.Set');
 goog.require('goog.object');
@@ -33,6 +34,7 @@ ccc.base.Environment = function(opt_parent) {
    */
   this.bindings_ = {};
 };
+goog.inherits(ccc.base.Environment, ccc.base.Object);
 
 
 /** @overwrite */
@@ -102,6 +104,8 @@ ccc.base.BasicEnvironment = function() {
 
   this.set('define', new ccc.syntax.Define());
   this.set('if', new ccc.syntax.If());
+  this.set('lambda', new ccc.syntax.Lambda());
+  this.set('λ', new ccc.syntax.Lambda());
   this.set('quote', new ccc.syntax.Quote());
   this.set('set!', new ccc.syntax.Set());
 };

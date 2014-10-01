@@ -192,6 +192,17 @@ ccc.base.Object.prototype.isEnvironment = function() {
 
 
 /**
+ * Indicates if this object is a compiled Procedure.
+ *
+ * @return {boolean}
+ * @public
+ */
+ccc.base.Object.prototype.isProcedure = function() {
+  return false;
+};
+
+
+/**
  * Indicates if this object is applicable (i.e. callable with {@code apply}).
  *
  * @return {boolean}

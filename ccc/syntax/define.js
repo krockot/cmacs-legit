@@ -37,6 +37,8 @@ ccc.syntax.Define.prototype.transform = function(environment, args) {
     return goog.Promise.reject('define: Symbol expected in first argument');
   if (args.cdr().isNil())
     return goog.Promise.reject('define: Missing binding value');
+  if (!args.cdr().isPair())
+    return goog.Promise.reject('define: Invalid syntax');
   if (!args.cdr().cdr().isNil())
     return goog.Promise.reject('define: Too many arguments');
   return goog.Promise.resolve(

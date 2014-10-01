@@ -11,6 +11,7 @@ goog.require('ccc.base.String');
 goog.require('ccc.base.Symbol');
 goog.require('ccc.base.UNSPECIFIED');
 goog.require('ccc.syntax.Define');
+goog.require('ccc.syntax.If');
 goog.require('ccc.syntax.Set');
 goog.require('goog.testing.AsyncTestCase');
 goog.require('goog.testing.jsunit');
@@ -20,12 +21,18 @@ var asyncTestCase = goog.testing.AsyncTestCase.createAndInstall(document.title);
 
 function setUpPage() {
   asyncTestCase.stepTimeout = 100;
+
+  goog.Promise.setUnhandledRejectionHandler(justFail);
+}
+
+function continueTesting() {
+  asyncTestCase.continueTesting();
 }
 
 function justFail(reason) {
-  console.error(reason.stack);
+  console.error(goog.isDef(reason.stack) ? reason.stack : reason);
+  continueTesting();
   fail(reason);
-  asyncTestCase.continueTesting();
 }
 
 function testDefine() {
@@ -41,7 +48,7 @@ function testDefine() {
       assertNotNull(foo);
       assert(foo.isNumber());
       assertEquals(42, foo.value());
-      asyncTestCase.continueTesting();
+      continueTesting();
     }, fail);
   }, fail);
 };
@@ -72,9 +79,73 @@ function testSet() {
           assertNotNull(foo);
           assert(foo.isNumber());
           assertEquals(42, foo.value());
-          asyncTestCase.continueTesting();
-        }, justFail);
-      }, justFail);
-    }, justFail);
-  }, justFail);
+          continueTesting();
+        });
+      });
+    });
+  });
+}
+
+function testIfTrue() {
+  asyncTestCase.waitForAsync();
+  var environment = new ccc.base.BasicEnvironment();
+  var ifTransformer = new ccc.syntax.If();
+  var ifArgs = ccc.base.Pair.makeList([ccc.base.NIL, ccc.base.T]);
+  ifTransformer.transform(environment, ifArgs).then(function(if_) {
+    return if_.car().apply(environment, ifArgs).then(function(result) {
+      assertEquals(ccc.base.T, result);
+      continueTesting();
+    });
+  });
+}
+
+function testIfFalse() {
+  asyncTestCase.waitForAsync();
+  var environment = new ccc.base.BasicEnvironment();
+  var ifTransformer = new ccc.syntax.If();
+  var ifArgs = ccc.base.Pair.makeList([ccc.base.F, ccc.base.T, ccc.base.NIL]);
+  ifTransformer.transform(environment, ifArgs).then(function(if_) {
+    return if_.car().apply(environment, ifArgs).then(function(result) {
+      assertEquals(ccc.base.NIL, result);
+      continueTesting();
+    });
+  });
+}
+
+function testIfFalseWithNoAlternate() {
+  asyncTestCase.waitForAsync();
+  var environment = new ccc.base.BasicEnvironment();
+  var ifTransformer = new ccc.syntax.If();
+  var ifArgs = ccc.base.Pair.makeList([ccc.base.F, ccc.base.T]);
+  ifTransformer.transform(environment, ifArgs).then(function(if_) {
+    return if_.car().apply(environment, ifArgs).then(function(result) {
+      assertEquals(ccc.base.UNSPECIFIED, result);
+      continueTesting();
+    });
+  });
+}
+
+function testBadIfSyntax() {
+  asyncTestCase.waitForAsync();
+  var environment = new ccc.base.BasicEnvironment();
+  var ifTransformer = new ccc.syntax.If();
+  var rejectSuccess = function(result) {
+    justFail('Expected failure, but got success with ' + result.toString());
+  };
+
+  // If with no arguments: FAIL!
+  ifTransformer.transform(environment, ccc.base.NIL).then(justFail).thenCatch(
+    function() {
+      // If with only a condition: FAIL!
+      return ifTransformer.transform(environment, ccc.base.Pair.makeList([
+          ccc.base.T]));
+  }).then(rejectSuccess).thenCatch(function() {
+    // If with too many arguments: FAIL!
+    return ifTransformer.transform(environment, ccc.base.Pair.makeList([
+        ccc.base.T, ccc.base.T, ccc.base.T, ccc.base.T]));
+  }).then(rejectSuccess).thenCatch(function() {
+    // If with weird improper list: DEFINITELY FAIL!
+    return ifTransformer.transform(environment, ccc.base.Pair.makeList([
+        ccc.base.T, ccc.base.T], ccc.base.T));
+  }).then(rejectSuccess).thenCatch(continueTesting);
 }

@@ -37,6 +37,8 @@ ccc.syntax.Set.prototype.transform = function(environment, args) {
     return goog.Promise.reject('set!: Symbol expected in first argument');
   if (args.cdr().isNil())
     return goog.Promise.reject('set!: Missing binding value');
+  if (!args.cdr().isPair())
+    return goog.Promise.reject('set!: Invalid syntax');
   if (!args.cdr().cdr().isNil())
     return goog.Promise.reject('set!: Too many arguments');
   return goog.Promise.resolve(

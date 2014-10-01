@@ -7,6 +7,7 @@ goog.provide('ccc.base.StandardEnvironment');
 
 goog.require('ccc.base.Object');
 goog.require('ccc.syntax.Define');
+goog.require('ccc.syntax.If');
 goog.require('ccc.syntax.Set');
 goog.require('goog.object');
 
@@ -99,6 +100,7 @@ ccc.base.BasicEnvironment = function() {
   goog.base(this);
 
   this.set('define', new ccc.syntax.Define());
+  this.set('if', new ccc.syntax.If());
   this.set('set!', new ccc.syntax.Set());
 };
 goog.inherits(ccc.base.BasicEnvironment, ccc.base.Environment);

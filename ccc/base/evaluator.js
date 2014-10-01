@@ -4,7 +4,6 @@
 goog.provide('ccc.base.Evaluator');
 
 goog.require('ccc.base.Environment');
-goog.require('ccc.base.StandardEnvironment');
 goog.require('ccc.base.Object');
 goog.require('goog.Promise');
 
@@ -23,7 +22,7 @@ ccc.base.Evaluator = function(opt_environment) {
   /** {!ccc.base.Environment} */
   this.environment_ = (goog.isDef(opt_environment)
       ? opt_environment
-      : new ccc.base.StandardEnvironment());
+      : new ccc.base.Environment());
 };
 
 

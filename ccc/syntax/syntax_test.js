@@ -4,7 +4,7 @@
 goog.provide('ccc.syntax.SyntaxTests');
 goog.setTestOnly('ccc.syntax.SyntaxTests');
 
-goog.require('ccc.base.BasicEnvironment');
+goog.require('ccc.base.Environment');
 goog.require('ccc.base.Number');
 goog.require('ccc.base.Pair');
 goog.require('ccc.base.String');
@@ -41,7 +41,7 @@ function justFail(reason) {
 
 function testDefine() {
   asyncTestCase.waitForAsync();
-  var environment = new ccc.base.BasicEnvironment();
+  var environment = new ccc.base.Environment();
   var args = List([new ccc.base.Symbol('foo'), new ccc.base.Number(42)]);
   var transformer = new ccc.syntax.Define();
   transformer.transform(environment, args).then(function(define) {
@@ -57,7 +57,7 @@ function testDefine() {
 
 function testBadDefineSyntax() {
   asyncTestCase.waitForAsync();
-  var environment = new ccc.base.BasicEnvironment();
+  var environment = new ccc.base.Environment();
   var transformer = new ccc.syntax.Define();
   var symbol = new ccc.base.Symbol('bananas');
 
@@ -78,7 +78,7 @@ function testBadDefineSyntax() {
 
 function testSet() {
   asyncTestCase.waitForAsync();
-  var environment = new ccc.base.BasicEnvironment();
+  var environment = new ccc.base.Environment();
   var defineArgs = List([new ccc.base.Symbol('foo'), new ccc.base.Number(41)]);
   var setArgs = List([new ccc.base.Symbol('foo'), new ccc.base.Number(42)]);
   var setTransformer = new ccc.syntax.Set();
@@ -110,7 +110,7 @@ function testSet() {
 
 function testBadSetSyntax() {
   asyncTestCase.waitForAsync();
-  var environment = new ccc.base.BasicEnvironment();
+  var environment = new ccc.base.Environment();
   var transformer = new ccc.syntax.Set();
   var symbol = new ccc.base.Symbol('catpants');
 
@@ -131,7 +131,7 @@ function testBadSetSyntax() {
 
 function testIfTrue() {
   asyncTestCase.waitForAsync();
-  var environment = new ccc.base.BasicEnvironment();
+  var environment = new ccc.base.Environment();
   var ifTransformer = new ccc.syntax.If();
   var ifArgs = List([ccc.base.NIL, ccc.base.T]);
   ifTransformer.transform(environment, ifArgs).then(function(if_) {
@@ -143,7 +143,7 @@ function testIfTrue() {
 
 function testIfFalse() {
   asyncTestCase.waitForAsync();
-  var environment = new ccc.base.BasicEnvironment();
+  var environment = new ccc.base.Environment();
   var ifTransformer = new ccc.syntax.If();
   var ifArgs = List([ccc.base.F, ccc.base.T, ccc.base.NIL]);
   ifTransformer.transform(environment, ifArgs).then(function(if_) {
@@ -155,7 +155,7 @@ function testIfFalse() {
 
 function testIfFalseWithNoAlternate() {
   asyncTestCase.waitForAsync();
-  var environment = new ccc.base.BasicEnvironment();
+  var environment = new ccc.base.Environment();
   var ifTransformer = new ccc.syntax.If();
   var ifArgs = List([ccc.base.F, ccc.base.T]);
   ifTransformer.transform(environment, ifArgs).then(function(if_) {
@@ -167,7 +167,7 @@ function testIfFalseWithNoAlternate() {
 
 function testBadIfSyntax() {
   asyncTestCase.waitForAsync();
-  var environment = new ccc.base.BasicEnvironment();
+  var environment = new ccc.base.Environment();
   var ifTransformer = new ccc.syntax.If();
 
   // If with no arguments: FAIL!
@@ -188,7 +188,7 @@ function testBadIfSyntax() {
 
 function testQuote() {
   asyncTestCase.waitForAsync();
-  var environment = new ccc.base.BasicEnvironment();
+  var environment = new ccc.base.Environment();
   var transformer = new ccc.syntax.Quote();
   var list = List([ccc.base.T, ccc.base.F, ccc.base.NIL]);
   transformer.transform(environment, List([list])).then(function(quote) {
@@ -201,7 +201,7 @@ function testQuote() {
 
 function testBadQuoteSyntax() {
   asyncTestCase.waitForAsync();
-  var environment = new ccc.base.BasicEnvironment();
+  var environment = new ccc.base.Environment();
   var quote = new ccc.syntax.Quote();
   quote.transform(environment, ccc.base.NIL).then(justFail).thenCatch(
       function() {
@@ -211,7 +211,7 @@ function testBadQuoteSyntax() {
 
 function testSimpleLambda() {
   asyncTestCase.waitForAsync();
-  var environment = new ccc.base.BasicEnvironment();
+  var environment = new ccc.base.Environment();
   var transformer = new ccc.syntax.Lambda();
   var formals = ccc.base.NIL;
   var body = List([ccc.base.T, new ccc.base.Number(42)]);

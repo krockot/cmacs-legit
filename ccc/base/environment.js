@@ -2,15 +2,8 @@
 // Copyright forever, the universe.
 
 goog.provide('ccc.base.Environment');
-goog.provide('ccc.base.BasicEnvironment');
-goog.provide('ccc.base.StandardEnvironment');
 
 goog.require('ccc.base.Object');
-goog.require('ccc.syntax.Define');
-goog.require('ccc.syntax.If');
-goog.require('ccc.syntax.Lambda');
-goog.require('ccc.syntax.Quote');
-goog.require('ccc.syntax.Set');
 goog.require('goog.object');
 
 
@@ -89,41 +82,3 @@ ccc.base.Environment.prototype.update = function(name, value) {
   this.bindings_[name] = value;
   return true;
 };
-
-
-/**
- * A BasicEnvironment is an Environment with basic builtin syntax keyword
- * (define, lambda, etc.) bindings.
- *
- * @constructor
- * @extends {ccc.base.Environment}
- * @public
- */
-ccc.base.BasicEnvironment = function() {
-  goog.base(this);
-
-  this.set('define', new ccc.syntax.Define());
-  this.set('if', new ccc.syntax.If());
-  this.set('lambda', new ccc.syntax.Lambda());
-  this.set('λ', new ccc.syntax.Lambda());
-  this.set('quote', new ccc.syntax.Quote());
-  this.set('set!', new ccc.syntax.Set());
-};
-goog.inherits(ccc.base.BasicEnvironment, ccc.base.Environment);
-
-
-
-/**
- * A StandardEnvironment is a BasicEnvironment with the addition of standard
- * library function bindings.
- *
- * @constructor
- * @extends {ccc.base.BasicEnvironment}
- * @public
- */
-ccc.base.StandardEnvironment = function() {
-  goog.base(this);
-
-  // TODO(krockot): Load standard library.
-};
-goog.inherits(ccc.base.StandardEnvironment, ccc.base.BasicEnvironment);

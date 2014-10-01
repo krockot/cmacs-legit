@@ -229,3 +229,22 @@ function testSimpleLambda() {
   }).then(continueTesting);
 }
 
+
+function testLambdaClosure() {
+  asyncTestCase.waitForAsync();
+  var environment = new ccc.base.Environment();
+  var transformer = new ccc.syntax.Lambda();
+  var formals = List([new ccc.base.Symbol('x')]);
+  var body = List([new ccc.base.Symbol('x')]);
+  var lambdaArgs = List([formals], body);
+  environment.set('x', ccc.base.F);
+  transformer.transform(environment, lambdaArgs).then(function(lambda) {
+    return lambda.car().apply(environment, ccc.base.NIL).then(function(proc) {
+      return proc.apply(environment, List([ccc.base.T])).then(function(result) {
+        assertNotNull(result);
+        assertEquals(ccc.base.T, result);
+        assertEquals(ccc.base.F, environment.get('x'));
+      });
+    });
+  }).then(continueTesting);
+}

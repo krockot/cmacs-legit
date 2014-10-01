@@ -84,7 +84,7 @@ ccc.base.Procedure.prototype.apply = function(environment, args) {
       return goog.Promise.reject('Too many arguments');
     if (arg.isNil() && formal.isPair())
       return goog.Promise.reject('Not enough arguments');
-    goog.asserts.assert(arg.isPair(), 'Invalid argument list');
+    goog.asserts.assert(arg.isPair() || arg.isNil(), 'Invalid argument list');
     if (formal.isSymbol())
       innerScope.set(formal.name(), arg);
   }

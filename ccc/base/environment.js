@@ -7,6 +7,7 @@ goog.provide('ccc.base.StandardEnvironment');
 
 goog.require('ccc.base.Object');
 goog.require('ccc.syntax.Define');
+goog.require('ccc.syntax.Set');
 goog.require('goog.object');
 
 
@@ -61,9 +62,29 @@ ccc.base.Environment.prototype.set = function(name, value) {
  * @param {string} name
  */
 ccc.base.Environment.prototype.get = function(name) {
-  return goog.object.get(this.bindings_, name, null);
+  var value = goog.object.get(this.bindings_, name, null);
+  if (goog.isNull(value) && !goog.isNull(this.parent_))
+    return this.parent_.get(name);
+  return value;
 };
 
+
+/**
+ * Updates the value bound to a name.
+ *
+ * @param {string} name
+ * @param {!ccc.base.Object} value
+ * @return {boolean} Indicates if the named binding was found and updated.
+ */
+ccc.base.Environment.prototype.update = function(name, value) {
+  if (!goog.object.containsKey(this.bindings_, name)) {
+    if (!goog.isNull(this.parent_))
+      return this.parent_.update(name);
+    return false;
+  }
+  this.bindings_[name] = value;
+  return true;
+};
 
 
 /**
@@ -78,6 +99,7 @@ ccc.base.BasicEnvironment = function() {
   goog.base(this);
 
   this.set('define', new ccc.syntax.Define());
+  this.set('set!', new ccc.syntax.Set());
 };
 goog.inherits(ccc.base.BasicEnvironment, ccc.base.Environment);
 

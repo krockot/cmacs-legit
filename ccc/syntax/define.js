@@ -3,7 +3,6 @@
 
 goog.provide('ccc.syntax.Define');
 
-goog.require('ccc.base.NIL');
 goog.require('ccc.base.NativeProcedure');
 goog.require('ccc.base.Pair');
 goog.require('ccc.base.Transformer');

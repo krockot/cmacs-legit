@@ -12,12 +12,14 @@ goog.require('ccc.base.Symbol');
 goog.require('ccc.base.UNSPECIFIED');
 goog.require('ccc.syntax.Define');
 goog.require('ccc.syntax.If');
+goog.require('ccc.syntax.Quote');
 goog.require('ccc.syntax.Set');
 goog.require('goog.testing.AsyncTestCase');
 goog.require('goog.testing.jsunit');
 
 
 var asyncTestCase = goog.testing.AsyncTestCase.createAndInstall(document.title);
+var List = ccc.base.Pair.makeList;
 
 function setUpPage() {
   asyncTestCase.stepTimeout = 100;
@@ -38,19 +40,17 @@ function justFail(reason) {
 function testDefine() {
   asyncTestCase.waitForAsync();
   var environment = new ccc.base.BasicEnvironment();
-  var args = ccc.base.Pair.makeList([new ccc.base.Symbol('foo'),
-      new ccc.base.Number(42)]);
+  var args = List([new ccc.base.Symbol('foo'), new ccc.base.Number(42)]);
   var transformer = new ccc.syntax.Define();
   transformer.transform(environment, args).then(function(define) {
-    define.car().apply(environment, define.cdr()).then(function(result) {
+    return define.car().apply(environment, define.cdr()).then(function(result) {
       assertEquals(ccc.base.UNSPECIFIED, result);
       var foo = environment.get('foo');
       assertNotNull(foo);
       assert(foo.isNumber());
       assertEquals(42, foo.value());
-      continueTesting();
-    }, fail);
-  }, fail);
+    });
+  }).then(continueTesting);
 }
 
 function testBadDefineSyntax() {
@@ -63,26 +63,22 @@ function testBadDefineSyntax() {
   transformer.transform(environment, ccc.base.NIL).then(justFail).thenCatch(
     function() {
       // Define with only a symbol argument: FAIL!
-      return transformer.transform(environment, ccc.base.Pair.makeList([
-          symbol]));
+      return transformer.transform(environment, List([symbol]));
   }).then(justFail).thenCatch(function() {
     // Define a non-symbol first argument: FAIL!
-    return transformer.transform(environment, ccc.base.Pair.makeList([
-        ccc.base.T, ccc.base.T]));
+    return transformer.transform(environment, List([ccc.base.T, ccc.base.T]));
   }).then(justFail).thenCatch(function() {
     // Define with too many arguments: FAIL!
-    return transformer.transform(environment, ccc.base.Pair.makeList([
-        symbol, ccc.base.T, ccc.base.T]));
+    return transformer.transform(environment,
+        List([symbol, ccc.base.T, ccc.base.T]));
   }).then(justFail).thenCatch(continueTesting);
 }
 
 function testSet() {
   asyncTestCase.waitForAsync();
   var environment = new ccc.base.BasicEnvironment();
-  var defineArgs = ccc.base.Pair.makeList([new ccc.base.Symbol('foo'),
-      new ccc.base.Number(41)]);
-  var setArgs = ccc.base.Pair.makeList([new ccc.base.Symbol('foo'),
-      new ccc.base.Number(42)]);
+  var defineArgs = List([new ccc.base.Symbol('foo'), new ccc.base.Number(41)]);
+  var setArgs = List([new ccc.base.Symbol('foo'), new ccc.base.Number(42)]);
   var setTransformer = new ccc.syntax.Set();
   var defineTransformer = new ccc.syntax.Define();
 
@@ -91,22 +87,23 @@ function testSet() {
     return set.car().apply(environment, set.cdr()).then(justFail).thenCatch(
         function() { return goog.Promise.resolve(set); });
   }).then(function(set) {
-    defineTransformer.transform(environment, defineArgs).then(function(define) {
-      define.car().apply(environment, define.cdr()).then(function(result) {
+    return defineTransformer.transform(
+        environment, defineArgs).then(function(define) {
+      return define.car().apply(
+          environment, define.cdr()).then(function(result) {
         var foo = environment.get('foo');
         assertNotNull(foo);
         assert(foo.isNumber());
         assertEquals(41, foo.value());
-        set.car().apply(environment, set.cdr()).then(function(result) {
+        return set.car().apply(environment, set.cdr()).then(function(result) {
           var foo = environment.get('foo');
           assertNotNull(foo);
           assert(foo.isNumber());
           assertEquals(42, foo.value());
-          continueTesting();
         });
       });
     });
-  });
+  }).then(continueTesting);
 }
 
 function testBadSetSyntax() {
@@ -119,16 +116,14 @@ function testBadSetSyntax() {
   transformer.transform(environment, ccc.base.NIL).then(justFail).thenCatch(
     function() {
       // Set with only a symbol argument: FAIL!
-      return transformer.transform(environment, ccc.base.Pair.makeList([
-          symbol]));
+      return transformer.transform(environment, List([symbol]));
   }).then(justFail).thenCatch(function() {
     // Set a non-symbol first argument: FAIL!
-    return transformer.transform(environment, ccc.base.Pair.makeList([
-        ccc.base.T, ccc.base.T]));
+    return transformer.transform(environment, List([ccc.base.T, ccc.base.T]));
   }).then(justFail).thenCatch(function() {
     // Set with too many arguments: FAIL!
-    return transformer.transform(environment, ccc.base.Pair.makeList([
-        symbol, ccc.base.T, ccc.base.T]));
+    return transformer.transform(environment,
+        List([symbol, ccc.base.T, ccc.base.T]));
   }).then(justFail).thenCatch(continueTesting);
 }
 
@@ -136,39 +131,36 @@ function testIfTrue() {
   asyncTestCase.waitForAsync();
   var environment = new ccc.base.BasicEnvironment();
   var ifTransformer = new ccc.syntax.If();
-  var ifArgs = ccc.base.Pair.makeList([ccc.base.NIL, ccc.base.T]);
+  var ifArgs = List([ccc.base.NIL, ccc.base.T]);
   ifTransformer.transform(environment, ifArgs).then(function(if_) {
     return if_.car().apply(environment, ifArgs).then(function(result) {
       assertEquals(ccc.base.T, result);
-      continueTesting();
     });
-  });
+  }).then(continueTesting);
 }
 
 function testIfFalse() {
   asyncTestCase.waitForAsync();
   var environment = new ccc.base.BasicEnvironment();
   var ifTransformer = new ccc.syntax.If();
-  var ifArgs = ccc.base.Pair.makeList([ccc.base.F, ccc.base.T, ccc.base.NIL]);
+  var ifArgs = List([ccc.base.F, ccc.base.T, ccc.base.NIL]);
   ifTransformer.transform(environment, ifArgs).then(function(if_) {
     return if_.car().apply(environment, ifArgs).then(function(result) {
       assertEquals(ccc.base.NIL, result);
-      continueTesting();
     });
-  });
+  }).then(continueTesting);
 }
 
 function testIfFalseWithNoAlternate() {
   asyncTestCase.waitForAsync();
   var environment = new ccc.base.BasicEnvironment();
   var ifTransformer = new ccc.syntax.If();
-  var ifArgs = ccc.base.Pair.makeList([ccc.base.F, ccc.base.T]);
+  var ifArgs = List([ccc.base.F, ccc.base.T]);
   ifTransformer.transform(environment, ifArgs).then(function(if_) {
     return if_.car().apply(environment, ifArgs).then(function(result) {
       assertEquals(ccc.base.UNSPECIFIED, result);
-      continueTesting();
     });
-  });
+  }).then(continueTesting);
 }
 
 function testBadIfSyntax() {
@@ -178,17 +170,39 @@ function testBadIfSyntax() {
 
   // If with no arguments: FAIL!
   ifTransformer.transform(environment, ccc.base.NIL).then(justFail).thenCatch(
-    function() {
-      // If with only a condition: FAIL!
-      return ifTransformer.transform(environment, ccc.base.Pair.makeList([
-          ccc.base.T]));
+      function() {
+        // If with only a condition: FAIL!
+        return ifTransformer.transform(environment, List([ccc.base.T]));
   }).then(justFail).thenCatch(function() {
     // If with too many arguments: FAIL!
-    return ifTransformer.transform(environment, ccc.base.Pair.makeList([
-        ccc.base.T, ccc.base.T, ccc.base.T, ccc.base.T]));
+    return ifTransformer.transform(environment,
+        List([ccc.base.T, ccc.base.T, ccc.base.T, ccc.base.T]));
   }).then(justFail).thenCatch(function() {
     // If with weird improper list: DEFINITELY FAIL!
-    return ifTransformer.transform(environment, ccc.base.Pair.makeList([
-        ccc.base.T, ccc.base.T], ccc.base.T));
+    return ifTransformer.transform(environment,
+      List([ccc.base.T, ccc.base.T], ccc.base.T));
+  }).then(justFail).thenCatch(continueTesting);
+}
+
+function testQuote() {
+  asyncTestCase.waitForAsync();
+  var environment = new ccc.base.BasicEnvironment();
+  var transformer = new ccc.syntax.Quote();
+  var list = List([ccc.base.T, ccc.base.F, ccc.base.NIL]);
+  transformer.transform(environment, List([list])).then(function(quote) {
+    return quote.car().apply(environment, ccc.base.NIL).then(function(result) {
+      assertNotNull(result);
+      assert(result.equal(list));
+    });
+  }).then(continueTesting);
+}
+
+function testBadQuoteSyntax() {
+  asyncTestCase.waitForAsync();
+  var environment = new ccc.base.BasicEnvironment();
+  var quote = new ccc.syntax.Quote();
+  quote.transform(environment, ccc.base.NIL).then(justFail).thenCatch(
+      function() {
+        return quote.transform(environment, List([ccc.base.T, ccc.base.T]));
   }).then(justFail).thenCatch(continueTesting);
 }

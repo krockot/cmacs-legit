@@ -1,5 +1,4 @@
 // The Cmacs Project.
-// Copyright forever, the universe.
 
 goog.provide('ccc.syntax.SyntaxTests');
 goog.setTestOnly('ccc.syntax.SyntaxTests');

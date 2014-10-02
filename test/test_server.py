@@ -1,5 +1,4 @@
 # The Cmacs Project.
-# Copyright forever, the universe.
 
 import BaseHTTPServer
 import inspect

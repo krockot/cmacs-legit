@@ -1,5 +1,4 @@
 // The Cmacs Project.
-// Copyright forever, the universe.
 
 goog.provide('ccc.parse.TokenTest');
 goog.setTestOnly('ccc.parse.TokenTest');

@@ -1,5 +1,4 @@
 // The Cmacs Project.
-// Copyright forever, the universe.
 
 goog.provide('ccc.base.F');
 goog.provide('ccc.base.NIL');

@@ -190,7 +190,7 @@ function testSimpleTransformer() {
   ]);
 }
 
-function testNestedTransformer() {
+function testNestedTransformers() {
   var adder = new ccc.base.NativeProcedure(function(environment, args) {
     return goog.Promise.resolve(new ccc.base.Number(
         args.car().value() + args.cdr().car().value()));
@@ -202,14 +202,22 @@ function testNestedTransformer() {
   var environment = new ccc.base.Environment();
   environment.set('the-machine', transformer);
 
-  var numbers = List([new ccc.base.Number(26), new ccc.base.Number(16)]);
+  var oneSix = new TestTransformer(function(environment, args) {
+    // Transformer which always generates the number 16.
+    return goog.Promise.resolve(new ccc.base.Number(16));
+  });
+  environment.set('dieciséis', oneSix);
+
   var needMoreLayers = new TestTransformer(function(environment, args) {
+    // Transformer which always generates (the-machine #t 26 (dieciséis))
     return goog.Promise.resolve(List([new ccc.base.Symbol('the-machine'),
-      ccc.base.T], numbers));
+        ccc.base.T, new ccc.base.Number(26),
+        List([new ccc.base.Symbol('dieciséis')])]));
   });
   environment.set('meta-machine', needMoreLayers);
 
   var form = List([new ccc.base.Symbol('meta-machine')]);
+  var numbers = List([new ccc.base.Number(26), new ccc.base.Number(16)]);
   RunTests([
     C(form, List([adder], numbers), environment),
     CE(form, new ccc.base.Number(42), environment)

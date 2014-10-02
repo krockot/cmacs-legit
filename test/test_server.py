@@ -33,9 +33,6 @@ class RequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     root_path = os.path.dirname(test_script_path)
     out_path = os.path.join(root_path, 'out')
 
-    filename = os.path.basename(self.path)
-    _, ext = os.path.splitext(filename)
-
     if self.path == '/alltests.js':
       return self.get_all_tests(root_path)
 
@@ -44,13 +41,11 @@ class RequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
       if os.path.isfile(test_suite + '.js'):
         return self.get_test_suite(test_suite)
 
-
-    # First try to locate the file in the project root, then fall back
-    # on the output path.
     try:
       file_path = os.path.join(root_path, self.path[1:])
       with open(file_path) as file:
         self.send_response(200)
+        _, ext = os.path.splitext(os.path.basename(self.path))
         self.send_header('Content-type', mimetypes.types_map[ext])
         self.end_headers()
         self.wfile.write(file.read())

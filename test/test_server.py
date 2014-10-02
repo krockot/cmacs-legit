@@ -54,7 +54,7 @@ class RequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
   def get_all_tests(self, root_path):
     self.send_response(200)
-    self.send_header('Content-type', 'text/javascript')
+    self.send_header('Content-type', 'text/javascript; charset=utf-8')
     self.end_headers()
     self.wfile.write('_allTests=[')
     root_dirs = os.listdir(root_path)
@@ -79,7 +79,7 @@ class RequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         return
       namespace = provide.groups(1)[0]
     self.send_response(200)
-    self.send_header('Content-type', 'text/html')
+    self.send_header('Content-type', 'text/html; charset=utf-8')
     self.end_headers()
     self.wfile.write(('<!doctype html><html><head>' +
         '<title>Cmacs Test Suite [%s]</title><script ' +

@@ -114,7 +114,10 @@ ccc.base.Pair.prototype.compile = function(environment) {
     if (compiledHead.isSymbol()) {
       var headValue = environment.get(compiledHead.name());
       if (headValue.isTransformer()) {
-        return headValue.transform(environment, this.cdr_);
+        return headValue.transform(environment, this.cdr_).then(
+            function(transformed) {
+          return transformed.compile(environment);
+        });
       }
     }
     var compileArgs = function(args) {
@@ -140,7 +143,7 @@ ccc.base.Pair.prototype.eval = function(environment) {
   return this.car_.eval(environment).then(function(head) {
     var evalArgs = function(args) {
       if (args.isNil())
-        return ccc.base.NIL;
+        return goog.Promise.resolve(ccc.base.NIL);
       if (!args.isPair())
         return goog.Promise.reject('Invalid list exression');
       return evalArgs(args.cdr_).then(function(cdr) {

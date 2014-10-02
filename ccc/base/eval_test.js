@@ -8,11 +8,14 @@ goog.require('ccc.base.Environment');
 goog.require('ccc.base.Char');
 goog.require('ccc.base.F');
 goog.require('ccc.base.NIL');
+goog.require('ccc.base.NativeProcedure');
 goog.require('ccc.base.Number');
 goog.require('ccc.base.Object');
+goog.require('ccc.base.Pair');
 goog.require('ccc.base.String');
 goog.require('ccc.base.Symbol');
 goog.require('ccc.base.T');
+goog.require('ccc.base.Transformer');
 goog.require('ccc.base.UNSPECIFIED');
 goog.require('ccc.base.Vector');
 goog.require('goog.Promise');
@@ -21,6 +24,7 @@ goog.require('goog.testing.jsunit');
 
 
 var asyncTestCase = goog.testing.AsyncTestCase.createAndInstall(document.title);
+var List = ccc.base.Pair.makeList;
 
 function setUpPage() {
   asyncTestCase.stepTimeout = 200;
@@ -50,6 +54,52 @@ function E(input, expectedOutput, opt_environment) {
         '\nActual: ' + result.toString() + '\n');
   });
 }
+
+// Single compile test. Takes an input object and an expected output object.
+function C(input, expectedOutput, opt_environment) {
+  var environment = (goog.isDef(opt_environment)
+      ? opt_environment
+      : new ccc.base.Environment(opt_environment));
+  return input.compile(environment).then(function(result) {
+    if (result.equal(expectedOutput))
+      return null;
+    return goog.Promise.reject('Object mismatch.\n' +
+        'Expected: ' + expectedOutput.toString() +
+        '\nActual: ' + result.toString() + '\n');
+  });
+}
+
+// Single compile + eval test.
+function CE(input, expectedOutput, opt_environment) {
+  var environment = (goog.isDef(opt_environment)
+      ? opt_environment
+      : new ccc.base.Environment(opt_environment));
+  return input.compile(environment).then(function(compiledInput) {
+    return compiledInput.eval(environment).then(function(result) {
+      if (result.equal(expectedOutput))
+        return null;
+      return goog.Promise.reject('Object mismatch.\n' +
+          'Expected: ' + expectedOutput.toString() +
+          '\nActual: ' + result.toString() + '\n');
+    });
+  });
+}
+
+/**
+ * @param {function(!ccc.base.Environment, !ccc.base.Object):
+ *     !goog.Promise.<!ccc.base.Object>} transform
+ * @constructor
+ * @extends {ccc.base.Transformer}
+ */
+var TestTransformer = function(transform) {
+  this.transform_ = transform;
+};
+goog.inherits(TestTransformer, ccc.base.Transformer);
+
+/** @override */
+TestTransformer.prototype.transform = function(environment, args) {
+  return this.transform_(environment, args);
+};
 
 function RunTest(test) {
   asyncTestCase.waitForAsync();
@@ -103,6 +153,65 @@ function testSymbolLookup() {
   ]);
 }
 
-function testNativeProcuedre() {
+function testNativeProcedure() {
+  var proc = new ccc.base.NativeProcedure(function(environment, args) {
+    assertNotNull(args);
+    assert(args.isPair());
+    assert(args.cdr().isPair());
+    assert(args.cdr().cdr().isNil());
+    assert(args.car().equal(new ccc.base.Number(42)));
+    assert(args.cdr().car().equal(new ccc.base.String('monkey')));
+    return goog.Promise.resolve(ccc.base.T);
+  });
+  var combination = List([proc, new ccc.base.Number(42),
+    new ccc.base.String('monkey')]);
+  RunTest(E(combination, ccc.base.T));
+}
 
+function testSimpleTransformer() {
+  var adder = new ccc.base.NativeProcedure(function(environment, args) {
+    return goog.Promise.resolve(new ccc.base.Number(
+        args.car().value() + args.cdr().car().value()));
+  });
+  var transformer = new TestTransformer(function(environment, args) {
+    // Throw away the first argument, return (<adder> arg2 arg3).
+    return goog.Promise.resolve(List([adder], args.cdr()));
+  });
+  var environment = new ccc.base.Environment();
+  environment.set('the-machine', transformer);
+
+  // Construct (the-machine #t 26 16). We expect this to compile down to
+  // (<adder> 26 16) according to the transformer definition above.
+  var form = List([new ccc.base.Symbol('the-machine'), ccc.base.T,
+      new ccc.base.Number(26), new ccc.base.Number(16)]);
+  RunTests([
+    C(form, List([adder], form.cdr().cdr()), environment),
+    CE(form, new ccc.base.Number(42), environment)
+  ]);
+}
+
+function testNestedTransformer() {
+  var adder = new ccc.base.NativeProcedure(function(environment, args) {
+    return goog.Promise.resolve(new ccc.base.Number(
+        args.car().value() + args.cdr().car().value()));
+  });
+  var transformer = new TestTransformer(function(environment, args) {
+    // Throw away the first argument, return (<adder> arg2 arg3).
+    return goog.Promise.resolve(List([adder], args.cdr()));
+  });
+  var environment = new ccc.base.Environment();
+  environment.set('the-machine', transformer);
+
+  var numbers = List([new ccc.base.Number(26), new ccc.base.Number(16)]);
+  var needMoreLayers = new TestTransformer(function(environment, args) {
+    return goog.Promise.resolve(List([new ccc.base.Symbol('the-machine'),
+      ccc.base.T], numbers));
+  });
+  environment.set('meta-machine', needMoreLayers);
+
+  var form = List([new ccc.base.Symbol('meta-machine')]);
+  RunTests([
+    C(form, List([adder], numbers), environment),
+    CE(form, new ccc.base.Number(42), environment)
+  ]);
 }

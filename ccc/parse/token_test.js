@@ -1,5 +1,6 @@
 // The Cmacs Project.
 
+
 goog.provide('ccc.parse.TokenTest');
 goog.setTestOnly('ccc.parse.TokenTest');
 

@@ -1,5 +1,6 @@
 // The Cmacs Project.
 
+
 goog.provide('ccc.base.Symbol');
 
 goog.require('ccc.base.Object');

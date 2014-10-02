@@ -31,14 +31,14 @@ chrome.Event.prototype.removeListener = function(listener) {};
  * namespace
  * @const
  */
-chrome.app = {}
+chrome.app = {};
 
 
 /**
  * namespace
  * @const
  */
-chrome.app.runtime = {}
+chrome.app.runtime = {};
 
 
 /**

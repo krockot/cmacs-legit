@@ -1,5 +1,6 @@
 // The Cmacs Project.
 
+
 goog.provide('ccc.base.Environment');
 
 goog.require('ccc.base.Object');

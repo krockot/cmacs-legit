@@ -1,10 +1,9 @@
 // The Cmacs Project.
 
-goog.provide('ccc.base.EvaluatorTest');
-goog.setTestOnly('ccc.parse.EvaluatorTest');
+goog.provide('ccc.base.EvalTest');
+goog.setTestOnly('ccc.base.EvalTest');
 
 goog.require('ccc.base.Environment');
-goog.require('ccc.base.Evaluator');
 goog.require('ccc.base.Char');
 goog.require('ccc.base.F');
 goog.require('ccc.base.NIL');
@@ -24,6 +23,7 @@ var asyncTestCase = goog.testing.AsyncTestCase.createAndInstall(document.title);
 
 function setUpPage() {
   asyncTestCase.stepTimeout = 200;
+  goog.Promise.setUnhandledRejectionHandler(justFail);
 }
 
 function continueTesting() {
@@ -36,18 +36,17 @@ function justFail(reason) {
   fail(reason);
 }
 
-// Single evaluator test. Takes an input object and an expected output object.
+// Single eval test. Takes an input object and an expected output object.
 function E(input, expectedOutput, opt_environment) {
-  return new goog.Promise(function(resolve, reject) {
-    var evaluator = new ccc.base.Evaluator(opt_environment);
-    evaluator.eval(input).then(function(result) {
-      if (result.equal(expectedOutput))
-        resolve(null);
-      else
-        reject('Object mismatch.\n' +
-               'Expected: ' + expectedOutput.toString() +
-               '\nActual: ' + result.toString() + '\n');
-    }, justFail);
+  var environment = (goog.isDef(opt_environment)
+      ? opt_environment
+      : new ccc.base.Environment(opt_environment));
+  return input.eval(environment).then(function(result) {
+    if (result.equal(expectedOutput))
+      return null;
+    return goog.Promise.reject('Object mismatch.\n' +
+        'Expected: ' + expectedOutput.toString() +
+        '\nActual: ' + result.toString() + '\n');
   });
 }
 
@@ -62,6 +61,21 @@ function RunTests(tests) {
 }
 
 // Tests below this line
+
+function testEnvironment() {
+  var outer = new ccc.base.Environment();
+  var inner = new ccc.base.Environment(outer);
+  outer.set('x', ccc.base.T);
+  outer.set('y', ccc.base.T);
+  inner.set('x', ccc.base.F);
+  inner.set('z', ccc.base.NIL);
+  assertEquals(ccc.base.T, outer.get('x'));
+  assertEquals(ccc.base.F, inner.get('x'));
+  assertEquals(ccc.base.T, outer.get('y'));
+  assertEquals(ccc.base.T, inner.get('y'));
+  assertEquals(ccc.base.NIL, inner.get('z'));
+  assertNull(outer.get('z'));
+}
 
 function testSelfEvaluators() {
   RunTests([
@@ -86,4 +100,8 @@ function testSymbolLookup() {
     E(new ccc.base.Symbol('answer'), new ccc.base.Number(42), environment),
     E(new ccc.base.Symbol('question'), ccc.base.UNSPECIFIED, environment)
   ]);
+}
+
+function testNativeProcuedre() {
+
 }

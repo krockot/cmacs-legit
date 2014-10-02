@@ -106,3 +106,51 @@ ccc.base.Pair.makeList = function(objects, opt_tail) {
   }
   return list;
 };
+
+
+/** @override */
+ccc.base.Pair.prototype.compile = function(environment) {
+  return this.car_.compile(environment).then(function(compiledHead) {
+    if (compiledHead.isSymbol()) {
+      var headValue = environment.get(compiledHead.name());
+      if (headValue.isTransformer()) {
+        return headValue.transform(environment, this.cdr_);
+      }
+    }
+    var compileArgs = function(args) {
+      if (args.isNil())
+        return goog.Promise.resolve(ccc.base.NIL);
+      if (!args.isPair())
+        return goog.Promise.reject('Invalid list expression');
+      return compileArgs(args.cdr_).then(function(cdr) {
+        return args.car_.compile(environment).then(function(car) {
+          return new ccc.base.Pair(car, cdr);
+        });
+      });
+    };
+    return compileArgs(this.cdr_).then(function(compiledArgs) {
+      return new ccc.base.Pair(compiledHead, compiledArgs);
+    });
+  }, null, this);
+};
+
+
+/** @override */
+ccc.base.Pair.prototype.eval = function(environment) {
+  return this.car_.eval(environment).then(function(head) {
+    var evalArgs = function(args) {
+      if (args.isNil())
+        return ccc.base.NIL;
+      if (!args.isPair())
+        return goog.Promise.reject('Invalid list exression');
+      return evalArgs(args.cdr_).then(function(cdr) {
+        return args.car_.eval(environment).then(function(car) {
+          return new ccc.base.Pair(car, cdr);
+        });
+      });
+    };
+    return evalArgs(this.cdr_).then(function(args) {
+      return head.apply(environment, args);
+    });
+  }, null, this);
+};

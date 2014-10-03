@@ -49,9 +49,9 @@ function E(input, expectedOutput, opt_environment) {
   return input.eval(environment).then(function(result) {
     if (result.equal(expectedOutput))
       return null;
-    return goog.Promise.reject('Object mismatch.\n' +
+    return goog.Promise.reject(new Error('Object mismatch.\n' +
         'Expected: ' + expectedOutput.toString() +
-        '\nActual: ' + result.toString() + '\n');
+        '\nActual: ' + result.toString() + '\n'));
   });
 }
 
@@ -63,9 +63,9 @@ function C(input, expectedOutput, opt_environment) {
   return input.compile(environment).then(function(result) {
     if (result.equal(expectedOutput))
       return null;
-    return goog.Promise.reject('Object mismatch.\n' +
+    return goog.Promise.reject(new Error('Object mismatch.\n' +
         'Expected: ' + expectedOutput.toString() +
-        '\nActual: ' + result.toString() + '\n');
+        '\nActual: ' + result.toString() + '\n'));
   });
 }
 
@@ -78,9 +78,9 @@ function CE(input, expectedOutput, opt_environment) {
     return compiledInput.eval(environment).then(function(result) {
       if (result.equal(expectedOutput))
         return null;
-      return goog.Promise.reject('Object mismatch.\n' +
+      return goog.Promise.reject(new Error('Object mismatch.\n' +
           'Expected: ' + expectedOutput.toString() +
-          '\nActual: ' + result.toString() + '\n');
+          '\nActual: ' + result.toString() + '\n'));
     });
   });
 }

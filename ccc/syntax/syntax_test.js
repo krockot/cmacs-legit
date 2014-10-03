@@ -22,6 +22,11 @@ goog.require('goog.testing.jsunit');
 
 var asyncTestCase = goog.testing.AsyncTestCase.createAndInstall(document.title);
 var List = ccc.base.Pair.makeList;
+var Define = new ccc.syntax.Define();
+var If = new ccc.syntax.If();
+var Lambda = new ccc.syntax.Lambda();
+var Quote = new ccc.syntax.Quote();
+var Set = new ccc.syntax.Set();
 
 function setUpPage() {
   asyncTestCase.stepTimeout = 100;
@@ -34,46 +39,77 @@ function continueTesting() {
 }
 
 function justFail(reason) {
-  console.error(goog.isDef(reason.stack) ? reason.stack : reason);
   continueTesting();
+  reason && reason.stack && console.error(reason.stack);
   fail(reason);
 }
+
+// Single test case which applies a transformer to a list and validates the
+// resulting object.
+var T = function(transformer, args, expectedOutput, opt_environment) {
+  var environment = (goog.isDef(opt_environment)
+      ? opt_environment
+      : new ccc.base.Environment());
+  return transformer.transform(environment, args).then(function(transformed) {
+    assertNotNull(transformed);
+    if (!goog.isNull(expectedOutput))
+      assert(transformed.equal(expectedOutput));
+    return transformed;
+  });
+};
+
+// Single test case which applies a transformer to a list, evaluates the result,
+// and then validates the result of the evaluation.
+var TE = function(transformer, args, expectedOutput, opt_environment) {
+  var environment = (goog.isDef(opt_environment)
+      ? opt_environment
+      : new ccc.base.Environment());
+  return transformer.transform(environment, args).then(function(transformed) {
+    return transformed.eval(environment).then(function(result) {
+      assertNotNull(result);
+      if (!goog.isNull(expectedOutput))
+        assert(result.equal(expectedOutput));
+      return result;
+    });
+  });
+};
+
+var RunTests = function(tests) {
+  return goog.Promise.all(tests);
+};
+
+var ExpectFailures = function(tests) {
+  return goog.Promise.firstFulfilled(tests).then(function(result) {
+    justFail(new Error('Expected failure; got success with ' +
+        result.toString()));
+  }, continueTesting);
+};
 
 function testDefine() {
   asyncTestCase.waitForAsync();
   var environment = new ccc.base.Environment();
   var args = List([new ccc.base.Symbol('foo'), new ccc.base.Number(42)]);
-  var transformer = new ccc.syntax.Define();
-  transformer.transform(environment, args).then(function(define) {
-    return define.car().apply(environment, define.cdr()).then(function(result) {
-      assertEquals(ccc.base.UNSPECIFIED, result);
-      var foo = environment.get('foo');
-      assertNotNull(foo);
-      assert(foo.isNumber());
-      assertEquals(42, foo.value());
-    });
-  }).then(continueTesting);
+  TE(Define, args, ccc.base.UNSPECIFIED, environment).then(function() {
+    var foo = environment.get('foo');
+    assertNotNull(foo);
+    assert(foo.isNumber());
+    assertEquals(42, foo.value());
+  }).then(continueTesting, justFail);
 }
 
 function testBadDefineSyntax() {
   asyncTestCase.waitForAsync();
-  var environment = new ccc.base.Environment();
-  var transformer = new ccc.syntax.Define();
   var symbol = new ccc.base.Symbol('bananas');
-
-  // Define with no arguments: FAIL!
-  transformer.transform(environment, ccc.base.NIL).then(justFail).thenCatch(
-    function() {
-      // Define with only a symbol argument: FAIL!
-      return transformer.transform(environment, List([symbol]));
-  }).then(justFail).thenCatch(function() {
-    // Define a non-symbol first argument: FAIL!
-    return transformer.transform(environment, List([ccc.base.T, ccc.base.T]));
-  }).then(justFail).thenCatch(function() {
-    // Define with too many arguments: FAIL!
-    return transformer.transform(environment,
-        List([symbol, ccc.base.T, ccc.base.T]));
-  }).then(justFail).thenCatch(continueTesting);
+  ExpectFailures([
+    // Define with no arguments.
+    T(Define, ccc.base.NIL),
+    // Define with only a symbol argument.
+    T(Define, List([symbol])),
+    // Define with a non-symbol first argument.
+    T(Define, List([ccc.base.T, ccc.base.T])),
+    // Define with too many arguments!
+    T(Define, List([symbol, ccc.base.T, ccc.base.T])),
+  ]);
 }
 
 function testSet() {
@@ -81,28 +117,21 @@ function testSet() {
   var environment = new ccc.base.Environment();
   var defineArgs = List([new ccc.base.Symbol('foo'), new ccc.base.Number(41)]);
   var setArgs = List([new ccc.base.Symbol('foo'), new ccc.base.Number(42)]);
-  var setTransformer = new ccc.syntax.Set();
-  var defineTransformer = new ccc.syntax.Define();
 
-  setTransformer.transform(environment, setArgs).then(function(set) {
-    // Set an unbound symbol (foo) and expect failure
-    return set.car().apply(environment, set.cdr()).then(justFail).thenCatch(
-        function() { return goog.Promise.resolve(set); });
-  }).then(function(set) {
-    return defineTransformer.transform(
-        environment, defineArgs).then(function(define) {
-      return define.car().apply(
-          environment, define.cdr()).then(function(result) {
+  // First try to set unbound symbol 'foo and expect it to fail.
+  TE(Set, setArgs, null, environment).then(justFail).thenCatch(function() {
+    // Now bind foo to 41
+    return TE(Define, defineArgs, null, environment).then(function() {
+      var foo = environment.get('foo');
+      assertNotNull(foo);
+      assert(foo.isNumber());
+      assertEquals(41, foo.value());
+      // And finally set the existing binding to 42
+      return TE(Set, setArgs, null, environment).then(function() {
         var foo = environment.get('foo');
         assertNotNull(foo);
         assert(foo.isNumber());
-        assertEquals(41, foo.value());
-        return set.car().apply(environment, set.cdr()).then(function(result) {
-          var foo = environment.get('foo');
-          assertNotNull(foo);
-          assert(foo.isNumber());
-          assertEquals(42, foo.value());
-        });
+        assertEquals(42, foo.value());
       });
     });
   }).then(continueTesting);
@@ -110,141 +139,100 @@ function testSet() {
 
 function testBadSetSyntax() {
   asyncTestCase.waitForAsync();
-  var environment = new ccc.base.Environment();
-  var transformer = new ccc.syntax.Set();
   var symbol = new ccc.base.Symbol('catpants');
 
-  // Set with no arguments: FAIL!
-  transformer.transform(environment, ccc.base.NIL).then(justFail).thenCatch(
-    function() {
-      // Set with only a symbol argument: FAIL!
-      return transformer.transform(environment, List([symbol]));
-  }).then(justFail).thenCatch(function() {
+  ExpectFailures([
+    // Set with no arguments: FAIL!
+    T(Set, ccc.base.NIL),
+    // Set with only a symbol argument: FAIL!
+    T(Set, List([symbol])),
     // Set a non-symbol first argument: FAIL!
-    return transformer.transform(environment, List([ccc.base.T, ccc.base.T]));
-  }).then(justFail).thenCatch(function() {
+    T(Set, List([ccc.base.T, ccc.base.T])),
     // Set with too many arguments: FAIL!
-    return transformer.transform(environment,
-        List([symbol, ccc.base.T, ccc.base.T]));
-  }).then(justFail).thenCatch(continueTesting);
+    T(Set, List([symbol, ccc.base.T, ccc.base.T]))
+  ]);
 }
 
 function testIfTrue() {
   asyncTestCase.waitForAsync();
-  var environment = new ccc.base.Environment();
-  var ifTransformer = new ccc.syntax.If();
   var ifArgs = List([ccc.base.NIL, ccc.base.T]);
-  ifTransformer.transform(environment, ifArgs).then(function(if_) {
-    return if_.car().apply(environment, ifArgs).then(function(result) {
-      assertEquals(ccc.base.T, result);
-    });
-  }).then(continueTesting);
+  TE(If, ifArgs, ccc.base.T).then(continueTesting, justFail);
 }
 
 function testIfFalse() {
   asyncTestCase.waitForAsync();
-  var environment = new ccc.base.Environment();
-  var ifTransformer = new ccc.syntax.If();
   var ifArgs = List([ccc.base.F, ccc.base.T, ccc.base.NIL]);
-  ifTransformer.transform(environment, ifArgs).then(function(if_) {
-    return if_.car().apply(environment, ifArgs).then(function(result) {
-      assertEquals(ccc.base.NIL, result);
-    });
-  }).then(continueTesting);
+  TE(If, ifArgs, ccc.base.NIL).then(continueTesting, justFail);
 }
 
 function testIfFalseWithNoAlternate() {
   asyncTestCase.waitForAsync();
-  var environment = new ccc.base.Environment();
-  var ifTransformer = new ccc.syntax.If();
   var ifArgs = List([ccc.base.F, ccc.base.T]);
-  ifTransformer.transform(environment, ifArgs).then(function(if_) {
-    return if_.car().apply(environment, ifArgs).then(function(result) {
-      assertEquals(ccc.base.UNSPECIFIED, result);
-    });
-  }).then(continueTesting);
+  TE(If, ifArgs, ccc.base.UNSPECIFIED).then(continueTesting, justFail);
 }
 
 function testBadIfSyntax() {
   asyncTestCase.waitForAsync();
-  var environment = new ccc.base.Environment();
-  var ifTransformer = new ccc.syntax.If();
-
-  // If with no arguments: FAIL!
-  ifTransformer.transform(environment, ccc.base.NIL).then(justFail).thenCatch(
-      function() {
-        // If with only a condition: FAIL!
-        return ifTransformer.transform(environment, List([ccc.base.T]));
-  }).then(justFail).thenCatch(function() {
+  ExpectFailures([
+    // If with no arguments: FAIL!
+    T(If, ccc.base.NIL),
+    // If with only a condition: FAIL!
+    T(If, List([ccc.base.T])),
     // If with too many arguments: FAIL!
-    return ifTransformer.transform(environment,
-        List([ccc.base.T, ccc.base.T, ccc.base.T, ccc.base.T]));
-  }).then(justFail).thenCatch(function() {
+    T(If, List([ccc.base.T, ccc.base.T, ccc.base.T, ccc.base.NIL])),
     // If with weird improper list: DEFINITELY FAIL!
-    return ifTransformer.transform(environment,
-      List([ccc.base.T, ccc.base.T], ccc.base.T));
-  }).then(justFail).thenCatch(continueTesting);
+    T(If, List([ccc.base.T, ccc.base.T], ccc.base.T))
+  ]);
 }
 
 function testQuote() {
   asyncTestCase.waitForAsync();
-  var environment = new ccc.base.Environment();
-  var transformer = new ccc.syntax.Quote();
   var list = List([ccc.base.T, ccc.base.F, ccc.base.NIL]);
-  transformer.transform(environment, List([list])).then(function(quote) {
-    return quote.car().apply(environment, ccc.base.NIL).then(function(result) {
-      assertNotNull(result);
-      assert(result.equal(list));
-    });
-  }).then(continueTesting);
+  TE(Quote, List([list]), list).then(continueTesting, justFail);
 }
 
 function testBadQuoteSyntax() {
   asyncTestCase.waitForAsync();
-  var environment = new ccc.base.Environment();
-  var quote = new ccc.syntax.Quote();
-  quote.transform(environment, ccc.base.NIL).then(justFail).thenCatch(
-      function() {
-        return quote.transform(environment, List([ccc.base.T, ccc.base.T]));
-  }).then(justFail).thenCatch(continueTesting);
+  ExpectFailures([
+    // No arguments
+    T(Quote, ccc.base.NIL),
+    // Too many arguments
+    T(Quote, List([ccc.base.T, ccc.base.T]))
+  ]);
 }
 
 function testSimpleLambda() {
   asyncTestCase.waitForAsync();
   var environment = new ccc.base.Environment();
-  var transformer = new ccc.syntax.Lambda();
   var formals = ccc.base.NIL;
   var body = List([ccc.base.T, new ccc.base.Number(42)]);
   var args = List([formals], body);
-  transformer.transform(environment, args).then(function(lambda) {
-    return lambda.car().apply(environment, ccc.base.NIL).then(function(result) {
+  TE(Lambda, args, null, environment).then(function(lambda) {
+    assertNotNull(lambda);
+    assert(lambda.isProcedure());
+    return lambda.apply(environment, ccc.base.NIL).then(function(result) {
       assertNotNull(result);
-      assert(result.isProcedure());
-      result.apply(environment, ccc.base.NIL).then(function(result) {
-        assertNotNull(result);
-        assert(result.isNumber());
-        assertEquals(42, result.value());
-      });
+      assert(result.isNumber());
+      assertEquals(42, result.value());
     });
-  }).then(continueTesting);
+  }).then(continueTesting, justFail);
 }
 
 
 function testLambdaClosure() {
   asyncTestCase.waitForAsync();
   var environment = new ccc.base.Environment();
-  var transformer = new ccc.syntax.Lambda();
   var formals = List([new ccc.base.Symbol('x')]);
   var body = List([new ccc.base.Symbol('x')]);
   var lambdaArgs = List([formals], body);
   environment.set('x', ccc.base.F);
-  transformer.transform(environment, lambdaArgs).then(function(lambda) {
-    return lambda.car().apply(environment, ccc.base.NIL).then(function(proc) {
-      return proc.apply(environment, List([ccc.base.T])).then(function(result) {
-        assertNotNull(result);
-        assertEquals(ccc.base.T, result);
-        assertEquals(ccc.base.F, environment.get('x'));
-      });
+  TE(Lambda, lambdaArgs, null, environment).then(function(lambda) {
+    // Apply the identity lambda and verify that the symbol 'x must have
+    // been internally bound to the argument #t.
+    lambda.apply(environment, ccc.base.Pair.makeList([ccc.base.T])).then(
+        goog.partial(assertEquals, ccc.base.T)).then(function() {
+      // Then also verify that the outer environment's 'x is still bound to #f.
+      assertEquals(ccc.base.F, environment.get('x'));
     });
-  }).then(continueTesting);
+  }).then(continueTesting, justFail);
 }

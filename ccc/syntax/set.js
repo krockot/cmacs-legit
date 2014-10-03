@@ -33,15 +33,16 @@ ccc.syntax.Set.prototype.toString = function() {
 /** @override */
 ccc.syntax.Set.prototype.transform = function(environment, args) {
   if (!args.isPair())
-    return goog.Promise.reject('set!: Invalid argument list');
+    return goog.Promise.reject(new Error('set!: Invalid argument list'));
   if (!args.car().isSymbol())
-    return goog.Promise.reject('set!: Symbol expected in first argument');
+    return goog.Promise.reject(new Error(
+        'set!: Symbol expected in first argument'));
   if (args.cdr().isNil())
-    return goog.Promise.reject('set!: Missing binding value');
+    return goog.Promise.reject(new Error('set!: Missing binding value'));
   if (!args.cdr().isPair())
-    return goog.Promise.reject('set!: Invalid syntax');
+    return goog.Promise.reject(new Error('set!: Invalid syntax'));
   if (!args.cdr().cdr().isNil())
-    return goog.Promise.reject('set!: Too many arguments');
+    return goog.Promise.reject(new Error('set!: Too many arguments'));
   return goog.Promise.resolve(
       new ccc.base.Pair(
           new ccc.base.NativeProcedure(
@@ -62,8 +63,8 @@ ccc.syntax.Set.prototype.transform = function(environment, args) {
  */
 ccc.syntax.Set.updateBinding_ = function(symbol, environment, args) {
   if (!environment.update(symbol, args.car())) {
-    return goog.Promise.reject('Cannot update binding for unbound symbol \'' +
-        symbol.name());
+    return goog.Promise.reject(new Error(
+        'Cannot update binding for unbound symbol \'' + symbol.name()));
   }
   return goog.Promise.resolve(ccc.base.UNSPECIFIED);
 };

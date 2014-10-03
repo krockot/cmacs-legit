@@ -124,7 +124,7 @@ ccc.base.Pair.prototype.compile = function(environment) {
       if (args.isNil())
         return goog.Promise.resolve(ccc.base.NIL);
       if (!args.isPair())
-        return goog.Promise.reject('Invalid list expression');
+        return goog.Promise.reject(new Error('Invalid list expression'));
       return compileArgs(args.cdr_).then(function(cdr) {
         return args.car_.compile(environment).then(function(car) {
           return new ccc.base.Pair(car, cdr);
@@ -145,7 +145,7 @@ ccc.base.Pair.prototype.eval = function(environment) {
       if (args.isNil())
         return goog.Promise.resolve(ccc.base.NIL);
       if (!args.isPair())
-        return goog.Promise.reject('Invalid list exression');
+        return goog.Promise.reject(new Error('Invalid list exression'));
       return evalArgs(args.cdr_).then(function(cdr) {
         return args.car_.eval(environment).then(function(car) {
           return new ccc.base.Pair(car, cdr);

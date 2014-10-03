@@ -33,28 +33,27 @@ ccc.syntax.Lambda.prototype.toString = function() {
 /** @override */
 ccc.syntax.Lambda.prototype.transform = function(environment, args) {
   if (!args.isPair() || args.cdr().isNil())
-    return goog.Promise.reject('lambda: Invalid syntax');
+    return goog.Promise.reject(new Error('lambda: Invalid syntax'));
   var formals = args.car();
   if (!formals.isSymbol() && !formals.isPair() && !formals.isNil())
-    return goog.Promise.reject('lambda: Invalid syntax');
-  var body = args.cdr();
-  var compiledBody = [];
-  var step = function() {
-    if (body.isNil()) {
-      return goog.Promise.resolve(new ccc.base.Pair(
-          new ccc.base.NativeProcedure(
-              goog.partial(ccc.syntax.Lambda.generateProcedure_,
-                           formals, ccc.base.Pair.makeList(compiledBody)))));
-    }
+    return goog.Promise.reject(new Error('lambda: Invalid syntax'));
+  var compile = function(body) {
+    if (body.isNil())
+      return goog.Promise.resolve(ccc.base.NIL);
     if (!body.isPair())
-      return goog.Promise.reject('lambda: Invalid syntax');
-    return body.car().compile(environment).then(function(compiledBodyItem) {
-      compiledBody.push(compiledBodyItem);
-      body = body.cdr();
-      return step();
+      return goog.Promise.reject(new Error('lambda: Invalid syntax'));
+    return body.cdr().compile(environment).then(function(cdr) {
+      return body.car().compile(environment).then(function(car) {
+        return new ccc.base.Pair(car, cdr);
+      });
     });
   };
-  return step();
+  return compile(args.cdr()).then(function(args) {
+    return new ccc.base.Pair(
+        new ccc.base.NativeProcedure(
+            goog.partial(ccc.syntax.Lambda.generateProcedure_, formals, args)),
+        ccc.base.NIL);
+  });
 };
 
 

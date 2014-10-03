@@ -34,7 +34,7 @@ ccc.syntax.If.prototype.toString = function() {
 /** @override */
 ccc.syntax.If.prototype.transform = function(environment, args) {
   if (!args.isPair() || !args.cdr().isPair())
-    return goog.Promise.reject('if: Not enough arguments');
+    return goog.Promise.reject(new Error('if: Not enough arguments'));
   var condition = args.car();
   var consequent = args.cdr().car();
   var alternate = args.cdr().cdr();
@@ -42,10 +42,10 @@ ccc.syntax.If.prototype.transform = function(environment, args) {
     alternate = ccc.base.UNSPECIFIED;
   } else if (alternate.isPair()) {
     if (!alternate.cdr().isNil())
-      return goog.Promise.reject('if: Too many arguments');
+      return goog.Promise.reject(new Error('if: Too many arguments'));
     alternate = alternate.car();
   } else {
-    return goog.Promise.reject('if: Invalid syntax');
+    return goog.Promise.reject(new Error('if: Invalid syntax'));
   }
   return alternate.compile(environment).then(function(alternate) {
     return consequent.compile(environment).then(function(consequent) {

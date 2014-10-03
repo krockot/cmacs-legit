@@ -67,7 +67,7 @@ ccc.base.Procedure.prototype.apply = function(environment, args) {
   var innerScope = new ccc.base.Environment(this.scope_);
   if (this.formals_.isNil()) {
     if (!args.isNil())
-      return goog.Promise.reject('Too many arguments');
+      return goog.Promise.reject(new Error('Too many arguments'));
   } else if (this.formals_.isSymbol()) {
     innerScope.set(this.formals_.name(), args);
   } else {
@@ -81,9 +81,9 @@ ccc.base.Procedure.prototype.apply = function(environment, args) {
       arg = arg.cdr();
     }
     if (formal.isNil() && !arg.isNil())
-      return goog.Promise.reject('Too many arguments');
+      return goog.Promise.reject(new Error('Too many arguments'));
     if (arg.isNil() && formal.isPair())
-      return goog.Promise.reject('Not enough arguments');
+      return goog.Promise.reject(new Error('Not enough arguments'));
     goog.asserts.assert(arg.isPair() || arg.isNil(), 'Invalid argument list');
     if (formal.isSymbol())
       innerScope.set(formal.name(), arg);

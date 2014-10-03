@@ -28,7 +28,7 @@ ccc.syntax.Quote.prototype.toString = function() {
 /** @override */
 ccc.syntax.Quote.prototype.transform = function(environment, args) {
   if (!args.isPair() || !args.cdr().isNil())
-    return goog.Promise.reject('quote: Invalid syntax');
+    return goog.Promise.reject(new Error('quote: Invalid syntax'));
   return goog.Promise.resolve(new ccc.base.Pair(
       new ccc.base.NativeProcedure(
           goog.partial(ccc.syntax.Quote.nativeImpl_, args.car())),

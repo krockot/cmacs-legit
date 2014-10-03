@@ -33,15 +33,16 @@ ccc.syntax.Define.prototype.toString = function() {
 /** @override */
 ccc.syntax.Define.prototype.transform = function(environment, args) {
   if (!args.isPair())
-    return goog.Promise.reject('define: Invalid argument list');
+    return goog.Promise.reject(new Error('define: Invalid argument list'));
   if (!args.car().isSymbol())
-    return goog.Promise.reject('define: Symbol expected in first argument');
+    return goog.Promise.reject(new Error(
+        'define: Symbol expected in first argument'));
   if (args.cdr().isNil())
-    return goog.Promise.reject('define: Missing binding value');
+    return goog.Promise.reject(new Error('define: Missing binding value'));
   if (!args.cdr().isPair())
-    return goog.Promise.reject('define: Invalid syntax');
+    return goog.Promise.reject(new Error('define: Invalid syntax'));
   if (!args.cdr().cdr().isNil())
-    return goog.Promise.reject('define: Too many arguments');
+    return goog.Promise.reject(new Error('define: Too many arguments'));
   return goog.Promise.resolve(
       new ccc.base.Pair(
           new ccc.base.NativeProcedure(

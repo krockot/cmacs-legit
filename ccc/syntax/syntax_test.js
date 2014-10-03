@@ -27,6 +27,8 @@ var If = new ccc.syntax.If();
 var Lambda = new ccc.syntax.Lambda();
 var Quote = new ccc.syntax.Quote();
 var Set = new ccc.syntax.Set();
+var Sym = function(name) { return new ccc.base.Symbol(name); };
+var Num = function(value) { return new ccc.base.Number(value); };
 
 function setUpPage() {
   asyncTestCase.stepTimeout = 100;
@@ -52,8 +54,11 @@ var T = function(transformer, args, expectedOutput, opt_environment) {
       : new ccc.base.Environment());
   return transformer.transform(environment, args).then(function(transformed) {
     assertNotNull(transformed);
-    if (!goog.isNull(expectedOutput))
-      assert(transformed.equal(expectedOutput));
+    if (!goog.isNull(expectedOutput) && !transformed.equal(expectedOutput)) {
+      return goog.Promise.reject('Objet mismatch.\n' +
+          'Expected: ' + expectedOutput.toString() +
+          '\nActual: ' + transformed.toString() + '\n');
+    }
     return transformed;
   });
 };
@@ -67,9 +72,33 @@ var TE = function(transformer, args, expectedOutput, opt_environment) {
   return transformer.transform(environment, args).then(function(transformed) {
     return transformed.eval(environment).then(function(result) {
       assertNotNull(result);
-      if (!goog.isNull(expectedOutput))
-        assert(result.equal(expectedOutput));
+      if (!goog.isNull(expectedOutput) && !result.equal(expectedOutput)) {
+        return goog.Promise.reject('Objet mismatch.\n' +
+            'Expected: ' + expectedOutput.toString() +
+            '\nActual: ' + result.toString() + '\n');
+      }
       return result;
+    });
+  });
+};
+
+// Single test case which transforms a supplied lambda expression and applies
+// it to a list of arguments, validating the result.
+var TL = function(formalsAndBody, args, expectedOutput, opt_environment) {
+  var environment = (goog.isDef(opt_environment)
+      ? opt_environment
+      : new ccc.base.Environment());
+  return Lambda.transform(environment, formalsAndBody).then(function(lambda) {
+    return lambda.car().apply(environment, ccc.base.NIL).then(function(proc) {
+      return proc.apply(environment, args).then(function(result) {
+        assertNotNull(result);
+        if (!goog.isNull(expectedOutput) && !result.equal(expectedOutput)) {
+          return goog.Promise.reject('Objet mismatch.\n' +
+              'Expected: ' + expectedOutput.toString() +
+              '\nActual: ' + result.toString() + '\n');
+        }
+        return result;
+      });
     });
   });
 };
@@ -88,7 +117,7 @@ var ExpectFailures = function(tests) {
 function testDefine() {
   asyncTestCase.waitForAsync();
   var environment = new ccc.base.Environment();
-  var args = List([new ccc.base.Symbol('foo'), new ccc.base.Number(42)]);
+  var args = List([Sym('foo'), Num(42)]);
   TE(Define, args, ccc.base.UNSPECIFIED, environment).then(function() {
     var foo = environment.get('foo');
     assertNotNull(foo);
@@ -99,7 +128,7 @@ function testDefine() {
 
 function testBadDefineSyntax() {
   asyncTestCase.waitForAsync();
-  var symbol = new ccc.base.Symbol('bananas');
+  var symbol = Sym('bananas');
   ExpectFailures([
     // Define with no arguments.
     T(Define, ccc.base.NIL),
@@ -115,8 +144,8 @@ function testBadDefineSyntax() {
 function testSet() {
   asyncTestCase.waitForAsync();
   var environment = new ccc.base.Environment();
-  var defineArgs = List([new ccc.base.Symbol('foo'), new ccc.base.Number(41)]);
-  var setArgs = List([new ccc.base.Symbol('foo'), new ccc.base.Number(42)]);
+  var defineArgs = List([Sym('foo'), Num(41)]);
+  var setArgs = List([Sym('foo'), Num(42)]);
 
   // First try to set unbound symbol 'foo and expect it to fail.
   TE(Set, setArgs, null, environment).then(justFail).thenCatch(function() {
@@ -139,7 +168,7 @@ function testSet() {
 
 function testBadSetSyntax() {
   asyncTestCase.waitForAsync();
-  var symbol = new ccc.base.Symbol('catpants');
+  var symbol = Sym('catpants');
 
   ExpectFailures([
     // Set with no arguments: FAIL!
@@ -203,36 +232,32 @@ function testBadQuoteSyntax() {
 
 function testSimpleLambda() {
   asyncTestCase.waitForAsync();
-  var environment = new ccc.base.Environment();
   var formals = ccc.base.NIL;
-  var body = List([ccc.base.T, new ccc.base.Number(42)]);
-  var args = List([formals], body);
-  TE(Lambda, args, null, environment).then(function(lambda) {
-    assertNotNull(lambda);
-    assert(lambda.isProcedure());
-    return lambda.apply(environment, ccc.base.NIL).then(function(result) {
-      assertNotNull(result);
-      assert(result.isNumber());
-      assertEquals(42, result.value());
-    });
-  }).then(continueTesting, justFail);
+  var body = List([ccc.base.T, Num(42)]);
+  RunTests([
+    TL(List([formals], body), ccc.base.NIL, Num(42))
+  ]).then(continueTesting, justFail);
 }
-
 
 function testLambdaClosure() {
   asyncTestCase.waitForAsync();
   var environment = new ccc.base.Environment();
-  var formals = List([new ccc.base.Symbol('x')]);
-  var body = List([new ccc.base.Symbol('x')]);
-  var lambdaArgs = List([formals], body);
+  var formals = List([Sym('x')]);
+  var body = List([Sym('x')]);
   environment.set('x', ccc.base.F);
-  TE(Lambda, lambdaArgs, null, environment).then(function(lambda) {
-    // Apply the identity lambda and verify that the symbol 'x must have
-    // been internally bound to the argument #t.
-    lambda.apply(environment, ccc.base.Pair.makeList([ccc.base.T])).then(
-        goog.partial(assertEquals, ccc.base.T)).then(function() {
-      // Then also verify that the outer environment's 'x is still bound to #f.
-      assertEquals(ccc.base.F, environment.get('x'));
-    });
+  // Apply the identity lambda and verify that the symbol 'x must have
+  // been internally bound to the argument #t.
+  TL(List([formals], body), List([ccc.base.T]), ccc.base.T).then(function() {
+    // Then also verify that the outer environment's 'x is still bound to #f.
+    assertEquals(ccc.base.F, environment.get('x'));
   }).then(continueTesting, justFail);
+}
+
+function testDottedTailArg() {
+  asyncTestCase.waitForAsync();
+  var formals = List([Sym('foo')], Sym('rest'));
+  var body = List([Sym('rest')]);
+  var args = List([Num(1), Num(2), Num(3), Num(4)]);
+  TL(List([formals], body), args, args.cdr()).then(
+      continueTesting, justFail);
 }

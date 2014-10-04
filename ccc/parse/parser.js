@@ -2,16 +2,7 @@
 
 goog.provide('ccc.parse.Parser');
 
-goog.require('ccc.base.F');
-goog.require('ccc.base.NIL');
-goog.require('ccc.base.Number');
-goog.require('ccc.base.Object');
-goog.require('ccc.base.Pair');
-goog.require('ccc.base.String');
-goog.require('ccc.base.Symbol');
-goog.require('ccc.base.Vector');
-goog.require('ccc.base.T');
-goog.require('ccc.base.UNSPECIFIED');
+goog.require('ccc.base');
 goog.require('ccc.parse.ObjectReader');
 goog.require('ccc.parse.Token');
 goog.require('ccc.parse.TokenReader');

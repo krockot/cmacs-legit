@@ -3,14 +3,7 @@
 goog.provide('ccc.parse.ParserTest');
 goog.setTestOnly('ccc.parse.ParserTest');
 
-goog.require('ccc.base.Char');
-goog.require('ccc.base.NIL');
-goog.require('ccc.base.Number');
-goog.require('ccc.base.Object');
-goog.require('ccc.base.String');
-goog.require('ccc.base.Symbol');
-goog.require('ccc.base.Vector');
-goog.require('ccc.base.Pair');
+goog.require('ccc.base');
 goog.require('ccc.parse.Parser');
 goog.require('ccc.parse.Token');
 goog.require('ccc.parse.TokenReader');

@@ -2,12 +2,7 @@
 
 goog.provide('ccc.syntax.If')
 
-goog.require('ccc.base.F');
-goog.require('ccc.base.NIL');
-goog.require('ccc.base.Object');
-goog.require('ccc.base.Pair');
-goog.require('ccc.base.Transformer');
-goog.require('ccc.base.UNSPECIFIED');
+goog.require('ccc.base');
 goog.require('goog.Promise');
 
 

@@ -2,10 +2,7 @@
 
 goog.provide('ccc.syntax.Lambda');
 
-goog.require('ccc.base.Object');
-goog.require('ccc.base.Pair');
-goog.require('ccc.base.Procedure');
-goog.require('ccc.base.Transformer');
+goog.require('ccc.base');
 goog.require('goog.Promise');
 goog.require('goog.asserts');
 

@@ -2,11 +2,7 @@
 
 goog.provide('ccc.syntax.Set');
 
-goog.require('ccc.base.NativeProcedure');
-goog.require('ccc.base.Pair');
-goog.require('ccc.base.Symbol');
-goog.require('ccc.base.Transformer');
-goog.require('ccc.base.UNSPECIFIED');
+goog.require('ccc.base');
 goog.require('goog.Promise');
 
 

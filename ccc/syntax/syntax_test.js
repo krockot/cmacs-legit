@@ -3,17 +3,8 @@
 goog.provide('ccc.syntax.SyntaxTests');
 goog.setTestOnly('ccc.syntax.SyntaxTests');
 
-goog.require('ccc.base.Environment');
-goog.require('ccc.base.Number');
-goog.require('ccc.base.Pair');
-goog.require('ccc.base.String');
-goog.require('ccc.base.Symbol');
-goog.require('ccc.base.UNSPECIFIED');
-goog.require('ccc.syntax.Define');
-goog.require('ccc.syntax.If');
-goog.require('ccc.syntax.Lambda');
-goog.require('ccc.syntax.Quote');
-goog.require('ccc.syntax.Set');
+goog.require('ccc.base');
+goog.require('ccc.syntax');
 goog.require('goog.Promise');
 goog.require('goog.testing.AsyncTestCase');
 goog.require('goog.testing.jsunit');

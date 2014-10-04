@@ -29,6 +29,7 @@ var Quote = new ccc.syntax.Quote();
 var Set = new ccc.syntax.Set();
 var Sym = function(name) { return new ccc.base.Symbol(name); };
 var Num = function(value) { return new ccc.base.Number(value); };
+var NIL = ccc.base.NIL;
 
 function setUpPage() {
   asyncTestCase.stepTimeout = 100;
@@ -89,7 +90,7 @@ var TL = function(formalsAndBody, args, expectedOutput, opt_environment) {
       ? opt_environment
       : new ccc.base.Environment());
   return Lambda.transform(environment, formalsAndBody).then(function(lambda) {
-    return lambda.car().apply(environment, ccc.base.NIL).then(function(proc) {
+    return lambda.car().apply(environment, NIL).then(function(proc) {
       return proc.apply(environment, args).then(function(result) {
         assertNotNull(result);
         if (!goog.isNull(expectedOutput) && !result.equal(expectedOutput)) {
@@ -111,7 +112,7 @@ var ExpectFailures = function(tests) {
   return goog.Promise.firstFulfilled(tests).then(function(result) {
     justFail(new Error('Expected failure; got success with ' +
         result.toString()));
-  }, continueTesting);
+  }).thenCatch(function() {});
 };
 
 function testDefine() {
@@ -131,14 +132,14 @@ function testBadDefineSyntax() {
   var symbol = Sym('bananas');
   ExpectFailures([
     // Define with no arguments.
-    T(Define, ccc.base.NIL),
+    T(Define, NIL),
     // Define with only a symbol argument.
     T(Define, List([symbol])),
     // Define with a non-symbol first argument.
     T(Define, List([ccc.base.T, ccc.base.T])),
     // Define with too many arguments!
     T(Define, List([symbol, ccc.base.T, ccc.base.T])),
-  ]);
+  ]).then(continueTesting, justFail);
 }
 
 function testSet() {
@@ -172,26 +173,26 @@ function testBadSetSyntax() {
 
   ExpectFailures([
     // Set with no arguments: FAIL!
-    T(Set, ccc.base.NIL),
+    T(Set, NIL),
     // Set with only a symbol argument: FAIL!
     T(Set, List([symbol])),
     // Set a non-symbol first argument: FAIL!
     T(Set, List([ccc.base.T, ccc.base.T])),
     // Set with too many arguments: FAIL!
     T(Set, List([symbol, ccc.base.T, ccc.base.T]))
-  ]);
+  ]).then(continueTesting, justFail);
 }
 
 function testIfTrue() {
   asyncTestCase.waitForAsync();
-  var ifArgs = List([ccc.base.NIL, ccc.base.T]);
+  var ifArgs = List([NIL, ccc.base.T]);
   TE(If, ifArgs, ccc.base.T).then(continueTesting, justFail);
 }
 
 function testIfFalse() {
   asyncTestCase.waitForAsync();
-  var ifArgs = List([ccc.base.F, ccc.base.T, ccc.base.NIL]);
-  TE(If, ifArgs, ccc.base.NIL).then(continueTesting, justFail);
+  var ifArgs = List([ccc.base.F, ccc.base.T, NIL]);
+  TE(If, ifArgs, NIL).then(continueTesting, justFail);
 }
 
 function testIfFalseWithNoAlternate() {
@@ -204,19 +205,19 @@ function testBadIfSyntax() {
   asyncTestCase.waitForAsync();
   ExpectFailures([
     // If with no arguments: FAIL!
-    T(If, ccc.base.NIL),
+    T(If, NIL),
     // If with only a condition: FAIL!
     T(If, List([ccc.base.T])),
     // If with too many arguments: FAIL!
-    T(If, List([ccc.base.T, ccc.base.T, ccc.base.T, ccc.base.NIL])),
+    T(If, List([ccc.base.T, ccc.base.T, ccc.base.T, NIL])),
     // If with weird improper list: DEFINITELY FAIL!
     T(If, List([ccc.base.T, ccc.base.T], ccc.base.T))
-  ]);
+  ]).then(continueTesting, justFail);
 }
 
 function testQuote() {
   asyncTestCase.waitForAsync();
-  var list = List([ccc.base.T, ccc.base.F, ccc.base.NIL]);
+  var list = List([ccc.base.T, ccc.base.F, NIL]);
   TE(Quote, List([list]), list).then(continueTesting, justFail);
 }
 
@@ -224,18 +225,18 @@ function testBadQuoteSyntax() {
   asyncTestCase.waitForAsync();
   ExpectFailures([
     // No arguments
-    T(Quote, ccc.base.NIL),
+    T(Quote, NIL),
     // Too many arguments
     T(Quote, List([ccc.base.T, ccc.base.T]))
-  ]);
+  ]).then(continueTesting, justFail);
 }
 
 function testSimpleLambda() {
   asyncTestCase.waitForAsync();
-  var formals = ccc.base.NIL;
+  var formals = NIL;
   var body = List([ccc.base.T, Num(42)]);
   RunTests([
-    TL(List([formals], body), ccc.base.NIL, Num(42))
+    TL(List([formals], body), NIL, Num(42))
   ]).then(continueTesting, justFail);
 }
 
@@ -253,11 +254,31 @@ function testLambdaClosure() {
   }).then(continueTesting, justFail);
 }
 
-function testDottedTailArg() {
+function testLambdaTailArgs() {
   asyncTestCase.waitForAsync();
-  var formals = List([Sym('foo')], Sym('rest'));
   var body = List([Sym('rest')]);
   var args = List([Num(1), Num(2), Num(3), Num(4)]);
-  TL(List([formals], body), args, args.cdr()).then(
-      continueTesting, justFail);
+  var formals1 = List([Sym('foo')], Sym('rest'));
+  var formals2 = List([Sym('foo'), Sym('bar')], Sym('rest'));
+  var formals4 = List([Sym('a'), Sym('b'), Sym('c'), Sym('d')], Sym('rest'));
+  RunTests([
+    TL(List([Sym('rest')], body), args, args),
+    TL(List([formals1], body), args, args.cdr()),
+    TL(List([formals2], body), args, args.cdr().cdr()),
+    TL(List([formals4], body), args, NIL)
+  ]).then(continueTesting, justFail);
+}
+
+function testBadLambdaSyntax() {
+  asyncTestCase.waitForAsync();
+  ExpectFailures([
+    // ((lambda) ())
+    TL(NIL, NIL, NIL),
+    // ((lambda foo) 1)
+    TL(List([Sym('foo')]), List([Num(1)]), NIL),
+    // ((lambda 42) 1)
+    TL(List([Num(42)]), List([Num(1)]), NIL),
+    // ((lambda foo . foo) 1)
+    TL(List([Sym('foo')], Sym('foo')), List([Num(1)]), Num(1))
+  ]).then(continueTesting, justFail);
 }

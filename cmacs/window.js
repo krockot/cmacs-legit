@@ -1,6 +1,5 @@
 // The Cmacs Project.
 
-
 goog.provide('cmacs.window.main')
 
 

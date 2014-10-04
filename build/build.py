@@ -1,6 +1,5 @@
 # The Cmacs Project.
 
-
 import inspect
 import json
 import os

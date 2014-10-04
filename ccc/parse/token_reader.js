@@ -1,6 +1,5 @@
 // The Cmacs Project.
 
-
 goog.provide('ccc.parse.TokenReader');
 
 goog.require('ccc.parse.Token');

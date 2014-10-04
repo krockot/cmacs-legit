@@ -1,6 +1,5 @@
 // The Cmacs Project.
 
-
 goog.provide('ccc.syntax.SyntaxTests');
 goog.setTestOnly('ccc.syntax.SyntaxTests');
 

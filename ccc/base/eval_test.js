@@ -1,6 +1,5 @@
 // The Cmacs Project.
 
-
 goog.provide('ccc.base.EvalTest');
 goog.setTestOnly('ccc.base.EvalTest');
 

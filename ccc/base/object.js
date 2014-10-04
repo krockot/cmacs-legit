@@ -1,6 +1,5 @@
 // The Cmacs Project.
 
-
 goog.provide('ccc.base.F');
 goog.provide('ccc.base.NIL');
 goog.provide('ccc.base.T');

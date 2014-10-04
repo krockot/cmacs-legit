@@ -1,6 +1,5 @@
 // The Cmacs Project.
 
-
 goog.provide('ccc.parse.ParserTest');
 goog.setTestOnly('ccc.parse.ParserTest');
 

@@ -1,6 +1,5 @@
 // The Cmacs Project.
 
-
 goog.provide('ccc.syntax.Lambda');
 
 goog.require('ccc.base.Object');

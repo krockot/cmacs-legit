@@ -1,6 +1,5 @@
 // The Cmacs Project.
 
-
 goog.provide('ccc.syntax.Set');
 
 goog.require('ccc.base.NativeProcedure');

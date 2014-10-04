@@ -1,6 +1,5 @@
 // The Cmacs Project.
 
-
 goog.provide('ccc.base.Vector');
 
 goog.require('ccc.base.Object');

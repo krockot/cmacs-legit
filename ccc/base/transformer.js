@@ -1,6 +1,5 @@
 // The Cmacs Project.
 
-
 goog.provide('ccc.base.Transformer');
 
 goog.require('ccc.base.Object');

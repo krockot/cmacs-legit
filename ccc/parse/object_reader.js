@@ -1,6 +1,5 @@
 // The Cmacs Project.
 
-
 goog.provide('ccc.parse.ObjectReader');
 
 goog.require('ccc.base.Object');

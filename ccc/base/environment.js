@@ -85,7 +85,7 @@ ccc.base.Environment.prototype.isToplevel = function() {
 ccc.base.Environment.prototype.update = function(name, value) {
   if (!goog.object.containsKey(this.bindings_, name)) {
     if (!goog.isNull(this.parent_))
-      return this.parent_.update(name);
+      return this.parent_.update(name, value);
     return false;
   }
   this.bindings_[name] = value;

@@ -66,6 +66,16 @@ ccc.base.Environment.prototype.get = function(name) {
 
 
 /**
+ * Indicates if this is a top-level environment.
+ *
+ * @return {boolean}
+ */
+ccc.base.Environment.prototype.isToplevel = function() {
+  return goog.isNull(this.parent_);
+};
+
+
+/**
  * Updates the value bound to a name.
  *
  * @param {string} name

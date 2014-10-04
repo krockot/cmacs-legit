@@ -252,9 +252,13 @@ function testLambdaTailArgs() {
   var formals2 = List([Sym('foo'), Sym('bar')], Sym('rest'));
   var formals4 = List([Sym('a'), Sym('b'), Sym('c'), Sym('d')], Sym('rest'));
   RunTests([
+    // ((lambda rest rest) 1 2 3 4) -> (1 2 3 4)
     TL(List([Sym('rest')], body), args, args),
+    // ((lambda (foo . rest) rest) 1 2 3 4) -> (2 3 4)
     TL(List([formals1], body), args, args.cdr()),
+    // ((lambda (foo bar . rest) rest) 1 2 3 4) -> (3 4)
     TL(List([formals2], body), args, args.cdr().cdr()),
+    // ((lambda (a b c d . rest) rest) 1 2 3 4) -> ()
     TL(List([formals4], body), args, NIL)
   ]).then(continueTesting, justFail);
 }
@@ -262,7 +266,7 @@ function testLambdaTailArgs() {
 function testBadLambdaSyntax() {
   asyncTestCase.waitForAsync();
   ExpectFailures([
-    // ((lambda) ())
+    // ((lambda))
     TL(NIL, NIL, NIL),
     // ((lambda foo) 1)
     TL(List([Sym('foo')]), List([Num(1)]), NIL),

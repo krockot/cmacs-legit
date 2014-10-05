@@ -51,6 +51,6 @@ ccc.base.Number.prototype.value = function() {
 
 
 /** @override */
-ccc.base.Number.prototype.eval = function(environment) {
-  return goog.Promise.resolve(this);
+ccc.base.Number.prototype.eval = function(environment, continuation) {
+  continuation.resolve(this);
 };

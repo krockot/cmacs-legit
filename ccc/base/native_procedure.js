@@ -26,7 +26,9 @@ goog.inherits(ccc.base.NativeProcedure, ccc.base.Object);
 /**
  * A native function type which can be wrapped by NativeProcedure instances.
  *
- * @typedef {function(!ccc.base.Environment, !ccc.base.Object):!goog.Promise}
+ * @typedef {function(!ccc.base.Environment,
+ *                    !ccc.base.Object,
+ *                    !goog.promise.Resolver)}
  * @public
  */
 ccc.base.NativeProcedure.FunctionType;
@@ -45,12 +47,13 @@ ccc.base.NativeProcedure.prototype.isApplicable = function() {
 
 
 /** @override */
-ccc.base.NativeProcedure.prototype.eval = function(environment) {
-  return goog.Promise.resolve(this);
+ccc.base.NativeProcedure.prototype.eval = function(environment, continuation) {
+  continuation.resolve(this);
 };
 
 
 /** @override */
-ccc.base.NativeProcedure.prototype.apply = function(environment, args) {
-  return this.nativeFunction_(environment, args);
+ccc.base.NativeProcedure.prototype.apply = function(
+    environment, args, continuation) {
+  this.nativeFunction_(environment, args, continuation);
 };

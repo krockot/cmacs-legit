@@ -62,12 +62,12 @@ ccc.syntax.Lambda.prototype.transform = function(environment, args) {
  * @param {!ccc.base.Object} body
  * @param {!ccc.base.Environment} environment
  * @param {!ccc.base.Object} args
- * @return {!goog.Promise}
+ * @param {!goog.promise.Resolver} continuation
+ * @private
  */
 ccc.syntax.Lambda.generateProcedure_ = function(
-    formals, body, environment, args) {
+    formals, body, environment, args, continuation) {
   goog.asserts.assert(args.isNil(),
       'Procedure generators should never receive arguments.');
-  return goog.Promise.resolve(new ccc.base.Procedure(
-      environment, formals, body));
+  continuation.resolve(new ccc.base.Procedure(environment, formals, body));
 };

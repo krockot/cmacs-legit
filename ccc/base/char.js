@@ -62,8 +62,8 @@ ccc.base.Char.prototype.stringValue = function() {
 
 
 /** @override */
-ccc.base.Char.prototype.eval = function(environment) {
-  return goog.Promise.resolve(this);
+ccc.base.Char.prototype.eval = function(environment, continuation) {
+  continuation.resolve(this);
 };
 
 

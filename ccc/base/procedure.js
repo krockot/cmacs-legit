@@ -8,6 +8,7 @@ goog.require('goog.Promise');
 goog.require('goog.asserts');
 
 
+
 /**
  * A Procedure object is a compiled, applicable closure.
  *
@@ -56,17 +57,19 @@ ccc.base.Procedure.prototype.isApplicable = function() {
 
 
 /** @override */
-ccc.base.Procedure.prototype.eval = function(environment) {
-  return goog.Promise.resolve(this);
+ccc.base.Procedure.prototype.eval = function(environment, continuation) {
+  continuation.resolve(this);
 };
 
 
 /** @override */
-ccc.base.Procedure.prototype.apply = function(environment, args) {
+ccc.base.Procedure.prototype.apply = function(environment, args, continuation) {
   var innerScope = new ccc.base.Environment(this.scope_);
   if (this.formals_.isNil()) {
-    if (!args.isNil())
-      return goog.Promise.reject(new Error('Too many arguments'));
+    if (!args.isNil()) {
+      continuation.reject(new Error('Too many arguments'));
+      return;
+    }
   } else if (this.formals_.isSymbol()) {
     innerScope.set(this.formals_.name(), args);
   } else {
@@ -79,23 +82,40 @@ ccc.base.Procedure.prototype.apply = function(environment, args) {
       formal = formal.cdr();
       arg = arg.cdr();
     }
-    if (formal.isNil() && !arg.isNil())
-      return goog.Promise.reject(new Error('Too many arguments'));
-    if (arg.isNil() && formal.isPair())
-      return goog.Promise.reject(new Error('Not enough arguments'));
+    if (formal.isNil() && !arg.isNil()) {
+      continuation.reject(new Error('Too many arguments'));
+      return;
+    }
+    if (arg.isNil() && formal.isPair()) {
+      continuation.reject(new Error('Not enough arguments'));
+      return;
+    }
     goog.asserts.assert(arg.isPair() || arg.isNil(), 'Invalid argument list');
     if (formal.isSymbol())
       innerScope.set(formal.name(), arg);
   }
 
-  var body = this.body_;
-  var step = function() {
-    return body.car().eval(innerScope).then(function(result) {
-      body = body.cdr();
-      if (body.isNil())
-        return result;
-      return step();
-    });
-  };
-  return step();
+  ccc.base.Procedure.evalBody_(innerScope, continuation, this.body_);
+};
+
+
+/**
+ * Evaluates a procedure body one expression at a time. If in the tail position,
+ * the result of evaluation is passed to the given continuation.
+ *
+ * @param {!ccc.base.Environment} environment
+ * @param {!goog.promise.Resolver} continuation
+ * @param {!ccc.base.Object} body
+ * @private
+ */
+ccc.base.Procedure.evalBody_ = function(environment, continuation, body) {
+  goog.asserts.assert(body.isPair(), 'Invalid procedure body. Y u do dis?');
+  if (body.cdr().isNil()) {
+    body.car().eval(environment, continuation);
+    return;
+  }
+  var resolver = goog.Promise.withResolver();
+  body.car().eval(environment, resolver);
+  resolver.promise.then(goog.partial(ccc.base.Procedure.evalBody_,
+      environment, continuation, body.cdr()));
 };

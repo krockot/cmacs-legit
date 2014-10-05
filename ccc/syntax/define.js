@@ -54,10 +54,11 @@ ccc.syntax.Define.prototype.transform = function(environment, args) {
  * @param {!ccc.base.Symbol} symbol
  * @param {!ccc.base.Environment} environment
  * @param {!ccc.base.Object} args
- * @return {!goog.Promise.<!ccc.base.Object>}
+ * @param {!goog.promise.Resolver} continuation
  * @private
  */
-ccc.syntax.Define.bindSymbol_ = function(symbol, environment, args) {
+ccc.syntax.Define.bindSymbol_ = function(
+    symbol, environment, args, continuation) {
   environment.set(symbol.name(), args.car());
-  return goog.Promise.resolve(ccc.base.UNSPECIFIED);
+  continuation.resolve(ccc.base.UNSPECIFIED);
 };

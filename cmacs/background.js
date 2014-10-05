@@ -6,6 +6,7 @@ goog.require('ccc.base');
 goog.require('ccc.syntax');
 goog.require('ccc.parse.Parser');
 goog.require('ccc.parse.Scanner');
+goog.require('goog.Promise');
 
 
 
@@ -18,6 +19,21 @@ cmacs.background.main = function() {
   environment.set('\u03bb', new ccc.syntax.Lambda());
   environment.set('quote', new ccc.syntax.Quote());
   environment.set('set!', new ccc.syntax.Set());
+  // Add some test library functions to play with.
+  environment.set('-', new ccc.base.NativeProcedure(function(
+      environment, args, continuation) {
+    continuation.resolve(new ccc.base.Number(
+        args.car().value() - args.cdr().car().value()));
+  }));
+  environment.set('+', new ccc.base.NativeProcedure(function(
+      environment, args, continuation) {
+    continuation.resolve(new ccc.base.Number(
+        args.car().value() + args.cdr().car().value()));
+  }));
+  environment.set('zero?', new ccc.base.NativeProcedure(function(
+      environment, args, continuation) {
+    continuation.resolve(args.car().value() == 0 ? ccc.base.T : ccc.base.F);
+  }));
   goog.global['evalCcc'] = function(code) {
     var scanner = new ccc.parse.Scanner();
     scanner.feed(code);
@@ -26,7 +42,9 @@ cmacs.background.main = function() {
     parser.readObject().then(function(object) {
       return object.compile(environment);
     }).then(function(compiledObject) {
-      return compiledObject.eval(environment);
+      var continuation = goog.Promise.withResolver();
+      compiledObject.eval(environment, continuation);
+      return continuation.promise;
     }).then(function(result) {
       console.log(result.toString());
     });

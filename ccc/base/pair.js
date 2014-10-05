@@ -4,6 +4,7 @@ goog.provide('ccc.base.Pair');
 
 goog.require('ccc.base.NIL');
 goog.require('ccc.base.Object');
+goog.require('goog.Promise');
 
 
 
@@ -138,21 +139,35 @@ ccc.base.Pair.prototype.compile = function(environment) {
 
 
 /** @override */
-ccc.base.Pair.prototype.eval = function(environment) {
-  return this.car_.eval(environment).then(function(head) {
-    var evalArgs = function(args) {
-      if (args.isNil())
-        return goog.Promise.resolve(ccc.base.NIL);
-      if (!args.isPair())
-        return goog.Promise.reject(new Error('Invalid list exression'));
-      return evalArgs(args.cdr_).then(function(cdr) {
-        return args.car_.eval(environment).then(function(car) {
-          return new ccc.base.Pair(car, cdr);
-        });
-      });
-    };
-    return evalArgs(this.cdr_).then(function(args) {
-      return head.apply(environment, args);
-    });
-  }, null, this);
+ccc.base.Pair.prototype.eval = function(environment, continuation) {
+  var headResolver = goog.Promise.withResolver();
+  this.car_.eval(environment, headResolver);
+  var promises = [headResolver.promise];
+  var arg = this.cdr_;
+  while (arg.isPair()) {
+    var resolver = goog.Promise.withResolver();
+    arg.car().eval(environment, resolver);
+    promises.push(resolver.promise);
+    arg = arg.cdr();
+  }
+  if (!arg.isNil()) {
+    continuation.reject(new Error('Invalid list expression'));
+    return;
+  }
+  goog.Promise.all(promises).then(ccc.base.Pair.combineValues_.bind(null,
+      environment, continuation));
+};
+
+
+/**
+ * Given an array of values, apply the first value to the remaining values
+ * within the given environment, and pass the result to the given continuation.
+ *
+ * @param {!ccc.base.Environment} environment
+ * @param {!goog.promise.Resolver} continuation
+ * @param {!Array.<!ccc.base.Object>} values
+ */
+ccc.base.Pair.combineValues_ = function(environment, continuation, values) {
+  var tail = ccc.base.Pair.makeList(values.slice(1));
+  values[0].apply(environment, tail, continuation);
 };

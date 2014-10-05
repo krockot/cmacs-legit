@@ -58,6 +58,6 @@ ccc.base.Vector.prototype.elements = function() {
 
 
 /** @override */
-ccc.base.Vector.prototype.eval = function(environment) {
-  return goog.Promise.resolve(this);
+ccc.base.Vector.prototype.eval = function(environment, continuation) {
+  continuation.resolve(this);
 };

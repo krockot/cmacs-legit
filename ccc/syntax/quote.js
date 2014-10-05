@@ -44,8 +44,10 @@ ccc.syntax.Quote.prototype.transform = function(environment, args) {
  * @param {!ccc.base.Object} object
  * @param {!ccc.base.Environment} environment
  * @param {!ccc.base.Object} args
- * @return {!goog.Promise.<!ccc.base.Object>}
+ * @param {!goog.promise.Resolver} continuation
+ * @private
  */
-ccc.syntax.Quote.nativeImpl_ = function(object, environment, args) {
-  return goog.Promise.resolve(object);
+ccc.syntax.Quote.nativeImpl_ = function(
+    object, environment, args, continuation) {
+  continuation.resolve(object);
 };

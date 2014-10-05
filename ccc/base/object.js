@@ -243,11 +243,13 @@ ccc.base.Object.prototype.compile = function(environment) {
  *     object application is to be initiated.
  * @param {!ccc.base.Object} args The arguments to apply. Guaranteed to be
  *     either a Pair or NIL.
- * @return {!goog.Promise}
+ * @param {!goog.promise.Resolver} continuation The promise resolver which
+ *     should receive the result of this application.
  * @public
  */
-ccc.base.Object.prototype.apply = function(environment, args) {
-  return goog.Promise.reject(new Error('Object is not applicable.'));
+ccc.base.Object.prototype.apply = function(environment, args, continuation) {
+  continuation.reject(new Error('Object ' + this.toString() +
+                                ' is not applicable.'));
 };
 
 
@@ -256,12 +258,13 @@ ccc.base.Object.prototype.apply = function(environment, args) {
  *
  * @param {!ccc.base.Environment} environment The environment in which this
  *     object should be evaluated.
- * @return {!goog.Promise}
+ * @param {!goog.promise.Resolver} continuation The promise resolver which
+ *     should receive the result of this evaluation.
  * @public
  */
-ccc.base.Object.prototype.eval = function(environment) {
-  return goog.Promise.reject(
-      new Error('Object ' + this.toString() + ' cannot be evaluated.'));
+ccc.base.Object.prototype.eval = function(environment, continuation) {
+  continuation.reject(new Error('Object ' + this.toString() +
+                                ' cannot be evaluated.'));
 };
 
 
@@ -283,8 +286,8 @@ ccc.base.NIL.isNil = function() { return true; };
 
 
 /** @override */
-ccc.base.NIL.eval = function(environment) {
-  return goog.Promise.resolve(this);
+ccc.base.NIL.eval = function(environment, continuation) {
+  continuation.resolve(this);
 };
 
 
@@ -306,8 +309,8 @@ ccc.base.UNSPECIFIED.isUnspecified = function() { return true; };
 
 
 /** @override */
-ccc.base.UNSPECIFIED.eval = function(environment) {
-  return goog.Promise.resolve(this);
+ccc.base.UNSPECIFIED.eval = function(environment, continuation) {
+  continuation.resolve(this);
 };
 
 
@@ -329,7 +332,9 @@ ccc.base.T.isTrue = function() { return true; };
 
 
 /** @override */
-ccc.base.T.eval = function(environment) { return goog.Promise.resolve(this); };
+ccc.base.T.eval = function(environment, continuation) {
+  continuation.resolve(this);
+};
 
 
 /**
@@ -350,4 +355,6 @@ ccc.base.F.isFalse = function() { return true; };
 
 
 /** @override */
-ccc.base.F.eval = function(environment) { return goog.Promise.resolve(this); };
+ccc.base.F.eval = function(environment, continuation) {
+  continuation.resolve(this);
+};

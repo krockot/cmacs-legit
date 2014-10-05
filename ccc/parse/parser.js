@@ -104,7 +104,7 @@ VectorBuilder_.prototype.build = function() {
  * @private
  */
 var TailBuilder_ = function(targetBuilder) {
-  ObjectBuilder_.call(this, -1);
+  ObjectBuilder_.call(this, targetBuilder.bracketType);
 
   /** @private {!ObjectBuilder_} */
   this.targetBuilder_ = targetBuilder;

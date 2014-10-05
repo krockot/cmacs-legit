@@ -276,3 +276,43 @@ function testBadLambdaSyntax() {
     TL(List([Sym('foo')], Sym('foo')), List([Num(1)]), Num(1))
   ]).then(continueTesting, justFail);
 }
+
+function testTailRecursion() {
+  var N = 100;
+  asyncTestCase.waitForAsync();
+  var environment = new ccc.base.Environment();
+  environment.set('x', Num(N));
+  var decrementX = new ccc.base.NativeProcedure(function(environment, args) {
+    environment.update('x', Num(environment.get('x').value() - 1));
+    return goog.Promise.resolve(NIL);
+  });
+  var xIsPositive = new ccc.base.NativeProcedure(function(environment, args) {
+    if (environment.get('x').value() > 0)
+      return goog.Promise.resolve(ccc.base.T);
+    return goog.Promise.resolve(ccc.base.F);
+  });
+  var incrementZ = new ccc.base.NativeProcedure(function(environment, args) {
+    environment.update('z', Num(environment.get('z').value() + 1));
+    return goog.Promise.resolve(ccc.base.T);
+  });
+  environment.set('z', Num(0));
+
+  var conditionalForm = If.transform(environment, List([List([xIsPositive]),
+      List([Sym('loop')]), ccc.base.T])).then(function(conditional) {
+    // Build a procedure and bind it to 'loop:
+    // (lambda () (decrementX) (if (xIsPositive) (loop) #t))
+    var loopForm = List([NIL, List([decrementX]), List([incrementZ]),
+        conditional]);
+    return Lambda.transform(environment, loopForm);
+  }).then(function(loopGenerator) {
+    // Eval the lambda form to generate a procedure.
+    return loopGenerator.car().apply(environment, ccc.base.NIL);
+  }).then(function(loop) {
+    environment.set('loop', loop);
+    // Run the loop!
+    return loop.apply(environment, ccc.base.NIL);
+  }).then(function() {
+    // Verify that the loop ran N times.
+    assertEquals(N, environment.get('z').value());
+  }).then(continueTesting, justFail);
+}

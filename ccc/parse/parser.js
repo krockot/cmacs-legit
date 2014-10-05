@@ -18,7 +18,7 @@ goog.require('ccc.parse.TokenType');
  * @constructor
  * @private
  */
-var ObjectBuilder_ = function(bracketType, build) {
+var ObjectBuilder_ = function(bracketType) {
   /** @public {number} */
   this.bracketType = bracketType;
 
@@ -62,7 +62,7 @@ ObjectBuilder_.prototype.add = function(object) {
  * @private
  */
 var ListBuilder_ = function(bracketType) {
-  goog.base(this, bracketType);
+  ObjectBuilder_.call(this, bracketType);
 };
 goog.inherits(ListBuilder_, ObjectBuilder_);
 
@@ -84,7 +84,7 @@ ListBuilder_.prototype.build = function() {
  * @private
  */
 var VectorBuilder_ = function(bracketType) {
-  goog.base(this, bracketType);
+  ObjectBuilder_.call(this, bracketType);
 };
 goog.inherits(VectorBuilder_, ObjectBuilder_);
 
@@ -103,8 +103,8 @@ VectorBuilder_.prototype.build = function() {
  * @extends {ObjectBuilder_}
  * @private
  */
-TailBuilder_ = function(targetBuilder) {
-  goog.base(this, targetBuilder.bracketType);
+var TailBuilder_ = function(targetBuilder) {
+  ObjectBuilder_.call(this, -1);
 
   /** @private {!ObjectBuilder_} */
   this.targetBuilder_ = targetBuilder;
@@ -135,8 +135,8 @@ TailBuilder_.prototype.build = function() {
  * @extends {ObjectBuilder_}
  * @private
  */
-CommentBuilder_ = function() {
-  goog.base(this, -1);
+var CommentBuilder_ = function() {
+  ObjectBuilder_.call(this, -1);
 };
 goog.inherits(CommentBuilder_, ObjectBuilder_);
 
@@ -155,10 +155,11 @@ CommentBuilder_.prototype.add = function(object) { return true; };
  *
  * @param {string} symbolName
  * @extends {ObjectBuilder_}
+ * @constructor
  * @private
  */
-WrapperBuilder_ = function(symbolName) {
-  goog.base(this, -1);
+var WrapperBuilder_ = function(symbolName) {
+  ObjectBuilder_.call(this, -1);
 
   /** @private {string} */
   this.symbolName_ = symbolName;
@@ -338,7 +339,7 @@ ccc.parse.Parser.prototype.processToken_ = function(token) {
       throw new Error('Invalid token: ' + token.text);
   }
 
-  if (goog.isNull(production)) {
+  if (goog.isNull(production) || !goog.isDef(production)) {
     return;
   }
 
@@ -347,7 +348,7 @@ ccc.parse.Parser.prototype.processToken_ = function(token) {
   }
 
   while (this.builder_.add(production)) {
-    var production = this.builder_.build();
+    production = this.builder_.build();
     this.builder_ = this.builderStack_.pop();
     if (!goog.isDef(production)) {
       return;

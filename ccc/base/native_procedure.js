@@ -26,8 +26,7 @@ goog.inherits(ccc.base.NativeProcedure, ccc.base.Object);
 /**
  * A native function type which can be wrapped by NativeProcedure instances.
  *
- * @typedef {function(!ccc.base.Environment, !ccc.base.Object):
- *              !goog.Promise.<!ccc.base.Object>}
+ * @typedef {function(!ccc.base.Environment, !ccc.base.Object):!goog.Promise}
  * @public
  */
 ccc.base.NativeProcedure.FunctionType;

@@ -38,7 +38,7 @@ ccc.base.Transformer.prototype.isTransformer = function() {
  *
  * @param {!ccc.base.Environment} environment
  * @param {!ccc.base.Object} args
- * @return {!goog.Promise.<!ccc.base.Object>}
+ * @return {!goog.Promise}
  */
 ccc.base.Transformer.prototype.transform = function(environment, args) {
   return goog.Promise.reject(new Error('Invalid Transformer'));

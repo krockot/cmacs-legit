@@ -72,11 +72,12 @@ ccc.base.Char.prototype.eval = function(environment) {
  * other special characters escaped. If any characters are escaped, the
  * resulting name is |-quoted.
  *
- * @param {string} name
+ * @param {number} value
  * @return {string}
  */
 ccc.base.Char.getCharName_ = function(value) {
-  var charName = goog.object.get(ccc.base.Char.CHAR_NAME_MAP_, value);
+  var charName = goog.object.get(ccc.base.Char.CHAR_NAME_MAP_,
+      value.toString());
   if (goog.isDef(charName)) {
     return charName;
   }

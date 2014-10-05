@@ -15,7 +15,9 @@ goog.require('goog.Promise');
  * @extends {ccc.base.Transformer}
  * @public
  */
-ccc.syntax.Quote = function() {};
+ccc.syntax.Quote = function() {
+};
+goog.inherits(ccc.syntax.Quote, ccc.base.Transformer);
 
 
 /** @override */

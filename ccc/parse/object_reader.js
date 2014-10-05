@@ -20,7 +20,7 @@ ccc.parse.ObjectReader = function() {};
 
 
 /**
- * @type {function():ccc.base.Object}
+ * @type {function():!goog.Promise.<!ccc.base.Object>}
  * @public
  */
 ccc.parse.ObjectReader.prototype.readObject;

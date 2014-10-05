@@ -16,7 +16,9 @@ goog.require('goog.Promise');
  * @extends {ccc.base.Transformer}
  * @public
  */
-ccc.syntax.If = function() {};
+ccc.syntax.If = function() {
+};
+goog.inherits(ccc.syntax.If, ccc.base.Transformer);
 
 
 /** @override */

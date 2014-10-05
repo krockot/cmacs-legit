@@ -17,7 +17,9 @@ goog.require('goog.asserts');
  * @extends {ccc.base.Transformer}
  * @public
  */
-ccc.syntax.Lambda = function() {};
+ccc.syntax.Lambda = function() {
+};
+goog.inherits(ccc.syntax.Lambda, ccc.base.Transformer);
 
 
 /** @override */
@@ -60,7 +62,7 @@ ccc.syntax.Lambda.prototype.transform = function(environment, args) {
  * @param {!ccc.base.Object} body
  * @param {!ccc.base.Environment} environment
  * @param {!ccc.base.Object} args
- * @return {!goog.Promise.<!ccc.base.Object>}
+ * @return {!goog.Promise}
  */
 ccc.syntax.Lambda.generateProcedure_ = function(
     formals, body, environment, args) {

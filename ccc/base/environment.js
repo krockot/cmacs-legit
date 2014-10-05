@@ -29,13 +29,13 @@ ccc.base.Environment = function(opt_parent) {
 goog.inherits(ccc.base.Environment, ccc.base.Object);
 
 
-/** @overwrite */
+/** @override */
 ccc.base.Environment.prototype.toString = function() {
   return '#<environment>';
 };
 
 
-/** @overwrite */
+/** @override */
 ccc.base.Environment.prototype.isEnvironment = function() {
   return true;
 };

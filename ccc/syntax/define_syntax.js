@@ -3,7 +3,7 @@
 goog.provide('ccc.syntax.DefineSyntax');
 
 goog.require('ccc.base');
-goog.require('goog.promise');
+goog.require('goog.Promise');
 
 
 
@@ -15,7 +15,9 @@ goog.require('goog.promise');
  * @extends {ccc.base.Transformer}
  * @public
  */
-ccc.syntax.DefineSyntax = function() {};
+ccc.syntax.DefineSyntax = function() {
+};
+goog.inherits(ccc.syntax.DefineSyntax, ccc.base.Transformer);
 
 
 /** @override */

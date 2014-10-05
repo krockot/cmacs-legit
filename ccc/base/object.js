@@ -57,7 +57,7 @@ ccc.base.Object.prototype.eqv = function(other) {
 /**
  * Default non-strict equality implementation: fallback to equivalence.
  *
- * @param {!ccc.base.Other} other
+ * @param {!ccc.base.Object} other
  * @return {boolean}
  * @public
  */
@@ -243,7 +243,7 @@ ccc.base.Object.prototype.compile = function(environment) {
  *     object application is to be initiated.
  * @param {!ccc.base.Object} args The arguments to apply. Guaranteed to be
  *     either a Pair or NIL.
- * @return {!goog.Promise.<!ccc.base.Object>}
+ * @return {!goog.Promise}
  * @public
  */
 ccc.base.Object.prototype.apply = function(environment, args) {
@@ -256,7 +256,7 @@ ccc.base.Object.prototype.apply = function(environment, args) {
  *
  * @param {!ccc.base.Environment} environment The environment in which this
  *     object should be evaluated.
- * @return {!goog.Promise.<!ccc.base.Object>}
+ * @return {!goog.Promise}
  * @public
  */
 ccc.base.Object.prototype.eval = function(environment) {

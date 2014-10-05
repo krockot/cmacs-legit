@@ -15,8 +15,9 @@ goog.require('goog.Promise');
  * @extends {ccc.base.Transformer}
  * @public
  */
-ccc.syntax.Set = function() {};
-
+ccc.syntax.Set = function() {
+};
+goog.inherits(ccc.syntax.Set, ccc.base.Transformer);
 
 
 /** @override */
@@ -57,7 +58,7 @@ ccc.syntax.Set.prototype.transform = function(environment, args) {
  * @private
  */
 ccc.syntax.Set.updateBinding_ = function(symbol, environment, args) {
-  if (!environment.update(symbol, args.car())) {
+  if (!environment.update(symbol.name(), args.car())) {
     return goog.Promise.reject(new Error(
         'Cannot update binding for unbound symbol \'' + symbol.name()));
   }

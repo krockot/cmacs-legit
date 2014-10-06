@@ -90,7 +90,7 @@ ccc.base.Procedure.prototype.apply = function(environment, args, continuation) {
   }
 
   return goog.partial(ccc.base.Procedure.evalBodyContinuationImpl_,
-      environment, continuation, this.body_, ccc.base.NIL);
+      innerScope, continuation, this.body_, ccc.base.NIL);
 };
 
 

@@ -40,13 +40,20 @@ cmacs.background.main = function() {
     scanner.feed(code);
     scanner.setEof();
     var parser = new ccc.parse.Parser(scanner);
-    parser.readObject().then(function(object) {
-      return object.compile(environment);
-    }).then(function(compiledObject) {
-      return evaluator.evalObject(compiledObject);
-    }).then(function(result) {
-      console.log(result.toString());
-    });
+    /** @param {Object=} opt_lastValue */
+    var readObjects = function(opt_lastValue) {
+      parser.readObject().then(function(object) {
+        if (goog.isNull(object)) {
+          if (goog.isDef(opt_lastValue))
+            console.log(opt_lastValue.toString());
+          return;
+        }
+        return object.compile(environment).then(function(compiledObject) {
+          return evaluator.evalObject(compiledObject);
+        }).then(readObjects);
+      });
+    };
+    readObjects();
   };
 };
 

@@ -54,11 +54,14 @@ ccc.syntax.Define.prototype.transform = function(environment, args) {
  * @param {!ccc.base.Symbol} symbol
  * @param {!ccc.base.Environment} environment
  * @param {!ccc.base.Object} args
- * @param {!goog.promise.Resolver} continuation
+ * @param {!ccc.base.Continuation} continuation
+ * @return {ccc.base.Thunk}
  * @private
  */
 ccc.syntax.Define.bindSymbol_ = function(
     symbol, environment, args, continuation) {
+  goog.asserts.assert(args.isPair() && args.cdr().isNil(),
+      'Compiled define should always receive exactly one argument.');
   environment.set(symbol.name(), args.car());
-  continuation.resolve(ccc.base.UNSPECIFIED);
+  return continuation(ccc.base.UNSPECIFIED);
 };

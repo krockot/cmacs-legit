@@ -3,7 +3,6 @@
 goog.provide('ccc.base.Symbol');
 
 goog.require('ccc.base.Object');
-goog.require('goog.Promise');
 goog.require('goog.object');
 
 
@@ -55,8 +54,8 @@ ccc.base.Symbol.prototype.name = function() {
 ccc.base.Symbol.prototype.eval = function(environment, continuation) {
   var value = environment.get(this.name_);
   if (goog.isNull(value))
-    continuation.reject(new Error('Unbound symbol: ' + this.name_));
-  continuation.resolve(value);
+    return continuation(null, new Error('Unbound symbol: ' + this.name_));
+  return continuation(value);
 };
 
 

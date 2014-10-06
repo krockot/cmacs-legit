@@ -3,7 +3,6 @@
 goog.provide('ccc.base.Number');
 
 goog.require('ccc.base.Object');
-goog.require('goog.Promise');
 
 
 
@@ -52,5 +51,5 @@ ccc.base.Number.prototype.value = function() {
 
 /** @override */
 ccc.base.Number.prototype.eval = function(environment, continuation) {
-  continuation.resolve(this);
+  return continuation(this);
 };

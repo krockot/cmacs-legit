@@ -59,5 +59,5 @@ ccc.base.Vector.prototype.elements = function() {
 
 /** @override */
 ccc.base.Vector.prototype.eval = function(environment, continuation) {
-  continuation.resolve(this);
+  return continuation(this);
 };

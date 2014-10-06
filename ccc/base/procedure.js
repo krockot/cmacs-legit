@@ -58,7 +58,7 @@ ccc.base.Procedure.prototype.isApplicable = function() {
 
 /** @override */
 ccc.base.Procedure.prototype.eval = function(environment, continuation) {
-  continuation.resolve(this);
+  return continuation(this);
 };
 
 
@@ -66,10 +66,8 @@ ccc.base.Procedure.prototype.eval = function(environment, continuation) {
 ccc.base.Procedure.prototype.apply = function(environment, args, continuation) {
   var innerScope = new ccc.base.Environment(this.scope_);
   if (this.formals_.isNil()) {
-    if (!args.isNil()) {
-      continuation.reject(new Error('Too many arguments'));
-      return;
-    }
+    if (!args.isNil())
+      return continuation(null, new Error('Too many arguments'));
   } else if (this.formals_.isSymbol()) {
     innerScope.set(this.formals_.name(), args);
   } else {
@@ -82,40 +80,38 @@ ccc.base.Procedure.prototype.apply = function(environment, args, continuation) {
       formal = formal.cdr();
       arg = arg.cdr();
     }
-    if (formal.isNil() && !arg.isNil()) {
-      continuation.reject(new Error('Too many arguments'));
-      return;
-    }
-    if (arg.isNil() && formal.isPair()) {
-      continuation.reject(new Error('Not enough arguments'));
-      return;
-    }
+    if (formal.isNil() && !arg.isNil())
+      return continuation(null, new Error('Too many arguments'));
+    if (arg.isNil() && formal.isPair())
+      return continuation(null, new Error('Not enough arguments'));
     goog.asserts.assert(arg.isPair() || arg.isNil(), 'Invalid argument list');
     if (formal.isSymbol())
       innerScope.set(formal.name(), arg);
   }
 
-  ccc.base.Procedure.evalBody_(innerScope, continuation, this.body_);
+  return goog.partial(ccc.base.Procedure.evalBodyContinuationImpl_,
+      environment, continuation, this.body_, ccc.base.NIL);
 };
 
 
 /**
- * Evaluates a procedure body one expression at a time. If in the tail position,
- * the result of evaluation is passed to the given continuation.
+ * Unbound continuation used to step through expressions in the procedure's
+ * body. The tail expression is passed the calling continuation.
  *
  * @param {!ccc.base.Environment} environment
- * @param {!goog.promise.Resolver} continuation
- * @param {!ccc.base.Object} body
- * @private
+ * @param {!ccc.base.Continuation} continuation
+ * @param {!ccc.base.Object} form
+ * @param {ccc.base.Object} unusedValue
+ * @param {Error=} opt_error
  */
-ccc.base.Procedure.evalBody_ = function(environment, continuation, body) {
-  goog.asserts.assert(body.isPair(), 'Invalid procedure body. Y u do dis?');
-  if (body.cdr().isNil()) {
-    body.car().eval(environment, continuation);
-    return;
-  }
-  var resolver = goog.Promise.withResolver();
-  body.car().eval(environment, resolver);
-  resolver.promise.then(goog.partial(ccc.base.Procedure.evalBody_,
-      environment, continuation, body.cdr()));
+ccc.base.Procedure.evalBodyContinuationImpl_ = function(
+    environment, continuation, form, unusedValue, opt_error) {
+  if (goog.isDef(opt_error))
+    return continuation(null, opt_error);
+  goog.asserts.assert(form.isPair());
+  if (form.cdr().isNil())
+    return form.car().eval(environment, continuation)
+  return form.car().eval(environment, goog.partial(
+      ccc.base.Procedure.evalBodyContinuationImpl_,
+      environment, continuation, form.cdr()));
 };

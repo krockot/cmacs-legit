@@ -22,18 +22,25 @@ cmacs.background.main = function() {
   // Add some test library functions to play with.
   environment.set('-', new ccc.base.NativeProcedure(function(
       environment, args, continuation) {
-    continuation.resolve(new ccc.base.Number(
+    return continuation(new ccc.base.Number(
         args.car().value() - args.cdr().car().value()));
   }));
   environment.set('+', new ccc.base.NativeProcedure(function(
       environment, args, continuation) {
-    continuation.resolve(new ccc.base.Number(
+    return continuation(new ccc.base.Number(
         args.car().value() + args.cdr().car().value()));
   }));
   environment.set('zero?', new ccc.base.NativeProcedure(function(
       environment, args, continuation) {
-    continuation.resolve(args.car().value() == 0 ? ccc.base.T : ccc.base.F);
+    return continuation(args.car().value() == 0 ? ccc.base.T : ccc.base.F);
   }));
+  var terminate = function() { return terminate; };
+  var continuation = function(value, opt_error) {
+    if (goog.isDef(opt_error))
+      throw opt_error;
+    console.log(value.toString());
+    return terminate;
+  };
   goog.global['evalCcc'] = function(code) {
     var scanner = new ccc.parse.Scanner();
     scanner.feed(code);
@@ -42,11 +49,10 @@ cmacs.background.main = function() {
     parser.readObject().then(function(object) {
       return object.compile(environment);
     }).then(function(compiledObject) {
-      var continuation = goog.Promise.withResolver();
-      compiledObject.eval(environment, continuation);
-      return continuation.promise;
-    }).then(function(result) {
-      console.log(result.toString());
+      var thunk = compiledObject.eval(environment, continuation);
+      while (thunk !== terminate) {
+        thunk = thunk();
+      }
     });
   };
 };

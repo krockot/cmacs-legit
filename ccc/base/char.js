@@ -3,7 +3,6 @@
 goog.provide('ccc.base.Char');
 
 goog.require('ccc.base.Object');
-goog.require('goog.Promise');
 goog.require('goog.object');
 
 
@@ -63,7 +62,7 @@ ccc.base.Char.prototype.stringValue = function() {
 
 /** @override */
 ccc.base.Char.prototype.eval = function(environment, continuation) {
-  continuation.resolve(this);
+  return continuation(this);
 };
 
 

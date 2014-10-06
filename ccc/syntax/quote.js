@@ -2,8 +2,7 @@
 
 goog.provide('ccc.syntax.Quote');
 
-goog.require('ccc.base.Object');
-goog.require('ccc.base.Symbol');
+goog.require('ccc.base');
 goog.require('goog.Promise');
 
 
@@ -44,10 +43,13 @@ ccc.syntax.Quote.prototype.transform = function(environment, args) {
  * @param {!ccc.base.Object} object
  * @param {!ccc.base.Environment} environment
  * @param {!ccc.base.Object} args
- * @param {!goog.promise.Resolver} continuation
+ * @param {!ccc.base.Continuation} continuation
+ * @return {ccc.base.Thunk}
  * @private
  */
 ccc.syntax.Quote.nativeImpl_ = function(
     object, environment, args, continuation) {
-  continuation.resolve(object);
+  goog.asserts.assert(args.isNil(),
+      'Compiled quote should never received arguments');
+  return continuation(object);
 };

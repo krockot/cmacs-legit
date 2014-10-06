@@ -2,7 +2,9 @@
 
 goog.provide('ccc.base.NativeProcedure');
 
+goog.require('ccc.base.Continuation');
 goog.require('ccc.base.Object');
+goog.require('ccc.base.Thunk');
 
 
 
@@ -28,7 +30,7 @@ goog.inherits(ccc.base.NativeProcedure, ccc.base.Object);
  *
  * @typedef {function(!ccc.base.Environment,
  *                    !ccc.base.Object,
- *                    !goog.promise.Resolver)}
+ *                    !ccc.base.Continuation):ccc.base.Thunk}
  * @public
  */
 ccc.base.NativeProcedure.FunctionType;
@@ -48,12 +50,12 @@ ccc.base.NativeProcedure.prototype.isApplicable = function() {
 
 /** @override */
 ccc.base.NativeProcedure.prototype.eval = function(environment, continuation) {
-  continuation.resolve(this);
+  return continuation(this);
 };
 
 
 /** @override */
 ccc.base.NativeProcedure.prototype.apply = function(
     environment, args, continuation) {
-  this.nativeFunction_(environment, args, continuation);
+  return this.nativeFunction_(environment, args, continuation);
 };

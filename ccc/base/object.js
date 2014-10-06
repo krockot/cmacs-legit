@@ -1,11 +1,15 @@
 // The Cmacs Project.
 
+goog.provide('ccc.base.Continuation');
 goog.provide('ccc.base.F');
 goog.provide('ccc.base.NIL');
 goog.provide('ccc.base.T');
+goog.provide('ccc.base.Thunk');
 goog.provide('ccc.base.UNSPECIFIED');
 goog.provide('ccc.base.Object');
 
+goog.require('ccc.base.Continuation');
+goog.require('ccc.base.Thunk');
 goog.require('goog.Promise');
 
 
@@ -243,13 +247,14 @@ ccc.base.Object.prototype.compile = function(environment) {
  *     object application is to be initiated.
  * @param {!ccc.base.Object} args The arguments to apply. Guaranteed to be
  *     either a Pair or NIL.
- * @param {!goog.promise.Resolver} continuation The promise resolver which
- *     should receive the result of this application.
+ * @param {!ccc.base.Continuation} continuation The continuation which should
+ *     receive the result of this procedure application.
+ * @return {ccc.base.Thunk}
  * @public
  */
 ccc.base.Object.prototype.apply = function(environment, args, continuation) {
-  continuation.reject(new Error('Object ' + this.toString() +
-                                ' is not applicable.'));
+  return continuation(null, new Error('Object ' + this.toString() +
+                                      ' is not applicable.'));
 };
 
 
@@ -258,13 +263,14 @@ ccc.base.Object.prototype.apply = function(environment, args, continuation) {
  *
  * @param {!ccc.base.Environment} environment The environment in which this
  *     object should be evaluated.
- * @param {!goog.promise.Resolver} continuation The promise resolver which
+ * @param {!ccc.base.Continuation} continuation The continuation which
  *     should receive the result of this evaluation.
+ * @return {ccc.base.Thunk}
  * @public
  */
 ccc.base.Object.prototype.eval = function(environment, continuation) {
-  continuation.reject(new Error('Object ' + this.toString() +
-                                ' cannot be evaluated.'));
+  return continuation(null, new Error('Object ' + this.toString() +
+                                      ' cannot be evaluated.'));
 };
 
 
@@ -287,7 +293,7 @@ ccc.base.NIL.isNil = function() { return true; };
 
 /** @override */
 ccc.base.NIL.eval = function(environment, continuation) {
-  continuation.resolve(this);
+  return continuation(this);
 };
 
 
@@ -310,7 +316,7 @@ ccc.base.UNSPECIFIED.isUnspecified = function() { return true; };
 
 /** @override */
 ccc.base.UNSPECIFIED.eval = function(environment, continuation) {
-  continuation.resolve(this);
+  return continuation(this);
 };
 
 
@@ -333,7 +339,7 @@ ccc.base.T.isTrue = function() { return true; };
 
 /** @override */
 ccc.base.T.eval = function(environment, continuation) {
-  continuation.resolve(this);
+  return continuation(this);
 };
 
 
@@ -356,5 +362,27 @@ ccc.base.F.isFalse = function() { return true; };
 
 /** @override */
 ccc.base.F.eval = function(environment, continuation) {
-  continuation.resolve(this);
+  return continuation(this);
 };
+
+
+
+/**
+ * A continuation is any function which takes a single {@code ccc.base.Object}
+ * or an {@code Error}, and returns a {@code ccc.base.Thunk}.
+ *
+ * @typedef {function(ccc.base.Object, Error=):ccc.base.Thunk}
+ */
+ccc.base.Continuation;
+
+
+
+/**
+ * A thunk primitive used extensively to implement form evaluation in
+ * continuation-passing style. Every thunk returns a new thunk to be
+ * subsequently called.
+ *
+ * @typedef {function():ccc.base.Thunk}
+ * @public
+ */
+ccc.base.Thunk;

@@ -54,14 +54,16 @@ ccc.syntax.Set.prototype.transform = function(environment, args) {
  * @param {!ccc.base.Symbol} symbol
  * @param {!ccc.base.Environment} environment
  * @param {!ccc.base.Object} args
- * @param {!goog.promise.Resolver} continuation
+ * @param {!ccc.base.Continuation} continuation
+ * @return {ccc.base.Thunk}
  * @private
  */
 ccc.syntax.Set.updateBinding_ = function(
     symbol, environment, args, continuation) {
-  if (!environment.update(symbol.name(), args.car())) {
-    continuation.reject(new Error(
+  goog.asserts.assert(args.isPair() && args.cdr().isNil(),
+      'Compiled set! should always receive exactly one argument.');
+  if (!environment.update(symbol.name(), args.car()))
+    return continuation(null, new Error(
         'Cannot update binding for unbound symbol \'' + symbol.name()));
-  }
-  continuation.resolve(ccc.base.UNSPECIFIED);
+  return continuation(ccc.base.UNSPECIFIED);
 };

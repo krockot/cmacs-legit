@@ -140,34 +140,99 @@ ccc.base.Pair.prototype.compile = function(environment) {
 
 /** @override */
 ccc.base.Pair.prototype.eval = function(environment, continuation) {
-  var headResolver = goog.Promise.withResolver();
-  this.car_.eval(environment, headResolver);
-  var promises = [headResolver.promise];
-  var arg = this.cdr_;
-  while (arg.isPair()) {
-    var resolver = goog.Promise.withResolver();
-    arg.car().eval(environment, resolver);
-    promises.push(resolver.promise);
-    arg = arg.cdr();
-  }
-  if (!arg.isNil()) {
-    continuation.reject(new Error('Invalid list expression'));
-    return;
-  }
-  goog.Promise.all(promises).then(ccc.base.Pair.combineValues_.bind(null,
-      environment, continuation));
+  return this.car_.eval(environment, goog.bind(
+      this.onHeadEval_, this, environment, continuation));
 };
 
 
 /**
- * Given an array of values, apply the first value to the remaining values
- * within the given environment, and pass the result to the given continuation.
+ * Continuation to handle head element evaluation, which is the first step in
+ * evaluating a list.
  *
  * @param {!ccc.base.Environment} environment
- * @param {!goog.promise.Resolver} continuation
- * @param {!Array.<!ccc.base.Object>} values
+ * @param {!ccc.base.Continuation} continuation The outer continuation which
+ *     will ultimately receive the result of the list evaluation.
+ * @param {ccc.base.Object} head The evaluated list head. Must be applicable.
+ * @param {Error=} opt_error
+ * @return {ccc.base.Thunk}
+ * @private
  */
-ccc.base.Pair.combineValues_ = function(environment, continuation, values) {
-  var tail = ccc.base.Pair.makeList(values.slice(1));
-  values[0].apply(environment, tail, continuation);
+ccc.base.Pair.prototype.onHeadEval_ = function(
+    environment, continuation, head, opt_error) {
+  if (goog.isDef(opt_error))
+    return continuation(null, opt_error);
+  goog.asserts.assert(!goog.isNull(head));
+  var arg = this.cdr_;
+  var argContinuation = goog.partial(ccc.base.Pair.applyContinuationImpl_,
+      environment, continuation, head);
+  while (arg.isPair()) {
+    argContinuation = goog.partial(ccc.base.Pair.evalArgContinuationImpl_,
+      environment, continuation, arg.car_, argContinuation);
+    arg = arg.cdr_;
+  }
+  goog.asserts.assert(arg.isNil());
+  return argContinuation(ccc.base.NIL);
+};
+
+
+/**
+ * Unbound implementation of the continuation which applies the evaluated
+ * head of a list to its evaluated args.
+ *
+ * @param {!ccc.base.Environment} environment
+ * @param {!ccc.base.Continuation} continuation
+ * @param {!ccc.base.Object} head
+ * @param {ccc.base.Object} args
+ * @param {Error=} opt_error
+ * @return {ccc.base.Thunk}
+ * @private
+ */
+ccc.base.Pair.applyContinuationImpl_ = function(
+    environment, continuation, head, args, opt_error) {
+  if (goog.isDef(opt_error))
+    return continuation(null, opt_error);
+  goog.asserts.assert(!goog.isNull(args));
+  return head.apply(environment, args, continuation);
+};
+
+
+/**
+ * Unbound implementation of the continuation which performs a single
+ * argument evaluation leading up to list combination.
+ *
+ * @param {!ccc.base.Environment} environment
+ * @param {!ccc.base.Continuation} continuation
+ * @param {!ccc.base.Object} arg
+ * @param {!ccc.base.Continuation} innerContinuation
+ * @param {ccc.base.Object} values
+ * @param {Error=} opt_error
+ * @return {ccc.base.Thunk}
+ * @private
+ */
+ccc.base.Pair.evalArgContinuationImpl_ = function(
+    environment, continuation, arg, innerContinuation, values, opt_error) {
+  if (goog.isDef(opt_error))
+    return continuation(null, opt_error);
+  goog.asserts.assert(!goog.isNull(values));
+  return arg.eval(environment, goog.partial(ccc.base.Pair.collectArg_,
+      values, innerContinuation));
+};
+
+
+/**
+ * Unbound continuation which joins an evaluated argument with the tail of its
+ * evaluated successors.
+ *
+ * @param {!ccc.base.Object} values
+ * @param {!ccc.base.Continuation} continuation
+ * @param {ccc.base.Object} value
+ * @param {Error=} opt_error
+ * @return {ccc.base.Thunk}
+ * @private
+ */
+ccc.base.Pair.collectArg_ = function(values, continuation, value, opt_error) {
+  if (goog.isDef(opt_error))
+    return continuation(null, opt_error);
+  goog.asserts.assert(!goog.isNull(value));
+  return continuation(new ccc.base.Pair(value, values));
 };

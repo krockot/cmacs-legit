@@ -63,14 +63,14 @@ ccc.syntax.If.prototype.transform = function(environment, args) {
  * @param {!ccc.base.Object} alternate
  * @param {!ccc.base.Environment} environment
  * @param {!ccc.base.Object} args
- * @param {!goog.promise.Resolver} continuation
+ * @param {!ccc.base.Continuation} continuation
+ * @return {ccc.base.Thunk}
  * @private
  */
 ccc.syntax.If.nativeImpl_ = function(
     consequent, alternate, environment, args, continuation) {
   if (args.car().isFalse()) {
-    alternate.eval(environment, continuation);
-    return;
+    return alternate.eval(environment, continuation);
   }
-  consequent.eval(environment, continuation);
+  return consequent.eval(environment, continuation);
 };

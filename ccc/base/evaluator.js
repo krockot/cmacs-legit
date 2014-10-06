@@ -8,6 +8,7 @@ goog.require('ccc.base.Object');
 goog.require('ccc.base.Thunk');
 goog.require('goog.Promise');
 goog.require('goog.promise.Resolver');
+goog.require('goog.Timer');
 
 
 
@@ -26,6 +27,15 @@ ccc.base.Evaluator = function(environment) {
 
 
 /**
+ * The number of consecutive thunks to execute synchronously before yielding
+ * control.
+ * @private {number}
+ * @const
+ */
+ccc.base.Evaluator.THUNKS_PER_SLICE_ = 1000;
+
+
+/**
  * Evaluates an object.
  *
  * @param {!ccc.base.Object} object
@@ -37,9 +47,7 @@ ccc.base.Evaluator.prototype.evalObject = function(object) {
       ccc.base.Evaluator.evalObjectContinuationImpl_,
       resolver);
   var thunk = object.eval(this.environment_, continuation);
-  while (thunk !== ccc.base.Evaluator.terminate_) {
-    thunk = thunk();
-  }
+  ccc.base.Evaluator.runSlice_(thunk);
   return resolver.promise;
 };
 
@@ -72,4 +80,22 @@ ccc.base.Evaluator.evalObjectContinuationImpl_ = function(
     resolver.resolve(result);
   }
   return ccc.base.Evaluator.terminate_;
+};
+
+
+/**
+ * Executes at most {@code ccc.base.Evaluator.THUNKS_PER_SLICE_} thunks
+ * synchronously. May terminate early if the termination thunk is hit. If the
+ * maximum number of thunks is reached without termination, a timeout is set to
+ * run another slice asynchronously.
+ *
+ * @param {!ccc.base.Thunk} thunk
+ */
+ccc.base.Evaluator.runSlice_ = function(thunk) {
+  var thunksRemaining = ccc.base.Evaluator.THUNKS_PER_SLICE_;
+  while (thunk !== ccc.base.Evaluator.terminate_ && thunksRemaining--) {
+    thunk = thunk();
+  }
+  if (thunk !== ccc.base.Evaluator.terminate_)
+    goog.Timer.callOnce(goog.partial(ccc.base.Evaluator.runSlice_, thunk));
 };

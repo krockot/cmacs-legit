@@ -103,6 +103,8 @@ ccc.base.Procedure.prototype.apply = function(environment, args, continuation) {
  * @param {!ccc.base.Object} form
  * @param {ccc.base.Object} unusedValue
  * @param {Error=} opt_error
+ * @return {ccc.base.Thunk}
+ * @private
  */
 ccc.base.Procedure.evalBodyContinuationImpl_ = function(
     environment, continuation, form, unusedValue, opt_error) {

@@ -34,13 +34,7 @@ cmacs.background.main = function() {
       environment, args, continuation) {
     return continuation(args.car().value() == 0 ? ccc.base.T : ccc.base.F);
   }));
-  var terminate = function() { return terminate; };
-  var continuation = function(value, opt_error) {
-    if (goog.isDef(opt_error))
-      throw opt_error;
-    console.log(value.toString());
-    return terminate;
-  };
+  var evaluator = new ccc.base.Evaluator(environment);
   goog.global['evalCcc'] = function(code) {
     var scanner = new ccc.parse.Scanner();
     scanner.feed(code);
@@ -49,10 +43,9 @@ cmacs.background.main = function() {
     parser.readObject().then(function(object) {
       return object.compile(environment);
     }).then(function(compiledObject) {
-      var thunk = compiledObject.eval(environment, continuation);
-      while (thunk !== terminate) {
-        thunk = thunk();
-      }
+      return evaluator.evalObject(compiledObject);
+    }).then(function(result) {
+      console.log(result.toString());
     });
   };
 };

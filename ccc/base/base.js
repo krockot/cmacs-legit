@@ -5,6 +5,7 @@ goog.provide('ccc.base');
 goog.require('ccc.base.Char');
 goog.require('ccc.base.Continuation');
 goog.require('ccc.base.Environment');
+goog.require('ccc.base.Evaluator');
 goog.require('ccc.base.F');
 goog.require('ccc.base.NIL');
 goog.require('ccc.base.NativeProcedure');

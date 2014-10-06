@@ -60,15 +60,13 @@ var TE = function(transformer, args, expectedOutput, opt_environment) {
   var environment = (goog.isDef(opt_environment)
       ? opt_environment
       : new ccc.base.Environment());
+  var evaluator = new ccc.base.Evaluator(environment);
   return transformer.transform(environment, args).then(function(transformed) {
-    return transformed.eval(environment).then(function(result) {
-      assertNotNull(result);
-      if (!goog.isNull(expectedOutput) && !result.equal(expectedOutput)) {
-        return goog.Promise.reject('Objet mismatch.\n' +
+    return evaluator.evalObject(transformed).then(function(result) {
+      if (!goog.isNull(expectedOutput) && !result.equal(expectedOutput))
+        return goog.Promise.reject(new Error('Object mismatch.\n' +
             'Expected: ' + expectedOutput.toString() +
-            '\nActual: ' + result.toString() + '\n');
-      }
-      return result;
+            '\nActual: ' + result.toString() + '\n'));
     });
   });
 };
@@ -79,17 +77,15 @@ var TL = function(formalsAndBody, args, expectedOutput, opt_environment) {
   var environment = (goog.isDef(opt_environment)
       ? opt_environment
       : new ccc.base.Environment());
-  return Lambda.transform(environment, formalsAndBody).then(function(lambda) {
-    return lambda.car().apply(environment, NIL).then(function(proc) {
-      return proc.apply(environment, args).then(function(result) {
-        assertNotNull(result);
-        if (!goog.isNull(expectedOutput) && !result.equal(expectedOutput)) {
-          return goog.Promise.reject('Objet mismatch.\n' +
-              'Expected: ' + expectedOutput.toString() +
-              '\nActual: ' + result.toString() + '\n');
-        }
-        return result;
-      });
+  var evaluator = new ccc.base.Evaluator();
+  return Lambda.transform(environment, formalsAndBody).then(function(
+      procedureGenerator) {
+    var expr = List([procedureGenerator], args);
+    return evaluator.evalObject(expr).then(function(result) {
+      if (!goog.isNull(expectedOutput) && !result.equal(expectedOutput))
+        return goog.Promise.reject(new Error('Object mismatch.\n' +
+            'Expected: ' + expectedOutput.toString() +
+            '\nActual: ' + result.toString() + '\n'));
     });
   });
 };
@@ -282,21 +278,25 @@ function testTailRecursion() {
   asyncTestCase.waitForAsync();
   var environment = new ccc.base.Environment();
   environment.set('x', Num(N));
-  var decrementX = new ccc.base.NativeProcedure(function(environment, args) {
+  var decrementX = new ccc.base.NativeProcedure(function(
+      environment, args, continuation) {
     environment.update('x', Num(environment.get('x').value() - 1));
-    return goog.Promise.resolve(NIL);
+    return continuation(NIL);
   });
-  var xIsPositive = new ccc.base.NativeProcedure(function(environment, args) {
+  var xIsPositive = new ccc.base.NativeProcedure(function(
+      environment, args, continuation) {
     if (environment.get('x').value() > 0)
-      return goog.Promise.resolve(ccc.base.T);
-    return goog.Promise.resolve(ccc.base.F);
+      return continuation(ccc.base.T);
+    return continuation(ccc.base.F);
   });
-  var incrementZ = new ccc.base.NativeProcedure(function(environment, args) {
+  var incrementZ = new ccc.base.NativeProcedure(function(
+      environment, args, continuation) {
     environment.update('z', Num(environment.get('z').value() + 1));
-    return goog.Promise.resolve(ccc.base.T);
+    return continuation(ccc.base.T);
   });
   environment.set('z', Num(0));
 
+  var evaluator = new ccc.base.Evaluator(environment);
   var conditionalForm = If.transform(environment, List([List([xIsPositive]),
       List([Sym('loop')]), ccc.base.T])).then(function(conditional) {
     // Build a procedure and bind it to 'loop:
@@ -305,12 +305,11 @@ function testTailRecursion() {
         conditional]);
     return Lambda.transform(environment, loopForm);
   }).then(function(loopGenerator) {
-    // Eval the lambda form to generate a procedure.
-    return loopGenerator.car().apply(environment, ccc.base.NIL);
+    return evaluator.evalObject(loopGenerator);
   }).then(function(loop) {
     environment.set('loop', loop);
     // Run the loop!
-    return loop.apply(environment, ccc.base.NIL);
+    return evaluator.evalObject(List([Sym('loop')]));
   }).then(function() {
     // Verify that the loop ran N times.
     assertEquals(N, environment.get('z').value());

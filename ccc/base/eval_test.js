@@ -32,12 +32,12 @@ function E(input, expectedOutput, opt_environment) {
   var environment = (goog.isDef(opt_environment)
       ? opt_environment
       : new ccc.base.Environment(opt_environment));
-  return input.eval(environment).then(function(result) {
-    if (result.equal(expectedOutput))
-      return null;
-    return goog.Promise.reject(new Error('Object mismatch.\n' +
-        'Expected: ' + expectedOutput.toString() +
-        '\nActual: ' + result.toString() + '\n'));
+  var evaluator = new ccc.base.Evaluator(environment);
+  return evaluator.evalObject(input).then(function(result) {
+    if (!result.equal(expectedOutput))
+      return goog.Promise.reject(new Error('Object mismatch.\n' +
+          'Expected: ' + expectedOutput.toString() +
+          '\nActual: ' + result.toString() + '\n'));
   });
 }
 
@@ -61,13 +61,7 @@ function CE(input, expectedOutput, opt_environment) {
       ? opt_environment
       : new ccc.base.Environment(opt_environment));
   return input.compile(environment).then(function(compiledInput) {
-    return compiledInput.eval(environment).then(function(result) {
-      if (result.equal(expectedOutput))
-        return null;
-      return goog.Promise.reject(new Error('Object mismatch.\n' +
-          'Expected: ' + expectedOutput.toString() +
-          '\nActual: ' + result.toString() + '\n'));
-    });
+    return E(compiledInput, expectedOutput, environment);
   });
 }
 
@@ -140,14 +134,15 @@ function testSymbolLookup() {
 }
 
 function testNativeProcedure() {
-  var proc = new ccc.base.NativeProcedure(function(environment, args) {
+  var proc = new ccc.base.NativeProcedure(function(
+      environment, args, continuation) {
     assertNotNull(args);
     assert(args.isPair());
     assert(args.cdr().isPair());
     assert(args.cdr().cdr().isNil());
     assert(args.car().equal(new ccc.base.Number(42)));
     assert(args.cdr().car().equal(new ccc.base.String('monkey')));
-    return goog.Promise.resolve(ccc.base.T);
+    return continuation(ccc.base.T);
   });
   var combination = List([proc, new ccc.base.Number(42),
     new ccc.base.String('monkey')]);
@@ -155,8 +150,9 @@ function testNativeProcedure() {
 }
 
 function testSimpleTransformer() {
-  var adder = new ccc.base.NativeProcedure(function(environment, args) {
-    return goog.Promise.resolve(new ccc.base.Number(
+  var adder = new ccc.base.NativeProcedure(function(
+      environment, args, continuation) {
+    return continuation(new ccc.base.Number(
         args.car().value() + args.cdr().car().value()));
   });
   var transformer = new TestTransformer(function(environment, args) {
@@ -177,8 +173,9 @@ function testSimpleTransformer() {
 }
 
 function testNestedTransformers() {
-  var adder = new ccc.base.NativeProcedure(function(environment, args) {
-    return goog.Promise.resolve(new ccc.base.Number(
+  var adder = new ccc.base.NativeProcedure(function(
+      environment, args, continuation) {
+    return continuation(new ccc.base.Number(
         args.car().value() + args.cdr().car().value()));
   });
   var transformer = new TestTransformer(function(environment, args) {

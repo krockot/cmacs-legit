@@ -1,7 +1,6 @@
 // The Cmacs Project.
 
 
-
 /**
  * @typedef {function(...)}
  */

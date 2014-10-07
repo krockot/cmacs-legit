@@ -8,3 +8,4 @@ goog.require('ccc.syntax.If');
 goog.require('ccc.syntax.Lambda');
 goog.require('ccc.syntax.Quote');
 goog.require('ccc.syntax.Set');
+goog.require('ccc.syntax.SyntaxRules');

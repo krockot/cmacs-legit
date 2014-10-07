@@ -19,6 +19,7 @@ cmacs.background.main = function() {
   environment.set('\u03bb', new ccc.syntax.Lambda());
   environment.set('quote', new ccc.syntax.Quote());
   environment.set('set!', new ccc.syntax.Set());
+  environment.set('syntax-rules', new ccc.syntax.SyntaxRules());
   // Add some test library functions to play with.
   environment.set('-', new ccc.base.NativeProcedure(function(
       environment, args, continuation) {

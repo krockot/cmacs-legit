@@ -34,6 +34,11 @@ cmacs.background.main = function() {
       environment, args, continuation) {
     return continuation(args.car().value() == 0 ? ccc.base.T : ccc.base.F);
   }));
+  environment.set('display', new ccc.base.NativeProcedure(function(
+      environemtn, args, continuation) {
+    console.log(args.car().toString());
+    return continuation(ccc.base.UNSPECIFIED);
+  }));
   var evaluator = new ccc.base.Evaluator(environment);
   goog.global['evalCcc'] = function(code) {
     var scanner = new ccc.parse.Scanner();

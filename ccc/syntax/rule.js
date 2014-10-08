@@ -24,13 +24,3 @@ ccc.syntax.Rule = function(pattern, template) {
   /** @public {!ccc.syntax.Template} */
   this.template = template;
 };
-
-
-/**
- * The literal token used to represent a pattern repetition or template
- * expansion.
- *
- * @public {string}
- * @const
- */
-ccc.syntax.Rule.ELLIPSIS_NAME = '...';

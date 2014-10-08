@@ -15,17 +15,12 @@ goog.require('ccc.syntax.Template');
  * pattern's corresponding template. Each pattern-template pair is provided as a
  * {@code ccc.syntax.Rule}.
  *
- * @param {!Array.<string>} literals The set of input symbol names which should
- *     be treated as syntax literals during pattern matching.
  * @param {!Array.<!ccc.syntax.Rule>} rules
  * @constructor
  * @extends {ccc.base.Transformer}
  * @public
  */
-ccc.syntax.RuleBasedTransformer = function(literals, rules) {
-  /** @private {!Array.<string>} */
-  this.literals_ = literals;
-
+ccc.syntax.RuleBasedTransformer = function(rules) {
   /** @private {!Array.<!ccc.syntax.Rule>} */
   this.rules_ = rules;
 };

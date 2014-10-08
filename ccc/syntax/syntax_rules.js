@@ -39,7 +39,7 @@ ccc.syntax.SyntaxRules.prototype.transform = function(environment, args) {
   while (literalsList.isPair()) {
     var item = literalsList.car();
     if (!item.isSymbol() ||
-        item.name() === ccc.syntax.Rule.ELLIPSIS_NAME) {
+        item.name() === ccc.syntax.Pattern.ELLIPSIS_NAME) {
       return goog.Promise.reject(new Error('syntax-rules: Invalid literal ' +
           literalsList.car().toString()));
     }
@@ -56,13 +56,12 @@ ccc.syntax.SyntaxRules.prototype.transform = function(environment, args) {
     if (!rule.isPair() || !rule.car().isPair() || rule.cdr().isNil() ||
         !rule.cdr().cdr().isNil()) {
       return goog.Promise.reject(new Error('syntax-rules: Invalid rule form'));
-  }
-    rules.push(new ccc.syntax.Rule(new ccc.syntax.Pattern(rule.car()),
+    }
+    rules.push(new ccc.syntax.Rule(new ccc.syntax.Pattern(literals, rule.car()),
         new ccc.syntax.Template(rule.cdr().car())));
     rulesList = rulesList.cdr();
   }
   if (!rulesList.isNil())
     return goog.Promise.reject(new Error('syntax-rules: Invalid rules list'));
-  return goog.Promise.resolve(new ccc.syntax.RuleBasedTransformer(
-      literals, rules));
+  return goog.Promise.resolve(new ccc.syntax.RuleBasedTransformer(rules));
 };

@@ -4,8 +4,8 @@ goog.provide('ccc.syntax.SyntaxRules');
 
 goog.require('ccc.base');
 goog.require('ccc.syntax.Pattern');
-goog.require('ccc.syntax.RulesBasedTransformer');
-goog.require('ccc.syntax.SyntaxRule')
+goog.require('ccc.syntax.Rule')
+goog.require('ccc.syntax.RuleBasedTransformer');
 goog.require('ccc.syntax.Template');
 goog.require('goog.Promise');
 
@@ -13,7 +13,7 @@ goog.require('goog.Promise');
 
 /**
  * SyntaxRules generates a transformer at compile time using a given set of
- * pattern/template pairs.
+ * literal symbols and pattern-template pairs.
  *
  * @constructor
  * @extends {ccc.base.Transformer}
@@ -39,7 +39,7 @@ ccc.syntax.SyntaxRules.prototype.transform = function(environment, args) {
   while (literalsList.isPair()) {
     var item = literalsList.car();
     if (!item.isSymbol() ||
-        item.name() === ccc.syntax.SyntaxRule.ELLIPSIS_NAME) {
+        item.name() === ccc.syntax.Rule.ELLIPSIS_NAME) {
       return goog.Promise.reject(new Error('syntax-rules: Invalid literal ' +
           literalsList.car().toString()));
     }
@@ -57,13 +57,12 @@ ccc.syntax.SyntaxRules.prototype.transform = function(environment, args) {
         !rule.cdr().cdr().isNil()) {
       return goog.Promise.reject(new Error('syntax-rules: Invalid rule form'));
   }
-    rules.push(new ccc.syntax.SyntaxRule(
-        new ccc.syntax.Pattern(rule.car()),
+    rules.push(new ccc.syntax.Rule(new ccc.syntax.Pattern(rule.car()),
         new ccc.syntax.Template(rule.cdr().car())));
     rulesList = rulesList.cdr();
   }
   if (!rulesList.isNil())
     return goog.Promise.reject(new Error('syntax-rules: Invalid rules list'));
-  return goog.Promise.resolve(new ccc.syntax.RulesBasedTransformer(
+  return goog.Promise.resolve(new ccc.syntax.RuleBasedTransformer(
       literals, rules));
 };

@@ -1,6 +1,6 @@
 // The Cmacs Project.
 
-goog.provide('ccc.syntax.SyntaxRule');
+goog.provide('ccc.syntax.Rule');
 
 goog.require('ccc.base');
 goog.require('ccc.syntax.Pattern');
@@ -9,7 +9,7 @@ goog.require('ccc.syntax.Template');
 
 
 /**
- * A SyntaxRule consists of a single pattern and template.
+ * A Rule consists of a single pattern and template.
  *
  * @param {!ccc.syntax.Pattern} pattern
  * @param {!ccc.syntax.Template} template
@@ -17,7 +17,7 @@ goog.require('ccc.syntax.Template');
  * @struct
  * @public
  */
-ccc.syntax.SyntaxRule = function(pattern, template) {
+ccc.syntax.Rule = function(pattern, template) {
   /** @public {!ccc.syntax.Pattern} */
   this.pattern = pattern;
 
@@ -33,4 +33,4 @@ ccc.syntax.SyntaxRule = function(pattern, template) {
  * @public {string}
  * @const
  */
-ccc.syntax.SyntaxRule.ELLIPSIS_NAME = '...';
+ccc.syntax.Rule.ELLIPSIS_NAME = '...';

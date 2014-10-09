@@ -48,12 +48,38 @@ ccc.base.Vector.prototype.isVector = function() {
 
 
 /**
- * Returns the underlying Array of elements.
+ * Returns the size of the vector.
  *
- * @return {!Array.<!ccc.base.Object>}
+ * @return {number}
  */
-ccc.base.Vector.prototype.elements = function() {
-  return this.elements_;
+ccc.base.Vector.prototype.size = function() {
+  return this.elements_.length;
+};
+
+
+/**
+ * Returns the value at the given index.
+ *
+ * @param {number} index
+ * @return {ccc.base.Object}
+ */
+ccc.base.Vector.prototype.get = function(index) {
+  if (index >= this.elements_.length)
+    throw new Error('Vector index out of bounds');
+  return this.elements_[index];
+};
+
+
+/**
+ * Sets the value at the given index.
+ *
+ * @param {number} index
+ * @param {!ccc.base.Object} value
+ */
+ccc.base.Vector.prototype.set = function(index, value) {
+  if (index >= this.elements_.length)
+    throw new Error('Vector index out of bounds');
+  this.elements_[index] = value;
 };
 
 

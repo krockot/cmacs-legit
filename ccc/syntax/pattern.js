@@ -170,10 +170,9 @@ ccc.syntax.Pattern.prototype.matchPattern_ = function(input, pattern) {
         /** @type {!ccc.base.Vector} */ (pattern));
   }
   if (pattern.isPair()) {
-    if (!input.isPair())
+    if (!input.isPair() && !input.isNil())
       return new ccc.syntax.Match(false);
-    return this.matchList_(/** @type {!ccc.base.Pair} */ (input),
-        /** @type {!ccc.base.Pair} */ (pattern));
+    return this.matchList_(input, /** @type {!ccc.base.Pair} */ (pattern));
   }
   if (pattern.isString())
     return new ccc.syntax.Match(input.isString() && input.eq(pattern));
@@ -285,7 +284,7 @@ ccc.syntax.Pattern.prototype.matchVectorTail_ = function(
 /**
  * Matches a list pattern against an input list.
  *
- * @param {!ccc.base.Pair} input
+ * @param {!ccc.base.Object} input
  * @param {!ccc.base.Pair} pattern
  * @return {!ccc.syntax.Match}
  * @private
@@ -294,18 +293,18 @@ ccc.syntax.Pattern.prototype.matchList_ = function(input, pattern) {
   var match = new ccc.syntax.Match(true);
   var inputElement = /** @type {!ccc.base.Object} */ (input);
   var patternElement = /** @type {!ccc.base.Object} */ (pattern);
-  while (patternElement.isPair() && inputElement.isPair()) {
+  var matchTail = false;
+  while (patternElement.isPair()) {
     var nextPattern = patternElement.cdr();
     if (nextPattern.isPair() && nextPattern.car().isSymbol() &&
         nextPattern.car().name() == ccc.syntax.Pattern.ELLIPSIS_NAME) {
       if (!nextPattern.cdr().isNil())
         throw new Error('Invalid ellipsis placement');
-      var tailMatch = this.matchListTail_(inputElement, patternElement.car());
-      if (!tailMatch.success)
-        return tailMatch;
-      match.mergeCaptures(tailMatch.captures);
-      return match;
+      matchTail = true;
+      break;
     }
+    if (!inputElement.isPair())
+      break;
     var elementMatch = this.matchPattern_(inputElement.car(),
         patternElement.car());
     if (!elementMatch.success)
@@ -314,6 +313,15 @@ ccc.syntax.Pattern.prototype.matchList_ = function(input, pattern) {
     patternElement = patternElement.cdr();
     inputElement = inputElement.cdr();
   }
+
+  if (matchTail) {
+    var tailMatch = this.matchListTail_(inputElement, patternElement.car());
+    if (!tailMatch.success)
+      return tailMatch;
+    match.mergeCaptures(tailMatch.captures);
+    return match;
+  }
+
   var remainderMatch = this.matchPattern_(inputElement, patternElement);
   if (!remainderMatch.success)
     return remainderMatch;

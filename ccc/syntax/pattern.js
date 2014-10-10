@@ -67,11 +67,12 @@ ccc.syntax.Match.prototype.mergeCaptures = function(captures) {
 ccc.syntax.Match.joinMatches = function(matches) {
   goog.asserts.assert(matches.length > 0);
   var newMatch = new ccc.syntax.Match(true);
-  goog.object.forEach(matches[matches.length - 1], function(capture, name) {
+  goog.object.forEach(matches[matches.length - 1].captures,
+      function(capture, name) {
     newMatch.captures[name] = new ccc.base.Pair(capture, ccc.base.NIL);
   });
-  for (var i = matches.length - 1; i >= 0; ++i) {
-    goog.object.forEach(matches[i], function(capture, name) {
+  for (var i = matches.length - 2; i >= 0; --i) {
+    goog.object.forEach(matches[i].captures, function(capture, name) {
       goog.asserts.assert(goog.object.containsKey(newMatch.captures, name));
       newMatch.captures[name] = new ccc.base.Pair(
           capture, newMatch.captures[name]);
@@ -124,7 +125,7 @@ ccc.syntax.Pattern = function(literals, form) {
   this.literals_ = literals;
 
   /** @private {!ccc.base.Object} */
-  this.form_ = form.cdr();
+  this.form_ = form;
 };
 
 
@@ -242,14 +243,14 @@ ccc.syntax.Pattern.prototype.matchVector_ = function(input, pattern) {
       var tailMatch = this.matchVectorTail_(input, i, patternElement);
       if (!tailMatch.success)
         return tailMatch;
-      match.mergeCaptures(tailMatch);
+      match.mergeCaptures(tailMatch.captures);
       return match;
     }
     var elementMatch = this.matchPattern_(/** @type {!ccc.base.Object} */ (
         input.get(i)), patternElement);
     if (!elementMatch.success)
       return elementMatch;
-    match.mergeCaptures(elementMatch);
+    match.mergeCaptures(elementMatch.captures);
   }
   return match;
 };
@@ -297,7 +298,7 @@ ccc.syntax.Pattern.prototype.matchList_ = function(input, pattern) {
     var nextPattern = patternElement.cdr();
     if (nextPattern.isPair() && nextPattern.car().isSymbol() &&
         nextPattern.car().name() == ccc.syntax.Pattern.ELLIPSIS_NAME) {
-      if (!nextPattern.cdr().cdr().isNil())
+      if (!nextPattern.cdr().isNil())
         throw new Error('Invalid ellipsis placement');
       var tailMatch = this.matchListTail_(inputElement, patternElement.car());
       if (!tailMatch.success)

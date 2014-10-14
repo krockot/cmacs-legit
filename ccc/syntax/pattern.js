@@ -127,6 +127,17 @@ ccc.syntax.Capture = function(contents) {
 
 
 /**
+ * Returns the rank of this capture.
+ *
+ * @return {number}
+ * @public
+ */
+ccc.syntax.Capture.prototype.rank = function() {
+  return this.rank_;
+};
+
+
+/**
  * Indicates if another Capture is equivalent to this one.
  *
  * @param {!ccc.syntax.Capture} other

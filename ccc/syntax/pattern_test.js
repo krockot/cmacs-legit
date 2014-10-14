@@ -219,3 +219,7 @@ function testEmptyCaptures() {
   ]);
 }
 
+function testCaptureRanking() {
+  var c = C(Num(42));
+  assertEquals(0, c.rank());
+}

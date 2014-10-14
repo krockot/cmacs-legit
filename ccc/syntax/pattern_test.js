@@ -13,6 +13,13 @@ goog.require('goog.testing.jsunit');
 
 
 var asyncTestCase = goog.testing.AsyncTestCase.createAndInstall(document.title);
+var List = ccc.base.Pair.makeList;
+var Sym = function(name) { return new ccc.base.Symbol(name); };
+var Num = function(value) { return new ccc.base.Number(value); };
+var NIL = ccc.base.NIL;
+var TRUE = ccc.base.T;
+var FALSE = ccc.base.F;
+var UNSPEC = ccc.base.UNSPECIFIED;
 
 function setUpPage() {
   asyncTestCase.stepTimeout = 100;
@@ -53,23 +60,20 @@ function T(pattern, literals, input, opt_expectedMatches) {
           return goog.Promise.reject(new Error(
               'Matched unexpected pattern variable: ' + vars[i]));
       }
-      var expectedMatches = [];
       var expectedVars = goog.object.getKeys(opt_expectedMatches);
       for (var i = 0; i < expectedVars.length; ++i) {
-        if (!goog.object.containsKey(match.captures, expectedVars[i]))
+        var key = expectedVars[i];
+        var expected = opt_expectedMatches[key];
+        if (!goog.object.containsKey(match.captures, key))
+          return goog.Promise.reject(
+              new Error('Missing expected pattern variable: ' + key));
+        if (!match.captures[key].equal(expected)) {
           return goog.Promise.reject(new Error(
-              'Missing expected pattern variable: ' + expectedVars[i]));
-        expectedMatches.push(readObject(
-            opt_expectedMatches[expectedVars[i]]).then(function(key, expected) {
-          if (!match.captures[key].equal(expected)) {
-            return goog.Promise.reject(new Error(
-                'Capture mismatch for variable: ' + key +
-                '\nExpected: ' + expected.toString() +
-                '\n Actual: ' + match.captures[key].toString() + '\n'));
-          }
-        }.bind(null, expectedVars[i])));
+              'Capture mismatch for variable: ' + key +
+              '\nExpected: ' + expected.toString() +
+              '\n Actual: ' + match.captures[key].toString() + '\n'));
+        }
       }
-      return goog.Promise.all(expectedMatches);
     });
   });
 }
@@ -80,6 +84,10 @@ function F(pattern, literals, input) {
       function() {});
 }
 
+function C(contents) {
+  return new ccc.syntax.Capture(contents);
+}
+
 function RunTests(tests) {
   asyncTestCase.waitForAsync();
   goog.Promise.all(tests).then(continueTesting, justFail);
@@ -88,9 +96,13 @@ function RunTests(tests) {
 
 function testSimplePatterns() {
   RunTests([
-    T('(a)', [], '(42)', { 'a': '42' }),
-    T('(a b)', [], '(42 43)', { 'a': '42', 'b': '43' }),
-    T('(a #t (b c))', [], '(1 #t (2 3))', { 'a': '1', 'b': '2', 'c': '3' }),
+    T('(a)', [], '(42)', { 'a': C(Num(42)) }),
+    T('(a b)', [], '(42 43)', { 'a': C(Num(42)), 'b': C(Num(43)) }),
+    T('(a #t (b c))', [], '(1 #t (2 3))', {
+      'a': C(Num(1)),
+      'b': C(Num(2)),
+      'c': C(Num(3))
+    }),
     F('(a)', [], '()'),
     F('(a b)', [], '(1 2 3)'),
   ]);
@@ -98,32 +110,32 @@ function testSimplePatterns() {
 
 function testLiterals() {
   RunTests([
-    T('(a $$ b)', ['$$'], '(1 $$ 2)', { 'a': '1', 'b': '2' }),
-    T('(a ! b @ c)', ['!', '@'], '[1 ! 2 @ 3]',
-        { 'a': '1', 'b': '2', 'c': '3' }),
+    T('(a $$ b)', ['$$'], '(1 $$ 2)', { 'a': C(Num(1)), 'b': C(Num(2)) }),
+    T('(a ! b @ c)', ['!', '@'], '[1 ! 2 @ 3]', {
+      'a': C(Num(1)),
+      'b': C(Num(2)),
+      'c': C(Num(3))
+    }),
   ]);
 }
 
 function testSimpleRepetition() {
   RunTests([
     T('(a ...)', [],
-      '(1 2 3 4)',
-      {
-        'a': '(1 2 3 4)'
-      }),
+      '(1 2 3 4)', {
+      'a': C([C(Num(1)), C(Num(2)), C(Num(3)), C(Num(4))])
+    }),
     T('(a b ...)', [],
-      '(1 2 3 4)',
-      {
-        'a': '1',
-        'b': '(2 3 4)'
-      }),
+      '(1 2 3 4)', {
+      'a': C(Num(1)),
+      'b': C([C(Num(2)), C(Num(3)), C(Num(4))])
+    }),
     T('(a (b c) ...)', [],
-      '(1 (2 3) (4 5) (6 7) (8 9))',
-      {
-        'a': '1',
-        'b': '(2 4 6 8)',
-        'c': '(3 5 7 9)',
-      }),
+      '(1 (2 3) (4 5) (6 7) (8 9))', {
+      'a': C(Num(1)),
+      'b': C([C(Num(2)), C(Num(4)), C(Num(6)), C(Num(8))]),
+      'c': C([C(Num(3)), C(Num(5)), C(Num(7)), C(Num(9))])
+    }),
     F('(a ... b)', [], '(1 2 3)'),
     F('(a (b c) ...)', [],
       '(1 2 3 4)'),
@@ -133,77 +145,77 @@ function testSimpleRepetition() {
 function testNestedRepetition() {
   RunTests([
     T('((a b ...) ...)', [],
-      '((1 2 3 4) (a b c d) (! @ $ %))',
-      {
-        'a': '(1 a !)',
-        'b': '((2 3 4) (b c d) (@ $ %))'
-      }),
+      '((1 2 3 4) (a b c d) (! @ $ %))', {
+      'a': C([C(Num(1)), C(Sym('a')), C(Sym('!'))]),
+      'b': C([C([C(Num(2)), C(Num(3)), C(Num(4))]),
+              C([C(Sym('b')), C(Sym('c')), C(Sym('d'))]),
+              C([C(Sym('@')), C(Sym('$')), C(Sym('%'))])]),
+    }),
     T('((a (b c ...) ...) ...)', [],
-      '((1 (2 3 4 5) (6 7 8)) (a (b c d e) (f g)) (! ($ $ $)))',
-      {
-        'a': '(1 a !)',
-        'b': '((2 6) (b f) ($))',
-        'c': '(((3 4 5) (7 8)) ((c d e) (g)) (($ $)))',
-      }),
+      '((1 (2 3 4 5) (6 7 8)) (a (b c d e) (f g)) (! ($ $ $)))', {
+      'a': C([C(Num(1)), C(Sym('a')), C(Sym('!'))]),
+      'b': C([C([C(Num(2)), C(Num(6))]),
+              C([C(Sym('b')), C(Sym('f'))]),
+              C([C(Sym('$'))])]),
+      'c': C([C([C([C(Num(3)), C(Num(4)), C(Num(5))]),
+                 C([C(Num(7)), C(Num(8))])]),
+              C([C([C(Sym('c')), C(Sym('d')), C(Sym('e'))]),
+                 C([C(Sym('g'))])]),
+              C([C([C(Sym('$')), C(Sym('$'))])])])
+    }),
   ]);
 }
 
 function testVector() {
   RunTests([
     T('(#(a b c))', [],
-      '(#(1 2 3))',
-      {
-        'a': '1',
-        'b': '2',
-        'c': '3'
-      }),
+      '(#(1 2 3))', {
+      'a': C(Num(1)),
+      'b': C(Num(2)),
+      'c': C(Num(3))
+    }),
     T('(#(a #(b c) ...))', [],
-      '(#(1 #(2 3) #(4 5) #(6 7)))',
-      {
-        'a': '1',
-        'b': '(2 4 6)',
-        'c': '(3 5 7)',
-      }),
+      '(#(1 #(2 3) #(4 5) #(6 7)))', {
+      'a': C(Num(1)),
+      'b': C([C(Num(2)), C(Num(4)), C(Num(6))]),
+      'c': C([C(Num(3)), C(Num(5)), C(Num(7))]),
+    }),
   ]);
 }
 
 function testDottedTail() {
   RunTests([
     T('(a . b)', [],
-      '(1 2 3 4)',
-      {
-        'a': '1',
-        'b': '(2 3 4)'
-      }),
+      '(1 2 3 4)', {
+      'a': C(Num(1)),
+      'b': C(List([Num(2), Num(3), Num(4)]))
+    }),
     T('(a . (b c))', [],
-      '(1 2 3)',
-      {
-        'a': '1',
-        'b': '2',
-        'c': '3',
-      }),
+      '(1 2 3)', {
+      'a': C(Num(1)),
+      'b': C(Num(2)),
+      'c': C(Num(3))
+    }),
   ]);
 }
 
 function testEmptyCaptures() {
   RunTests([
     T('(a ...)', [],
-      '()',
-      {
-        'a': '()'
-      }),
+      '()', {
+      'a': C([])
+    }),
     T('((a b ...) ...)', [],
-      '()',
-      {
-        'a': '()',
-        'b': '()'
-      }),
+      '()', {
+      'a': C([]),
+      'b': C([C([])]),
+    }),
     T('#(a (b c ...) ...)', [],
-      '#(42)',
-      {
-        'a': '42',
-        'b': '()',
-        'c': '()'
-      }),
+      '#(42)', {
+      'a': C(Num(42)),
+      'b': C([]),
+      'c': C([C([])])
+    }),
   ]);
 }
+

@@ -118,7 +118,7 @@ ccc.syntax.Capture = function(contents) {
       });
       this.rank_ = baseRank + 1;
     } else {
-      goog.asserts.assert(this.rank_ > 0);
+      this.rank_ = 1;
     }
   } else {
     goog.asserts.assert(this.rank_ == 0);
@@ -131,7 +131,6 @@ ccc.syntax.Capture = function(contents) {
  *
  * @param {!ccc.syntax.Capture} other
  * @return {boolean}
- * @private
  */
 ccc.syntax.Capture.prototype.equal = function(other) {
   if (this.rank_ !== other.rank_)
@@ -144,6 +143,18 @@ ccc.syntax.Capture.prototype.equal = function(other) {
   return goog.array.every(this.contents_, function(capture, i) {
     return capture.equal(other.contents_[i]);
   });
+};
+
+
+/**
+ * Stringification for test and debug output.
+ *
+ * @return {string}
+ */
+ccc.syntax.Capture.prototype.toString = function() {
+  return ((this.contents_ instanceof Array)
+      ? ('<' + this.contents_.join(', ') + '>')
+      : this.contents_.toString());
 };
 
 

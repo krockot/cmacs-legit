@@ -225,17 +225,17 @@ function testCaptureRanking() {
 
   c = C([C(Num(1)), C(Num(2))]);
   assertEquals(1, c.rank());
-  assert(c.contents_ instanceof Array);
-  assertEquals(2, c.contents_.length);
-  assertEquals(0, c.contents_[0].rank());
-  assertEquals(0, c.contents_[1].rank());
+  assert(c.contents() instanceof Array);
+  assertEquals(2, c.contents().length);
+  assertEquals(0, c.contents()[0].rank());
+  assertEquals(0, c.contents()[1].rank());
 
   c = C([]);
   assertEquals(1, c.rank());
 
   c = C([C([C([])])]);
   assertEquals(3, c.rank());
-  assertEquals(2, c.contents_[0].rank());
-  assertEquals(1, c.contents_[0].contents_[0].rank());
-  assertEquals(0, c.contents_[0].contents_[0].contents_.length);
+  assertEquals(2, c.contents()[0].rank());
+  assertEquals(1, c.contents()[0].contents()[0].rank());
+  assertEquals(0, c.contents()[0].contents()[0].contents().length);
 }

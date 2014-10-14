@@ -55,6 +55,17 @@ ccc.syntax.Capture.prototype.rank = function() {
 
 
 /**
+ * Return the contents of this capture.
+ *
+ * @return {!ccc.base.Object|!Array.<!ccc.syntax.Capture>}
+ * @public
+ */
+ccc.syntax.Capture.prototype.contents = function() {
+  return this.contents_;
+};
+
+
+/**
  * Indicates if another Capture is equivalent to this one.
  *
  * @param {!ccc.syntax.Capture} other

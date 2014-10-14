@@ -114,14 +114,14 @@ ccc.syntax.Capture = function(contents) {
     if (contents.length > 0) {
       var baseRank = contents[0].rank_;
       goog.array.forEach(contents, function(capture) {
-        goog.asserts.assert(capture.rank_ === baseRank);
-        capture.rank_++;
+        goog.asserts.assert(capture.rank_ == baseRank);
       });
+      this.rank_ = baseRank + 1;
     } else {
       goog.asserts.assert(this.rank_ > 0);
     }
   } else {
-    goog.asserts.assert(this.rank_ === 0);
+    goog.asserts.assert(this.rank_ == 0);
   }
 };
 
@@ -416,18 +416,62 @@ ccc.syntax.Pattern.prototype.matchListTail_ = function(input, elementPattern) {
 ccc.syntax.Pattern.prototype.matchEmptyTail_ = function(pattern) {
   var match = new ccc.syntax.Match(true);
   if (pattern.isSymbol() &&
-      !goog.object.containsKey(this.literals_, pattern.name()) &&
-      pattern.name() != ccc.syntax.Pattern.ELLIPSIS_NAME) {
+      !goog.object.containsKey(this.literals_, pattern.name())) {
     match.captures[pattern.name()] = new ccc.syntax.Capture([]);
-  } else if (pattern.isVector()) {
-    for (var i = 0; i < pattern.size(); ++i) {
+    return match;
+  }
+  if (pattern.isVector()) {
+    var repeatLast = false;
+    if (pattern.size() > 1) {
+      var lastElement = pattern.get(pattern.size() - 1);
+      if (lastElement.isSymbol() &&
+          lastElement.name() == ccc.syntax.Pattern.ELLIPSIS_NAME) {
+        repeatLast = true;
+      }
+    }
+    for (var i = 0; i < pattern.size() - (repeatLast ? 1 : 0); ++i) {
+      var current = pattern.get(i);
+      if (current.isSymbol() &&
+          current.name() == ccc.syntax.Pattern.ELLIPSIS_NAME) {
+        throw new Error('Invalid ellipsis placement');
+      }
       match.mergeCaptures(this.matchEmptyTail_(pattern.get(i)).captures);
     }
-  } else if (pattern.isPair()) {
+    if (repeatLast) {
+      var lastCaptures = this.matchEmptyTail_(pattern.get(i)).captures;
+      var newCaptures = {};
+      goog.object.forEach(lastCaptures, function(capture, name) {
+        newCaptures[name] = new ccc.syntax.Capture([capture]);
+      });
+      match.mergeCaptures(newCaptures);
+    }
+    return match;
+  }
+  if (pattern.isPair()) {
     while (pattern.isPair()) {
-      match.mergeCaptures(this.matchEmptyTail_(pattern.car()).captures);
+      var current = pattern.car();
+      if (current.isSymbol() &&
+          current.name() == ccc.syntax.Pattern.ELLIPSIS_NAME) {
+        throw new Error('Invalid ellipsis placement');
+      }
+      var next = pattern.cdr();
+      if (next.isPair() && next.car().isSymbol() &&
+          next.car().name() == ccc.syntax.Pattern.ELLIPSIS_NAME) {
+        if (!next.cdr().isNil())
+          throw new Error('Invalid ellipsis placement');
+        var lastCaptures = this.matchEmptyTail_(current).captures;
+        var newCaptures = {};
+        goog.object.forEach(lastCaptures, function(capture, name) {
+          newCaptures[name] = new ccc.syntax.Capture([capture]);
+        });
+        match.mergeCaptures(newCaptures);
+        return match;
+      }
+      match.mergeCaptures(this.matchEmptyTail_(current).captures);
       pattern = pattern.cdr();
     }
+    match.mergeCaptures(this.matchEmptyTail_(pattern).captures);
+    return match;
   }
   return match;
 };

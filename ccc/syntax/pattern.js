@@ -57,8 +57,21 @@ ccc.syntax.Match.prototype.mergeCaptures = function(captures) {
 
 /**
  * Joins a list of matches together. Every match in the list should have an
- * identical set of capture variables. Each variable in the resulting Match
- * will enumerate its respective values from the joined matches.
+ * identical set of capture variables. The output Match combines the captures
+ * for each variable into a new higher-rank capture. For example, if the input
+ * set is:
+ *
+ * matches: [
+ *   { 'a': Capture(NIL, 0), 'b': Capture(#t, 0) },
+ *   { 'a': Capture(42, 0), 'b': Capture(#f, 0) }
+ * ]
+ *
+ * Then the joined output Match will be:
+ *
+ * {
+ *   'a': Capture([Capture(NIL, 0), Capture(42, 0)], 1)
+ *   'b': Capture([Capture(#t, 0), Capture(#f, 0)], 1)
+ * }
  *
  * @param {!Array.<!ccc.syntax.Match>} matches
  * @return {!ccc.syntax.Match}
@@ -67,17 +80,13 @@ ccc.syntax.Match.prototype.mergeCaptures = function(captures) {
 ccc.syntax.Match.joinMatches = function(matches) {
   goog.asserts.assert(matches.length > 0);
   var newMatch = new ccc.syntax.Match(true);
-  goog.object.forEach(matches[matches.length - 1].captures,
-      function(capture, name) {
-    newMatch.captures[name] = new ccc.base.Pair(capture, ccc.base.NIL);
+  goog.object.forEach(matches[0].captures, function(capture, name) {
+    newMatch.captures[name] = new ccc.syntax.Capture(goog.array.map(matches,
+        function(match) {
+          goog.asserts.assert(goog.object.containsKey(match.captures, name));
+          return match.captures[name];
+        }));
   });
-  for (var i = matches.length - 2; i >= 0; --i) {
-    goog.object.forEach(matches[i].captures, function(capture, name) {
-      goog.asserts.assert(goog.object.containsKey(newMatch.captures, name));
-      newMatch.captures[name] = new ccc.base.Pair(
-          capture, newMatch.captures[name]);
-    });
-  }
   return newMatch;
 };
 
@@ -88,13 +97,53 @@ ccc.syntax.Match.joinMatches = function(matches) {
  * a syntax pattern matching operation. Captures may represent single values or
  * nested value series with arbitrary depth.
  *
- * @param {!ccc.base.Object} value TODO: This is obviously insufficient.
+ * @param {!ccc.base.Object|!Array.<!ccc.syntax.Capture>} contents The contents
+ *     of this new capture. May either be a single base Object or a collection
+ *     of equal-rank captures.
  * @constructor
- * @struct
  * @public
  */
-ccc.syntax.Capture = function(value) {
-  this.value = value;
+ccc.syntax.Capture = function(contents) {
+  /** @private {number} */
+  this.rank_ = 0;
+
+  /** @private {!ccc.base.Object|!Array.<!ccc.syntax.Capture>} */
+  this.contents_ = contents;
+
+  if (contents instanceof Array) {
+    if (contents.length > 0) {
+      var baseRank = contents[0].rank_;
+      goog.array.forEach(contents, function(capture) {
+        goog.asserts.assert(capture.rank_ === baseRank);
+        capture.rank_++;
+      });
+    } else {
+      goog.asserts.assert(this.rank_ > 0);
+    }
+  } else {
+    goog.asserts.assert(this.rank_ === 0);
+  }
+};
+
+
+/**
+ * Indicates if another Capture is equivalent to this one.
+ *
+ * @param {!ccc.syntax.Capture} other
+ * @return {boolean}
+ * @private
+ */
+ccc.syntax.Capture.prototype.equal = function(other) {
+  if (this.rank_ !== other.rank_)
+    return false;
+  if (!(this.contents_ instanceof Array) && !(other.contents_ instanceof Array))
+    return this.contents_.equal(other.contents_);
+  if (this.contents_.length !== other.contents_.length)
+    return false;
+  goog.asserts.assert(this.contents_ instanceof Array);
+  return goog.array.every(this.contents_, function(capture, i) {
+    return capture.equal(other.contents_[i]);
+  });
 };
 
 
@@ -103,7 +152,7 @@ ccc.syntax.Capture = function(value) {
  * A CaptureSet is a map from symbol name to {@code ccc.syntax.Capture} objects.
  * This is the output of a successful match operation.
  *
- * @typedef {!Object.<string, !ccc.base.Object>} // TODO: use a Capture?
+ * @typedef {!Object.<string, !ccc.syntax.Capture>}
  * @public
  */
 ccc.syntax.CaptureSet;
@@ -208,7 +257,7 @@ ccc.syntax.Pattern.prototype.matchSymbol_ = function(input, symbol) {
         input.name() == symbol.name());
   }
   var match = new ccc.syntax.Match(true);
-  match.captures[symbol.name()] = input;
+  match.captures[symbol.name()] = new ccc.syntax.Capture(input);
   return match;
 };
 
@@ -369,7 +418,7 @@ ccc.syntax.Pattern.prototype.matchEmptyTail_ = function(pattern) {
   if (pattern.isSymbol() &&
       !goog.object.containsKey(this.literals_, pattern.name()) &&
       pattern.name() != ccc.syntax.Pattern.ELLIPSIS_NAME) {
-    match.captures[pattern.name()] = ccc.base.NIL;
+    match.captures[pattern.name()] = new ccc.syntax.Capture([]);
   } else if (pattern.isVector()) {
     for (var i = 0; i < pattern.size(); ++i) {
       match.mergeCaptures(this.matchEmptyTail_(pattern.get(i)).captures);

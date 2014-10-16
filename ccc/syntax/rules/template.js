@@ -89,7 +89,6 @@ ccc.syntax.Template.prototype.expandSymbol_ = function(
         'Invalid ellipsis depth for pattern variable |%s|. ' +
         'Found %d but expected %d', symbol.name(), generator.depth(), rank));
   var output = generator.get();
-  generator.advance();
   goog.asserts.assert(goog.isNull(output) || output instanceof ccc.base.Object);
   return output;
 };
@@ -196,6 +195,10 @@ ccc.syntax.Template.prototype.expandRepeatingForm_ = function(
     if (goog.isNull(expansion))
       break;
     expansions.push(expansion);
+    goog.object.forEach(generatorClones, function(generator) {
+      if (generator.consumed())
+        generator.advance();
+    });
   }
   return expansions;
 };

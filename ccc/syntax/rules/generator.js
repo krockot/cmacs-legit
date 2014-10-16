@@ -26,6 +26,9 @@ ccc.syntax.Generator = function(capture, depth) {
 
   /** @private {number} */
   this.index_ = 0;
+
+  /** @private {boolean} */
+  this.consumed_ = false;
 };
 
 
@@ -38,6 +41,7 @@ ccc.syntax.Generator = function(capture, depth) {
  */
 ccc.syntax.Generator.prototype.get = function() {
   // Rank 0 captures always generate the same output.
+  this.consumed_ = true;
   if (this.capture_.rank() == 0) {
     goog.asserts.assert(!(this.capture_.contents() instanceof Array));
     return /** @type {!ccc.base.Object} */ (this.capture_.contents());
@@ -60,9 +64,22 @@ ccc.syntax.Generator.prototype.get = function() {
 ccc.syntax.Generator.prototype.advance = function() {
   if (this.capture_.rank() > 0) {
     goog.asserts.assert(this.capture_.contents() instanceof Array);
+    this.consumed_ = false;
     if (this.index_ < this.capture_.contents().length)
       ++this.index_;
   }
+};
+
+
+/**
+ * Indicates if the generator should terminate.
+ *
+ * @return {boolean}
+ * @public
+ */
+ccc.syntax.Generator.prototype.isAtEnd = function() {
+  return this.capture_.rank() > 0 &&
+      this.index_ >= this.capture_.contents().length;
 };
 
 
@@ -87,6 +104,17 @@ ccc.syntax.Generator.prototype.clone = function() {
  */
 ccc.syntax.Generator.prototype.depth = function() {
   return this.depth_;
+};
+
+
+/**
+ * Indicates if this generator's value has been consumer.
+ *
+ * @return {boolean}
+ * public
+ */
+ccc.syntax.Generator.prototype.consumed = function() {
+  return this.consumed_;
 };
 
 

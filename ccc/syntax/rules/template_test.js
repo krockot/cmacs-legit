@@ -66,4 +66,15 @@ function testRank1Expansion() {
       'a': C([C(Num(1)), C(Num(2)), C(Num(3))])
     },
     List([Num(1), Num(2), Num(3)]));
+  T(List([Sym('a'), ELLIPSIS, Sym('b'), ELLIPSIS]),
+    {
+      'a': C([C(Num(1)), C(Num(2))]),
+      'b': C([C(Sym('a')), C(Sym('b')), C(Sym('c'))])
+    },
+    List([Num(1), Num(2), Sym('a'), Sym('b'), Sym('c')]));
+  T(Vec([TRUE, Sym('a'), ELLIPSIS]),
+    {
+      'a': C([C(Num(1)), C(Num(2))])
+    },
+    Vec([TRUE, Num(1), Num(2)]));
 }

@@ -17,6 +17,7 @@ var NIL = ccc.base.NIL;
 var TRUE = ccc.base.T;
 var FALSE = ccc.base.F;
 var UNSPEC = ccc.base.UNSPECIFIED;
+var ELLIPSIS = Sym('...');
 
 function C(contents) {
   return new ccc.syntax.Capture(contents);
@@ -57,4 +58,12 @@ function testRank0Expansion() {
       'b': C(List([Num(3), Num(4)]))
     },
     List([List([Num(1), Num(2)]), Num(3), Num(4)]));
+}
+
+function testRank1Expansion() {
+  T(List([Sym('a'), ELLIPSIS]),
+    {
+      'a': C([C(Num(1)), C(Num(2)), C(Num(3))])
+    },
+    List([Num(1), Num(2), Num(3)]));
 }

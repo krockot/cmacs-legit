@@ -7,6 +7,7 @@ goog.require('ccc.syntax.CaptureSet');
 goog.require('ccc.syntax.GeneratorSet');
 goog.require('ccc.syntax.Pattern');
 goog.require('goog.object');
+goog.require('goog.string.format');
 
 
 
@@ -36,9 +37,11 @@ ccc.syntax.Template.prototype.expand = function(captures) {
   /** @type {!ccc.syntax.GeneratorSet} */
   var generators = {};
   goog.object.forEach(captures, function(capture, name) {
-    generators[name] = new ccc.syntax.Generator(capture);
+    generators[name] = new ccc.syntax.Generator(capture, 0);
   });
-  return this.expandForm_(this.form_, generators, 0);
+  var expansion = this.expandForm_(this.form_, generators, 0);
+  goog.asserts.assert(!goog.isNull(expansion));
+  return expansion;
 };
 
 
@@ -48,7 +51,7 @@ ccc.syntax.Template.prototype.expand = function(captures) {
  * @param {!ccc.base.Object} template
  * @param {!ccc.syntax.GeneratorSet} generators
  * @param {number} rank
- * @return {!ccc.base.Object}
+ * @return {ccc.base.Object}
  * @private
  */
 ccc.syntax.Template.prototype.expandForm_ = function(
@@ -72,7 +75,7 @@ ccc.syntax.Template.prototype.expandForm_ = function(
  * @param {!ccc.base.Symbol} symbol
  * @param {!ccc.syntax.GeneratorSet} generators
  * @param {number} rank
- * @return {!ccc.base.Object}
+ * @return {ccc.base.Object}
  * @private
  */
 ccc.syntax.Template.prototype.expandSymbol_ = function(
@@ -81,9 +84,14 @@ ccc.syntax.Template.prototype.expandSymbol_ = function(
   // Non-captured symbols expand to themselves.
   if (!goog.isDef(generator))
     return symbol;
-  var value = generator.getNext();
-  goog.asserts.assert(!goog.isNull(value));
-  return value;
+  if (generator.depth() != rank)
+    throw new Error(goog.string.format(
+        'Invalid ellipsis depth for pattern variable |%s|. ' +
+        'Found %d but expected %d', symbol.name(), generator.depth(), rank));
+  var output = generator.get();
+  generator.advance();
+  goog.asserts.assert(goog.isNull(output) || output instanceof ccc.base.Object);
+  return output;
 };
 
 
@@ -93,31 +101,38 @@ ccc.syntax.Template.prototype.expandSymbol_ = function(
  * @param {!ccc.base.Object} list
  * @param {!ccc.syntax.GeneratorSet} generators
  * @param {number} rank
- * @return {!ccc.base.Object}
+ * @return {ccc.base.Object}
  * @private
  */
 ccc.syntax.Template.prototype.expandList_ = function(list, generators, rank) {
   var outputElements = [];
   while (list.isPair()) {
-    var nextElement = list.cdr();
+    var element = list.car();
+    var nextList = list.cdr();
     var repeat = false;
-    if (nextElement.isPair()) {
-      nextElement = nextElement.car();
+    if (nextList.isPair()) {
+      var nextElement = nextList.car();
       if (nextElement.isSymbol() &&
           nextElement.name() == ccc.syntax.Pattern.ELLIPSIS_NAME) {
         repeat = true;
-        list = nextElement;
+        list = nextList;
       }
     }
     if (repeat) {
-      outputElements.push.apply(outputElements, this.expandRepeatingForm_(
-          list.car(), generators, rank));
+      var newElements = this.expandRepeatingForm_(element, generators, rank);
+      if (goog.isNull(newElements))
+        return null;
+      outputElements.push.apply(outputElements, newElements);
     } else {
-      outputElements.push(this.expandForm_(list.car(), generators, rank));
+      var newElement = this.expandForm_(element, generators, rank);
+      if (goog.isNull(newElement))
+        return null;
+      outputElements.push(newElement);
     }
     list = list.cdr();
   }
   var tail = this.expandForm_(list, generators, rank);
+  goog.asserts.assert(!goog.isNull(tail));
   return ccc.base.Pair.makeList(outputElements, tail);
 };
 
@@ -128,7 +143,7 @@ ccc.syntax.Template.prototype.expandList_ = function(list, generators, rank) {
  * @param {!ccc.base.Vector} vector
  * @param {!ccc.syntax.GeneratorSet} generators
  * @param {number} rank
- * @return {!ccc.base.Object}
+ * @return {ccc.base.Object}
  * @private
  */
 ccc.syntax.Template.prototype.expandVector_ = function(
@@ -144,10 +159,15 @@ ccc.syntax.Template.prototype.expandVector_ = function(
     if (!goog.isNull(nextElement) && nextElement.isSymbol() &&
         nextElement.name() == ccc.syntax.Pattern.ELLIPSIS_NAME) {
       ++i;
-      outputElements.push.apply(outputElements, this.expandRepeatingForm_(
-          element, generators, rank));
+      var newElements = this.expandRepeatingForm_(element, generators, rank);
+      if (goog.isNull(newElements))
+        return null;
+      outputElements.push.apply(outputElements, newElements);
     } else {
-      outputElements.push(this.expandForm_(element, generators, rank));
+      var newElement = this.expandForm_(element, generators, rank);
+      if (goog.isNull(newElement))
+        return null;
+      outputElements.push(newElement);
     }
   }
   return new ccc.base.Vector(outputElements);
@@ -165,5 +185,17 @@ ccc.syntax.Template.prototype.expandVector_ = function(
  */
 ccc.syntax.Template.prototype.expandRepeatingForm_ = function(
     template, generators, rank) {
-  return [];
-}
+  /** @type {!ccc.syntax.GeneratorSet} */
+  var generatorClones = {};
+  goog.object.forEach(generators, function(generator, name) {
+    generatorClones[name] = generator.clone();
+  });
+  var expansions = [];
+  while (true) {
+    var expansion = this.expandForm_(template, generatorClones, rank + 1);
+    if (goog.isNull(expansion))
+      break;
+    expansions.push(expansion);
+  }
+  return expansions;
+};

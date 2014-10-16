@@ -26,11 +26,10 @@ ccc.syntax.Template = function(form) {
 
 
 /**
- * Fully expands this template given a {@code ccc.syntax.CaptureSet}. Returns
- * {@code null} if expansion fails.
+ * Fully expands this template given a {@code ccc.syntax.CaptureSet}.
  *
  * @param {!ccc.syntax.CaptureSet} captures
- * @return {ccc.base.Object}
+ * @return {!ccc.base.Object}
  * @public
  */
 ccc.syntax.Template.prototype.expand = function(captures) {
@@ -44,7 +43,7 @@ ccc.syntax.Template.prototype.expand = function(captures) {
  * @param {!ccc.base.Object} template
  * @param {!ccc.syntax.CaptureSet} captures
  * @param {number} rank
- * @return {ccc.base.Object}
+ * @return {!ccc.base.Object}
  * @private
  */
 ccc.syntax.Template.prototype.expandForm_ = function(template, captures, rank) {
@@ -67,7 +66,7 @@ ccc.syntax.Template.prototype.expandForm_ = function(template, captures, rank) {
  * @param {!ccc.base.Symbol} symbol
  * @param {!ccc.syntax.CaptureSet} captures
  * @param {number} rank
- * @return {ccc.base.Object}
+ * @return {!ccc.base.Object}
  * @private
  */
 ccc.syntax.Template.prototype.expandSymbol_ = function(symbol, captures, rank) {
@@ -86,7 +85,7 @@ ccc.syntax.Template.prototype.expandSymbol_ = function(symbol, captures, rank) {
  * @param {!ccc.base.Object} list
  * @param {!ccc.syntax.CaptureSet} captures
  * @param {number} rank
- * @return {ccc.base.Object}
+ * @return {!ccc.base.Object}
  * @private
  */
 ccc.syntax.Template.prototype.expandList_ = function(list, captures, rank) {
@@ -103,21 +102,14 @@ ccc.syntax.Template.prototype.expandList_ = function(list, captures, rank) {
       }
     }
     if (repeat) {
-      var newElements = this.expandRepeatingForm_(list.car(), captures, rank);
-      if (goog.isNull(newElements))
-        return null;
-      outputElements.push.apply(outputElements, newElements);
+      outputElements.push.apply(outputElements, this.expandRepeatingForm_(
+          list.car(), captures, rank));
     } else {
-      var newElement = this.expandForm_(list.car(), captures, rank);
-      if (goog.isNull(newElement))
-        return null;
-      outputElements.push(newElement);
+      outputElements.push(this.expandForm_(list.car(), captures, rank));
     }
     list = list.cdr();
   }
   var tail = this.expandForm_(list, captures, rank);
-  if (goog.isNull(tail))
-    return null;
   return ccc.base.Pair.makeList(outputElements, tail);
 };
 
@@ -128,7 +120,7 @@ ccc.syntax.Template.prototype.expandList_ = function(list, captures, rank) {
  * @param {!ccc.base.Vector} vector
  * @param {!ccc.syntax.CaptureSet} captures
  * @param {number} rank
- * @return {ccc.base.Object}
+ * @return {!ccc.base.Object}
  * @private
  */
 ccc.syntax.Template.prototype.expandVector_ = function(vector, captures, rank) {
@@ -143,19 +135,15 @@ ccc.syntax.Template.prototype.expandVector_ = function(vector, captures, rank) {
     if (!goog.isNull(nextElement) && nextElement.isSymbol() &&
         nextElement.name() == ccc.syntax.Pattern.ELLIPSIS_NAME) {
       ++i;
-      var newElements = this.expandRepeatingForm_(element, captures, rank);
-      if (goog.isNull(newElements))
-        return null;
-      outputElements.push.apply(outputElements, newElements);
+      outputElements.push.apply(outputElements, this.expandRepeatingForm_(
+          element, captures, rank));
     } else {
-      var newElement = this.expandForm_(element, captures, rank);
-      if (goog.isNull(newElement))
-        return null;
-      outputElements.push(newElement);
+      outputElements.push(this.expandForm_(element, captures, rank));
     }
   }
   return new ccc.base.Vector(outputElements);
 };
+
 
 /**
  * Expand a repeating template subform over a set of captures.
@@ -163,7 +151,7 @@ ccc.syntax.Template.prototype.expandVector_ = function(vector, captures, rank) {
  * @param {!ccc.base.Object} template
  * @param {!ccc.syntax.CaptureSet} captures
  * @param {number} rank
- * @return {Array.<!ccc.base.Object>}
+ * @return {!Array.<!ccc.base.Object>}
  * @private
  */
 ccc.syntax.Template.prototype.expandRepeatingForm_ = function(

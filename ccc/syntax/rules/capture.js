@@ -106,6 +106,3 @@ ccc.syntax.Capture.prototype.toString = function() {
  * @public
  */
 ccc.syntax.CaptureSet;
-
-
-

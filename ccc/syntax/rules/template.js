@@ -3,8 +3,8 @@
 goog.provide('ccc.syntax.Template');
 
 goog.require('ccc.base');
-goog.require('ccc.syntax.Capture');
 goog.require('ccc.syntax.CaptureSet');
+goog.require('ccc.syntax.GeneratorSet');
 goog.require('ccc.syntax.Pattern');
 goog.require('goog.object');
 
@@ -33,28 +33,34 @@ ccc.syntax.Template = function(form) {
  * @public
  */
 ccc.syntax.Template.prototype.expand = function(captures) {
-  return this.expandForm_(this.form_, captures, 0);
+  /** @type {!ccc.syntax.GeneratorSet} */
+  var generators = {};
+  goog.object.forEach(captures, function(capture, name) {
+    generators[name] = new ccc.syntax.Generator(capture);
+  });
+  return this.expandForm_(this.form_, generators, 0);
 };
 
 
 /**
- * Expand a template subform over a set of captures.
+ * Expand a template subform over a set of generators.
  *
  * @param {!ccc.base.Object} template
- * @param {!ccc.syntax.CaptureSet} captures
+ * @param {!ccc.syntax.GeneratorSet} generators
  * @param {number} rank
  * @return {!ccc.base.Object}
  * @private
  */
-ccc.syntax.Template.prototype.expandForm_ = function(template, captures, rank) {
+ccc.syntax.Template.prototype.expandForm_ = function(
+    template, generators, rank) {
   if (template.isSymbol())
     return this.expandSymbol_(/** @type {!ccc.base.Symbol} */ (template),
-        captures, rank);
+        generators, rank);
   if (template.isPair())
-    return this.expandList_(template, captures, rank);
+    return this.expandList_(template, generators, rank);
   if (template.isVector())
     return this.expandVector_(/** @type {!ccc.base.Vector} */ (template),
-        captures, rank);
+        generators, rank);
   // Anything else just expands to itself.
   return template;
 };
@@ -64,18 +70,20 @@ ccc.syntax.Template.prototype.expandForm_ = function(template, captures, rank) {
  * Expand a symbol template.
  *
  * @param {!ccc.base.Symbol} symbol
- * @param {!ccc.syntax.CaptureSet} captures
+ * @param {!ccc.syntax.GeneratorSet} generators
  * @param {number} rank
  * @return {!ccc.base.Object}
  * @private
  */
-ccc.syntax.Template.prototype.expandSymbol_ = function(symbol, captures, rank) {
-  // TODO: Support non-zero rank captures.
-  var capture = goog.object.get(captures, symbol.name());
+ccc.syntax.Template.prototype.expandSymbol_ = function(
+    symbol, generators, rank) {
+  var generator = goog.object.get(generators, symbol.name());
   // Non-captured symbols expand to themselves.
-  if (!goog.isDef(capture))
+  if (!goog.isDef(generator))
     return symbol;
-  return capture.contents();
+  var value = generator.getNext();
+  goog.asserts.assert(!goog.isNull(value));
+  return value;
 };
 
 
@@ -83,12 +91,12 @@ ccc.syntax.Template.prototype.expandSymbol_ = function(symbol, captures, rank) {
  * Expand a list template.
  *
  * @param {!ccc.base.Object} list
- * @param {!ccc.syntax.CaptureSet} captures
+ * @param {!ccc.syntax.GeneratorSet} generators
  * @param {number} rank
  * @return {!ccc.base.Object}
  * @private
  */
-ccc.syntax.Template.prototype.expandList_ = function(list, captures, rank) {
+ccc.syntax.Template.prototype.expandList_ = function(list, generators, rank) {
   var outputElements = [];
   while (list.isPair()) {
     var nextElement = list.cdr();
@@ -103,13 +111,13 @@ ccc.syntax.Template.prototype.expandList_ = function(list, captures, rank) {
     }
     if (repeat) {
       outputElements.push.apply(outputElements, this.expandRepeatingForm_(
-          list.car(), captures, rank));
+          list.car(), generators, rank));
     } else {
-      outputElements.push(this.expandForm_(list.car(), captures, rank));
+      outputElements.push(this.expandForm_(list.car(), generators, rank));
     }
     list = list.cdr();
   }
-  var tail = this.expandForm_(list, captures, rank);
+  var tail = this.expandForm_(list, generators, rank);
   return ccc.base.Pair.makeList(outputElements, tail);
 };
 
@@ -118,12 +126,13 @@ ccc.syntax.Template.prototype.expandList_ = function(list, captures, rank) {
  * Expand a vector template.
  *
  * @param {!ccc.base.Vector} vector
- * @param {!ccc.syntax.CaptureSet} captures
+ * @param {!ccc.syntax.GeneratorSet} generators
  * @param {number} rank
  * @return {!ccc.base.Object}
  * @private
  */
-ccc.syntax.Template.prototype.expandVector_ = function(vector, captures, rank) {
+ccc.syntax.Template.prototype.expandVector_ = function(
+    vector, generators, rank) {
   var outputElements = [];
   for (var i = 0; i < vector.size(); ++i) {
     var element = vector.get(i);
@@ -136,9 +145,9 @@ ccc.syntax.Template.prototype.expandVector_ = function(vector, captures, rank) {
         nextElement.name() == ccc.syntax.Pattern.ELLIPSIS_NAME) {
       ++i;
       outputElements.push.apply(outputElements, this.expandRepeatingForm_(
-          element, captures, rank));
+          element, generators, rank));
     } else {
-      outputElements.push(this.expandForm_(element, captures, rank));
+      outputElements.push(this.expandForm_(element, generators, rank));
     }
   }
   return new ccc.base.Vector(outputElements);
@@ -146,15 +155,15 @@ ccc.syntax.Template.prototype.expandVector_ = function(vector, captures, rank) {
 
 
 /**
- * Expand a repeating template subform over a set of captures.
+ * Expand a repeating template subform over a set of generators.
  *
  * @param {!ccc.base.Object} template
- * @param {!ccc.syntax.CaptureSet} captures
+ * @param {!ccc.syntax.GeneratorSet} generators
  * @param {number} rank
  * @return {!Array.<!ccc.base.Object>}
  * @private
  */
 ccc.syntax.Template.prototype.expandRepeatingForm_ = function(
-    template, captures, rank) {
+    template, generators, rank) {
   return [];
 }

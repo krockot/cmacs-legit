@@ -136,7 +136,10 @@ ccc.syntax.Template.prototype.expandVector_ = function(vector, captures, rank) {
   for (var i = 0; i < vector.size(); ++i) {
     var element = vector.get(i);
     goog.asserts.assert(!goog.isNull(element));
-    var nextElement = vector.get(i + 1);
+    var nextElement = null;
+    if (i < vector.size() - 1) {
+      nextElement = vector.get(i + 1);
+    }
     if (!goog.isNull(nextElement) && nextElement.isSymbol() &&
         nextElement.name() == ccc.syntax.Pattern.ELLIPSIS_NAME) {
       ++i;

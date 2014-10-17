@@ -138,11 +138,12 @@ function testInvalidExpansionRank() {
       'a': C(Num(42))
     });
   // ((a b) ...) with rank-0 capture in |a|
-  F(List([List([Sym('a'), Sym('b')]), ELLIPSIS]),
+  T(List([List([Sym('a'), Sym('b')]), ELLIPSIS]),
     {
       'a': C(Num(42)),
       'b': C([C(Sym('foo')), C(Sym('bar'))])
-    });
+    },
+    List([List([Num(42), Sym('foo')]), List([Num(42), Sym('bar')])]));
   // (a) with rank-1 capture in |a|
   F(List([Sym('a')]),
     {
@@ -165,7 +166,7 @@ function testMultipleExpansionsOfOneVariable() {
     List([Num(0), Num(1), Num(0), Num(1)]));
 }
 
-function testRank2Expanion() {
+function testRank2Expansion() {
   // ((a ... b ...) ...)
   T(List([List([Sym('a'), ELLIPSIS, Sym('b'), ELLIPSIS]), ELLIPSIS]),
     {
@@ -179,4 +180,15 @@ function testRank2Expanion() {
     // ((1 3 5 2 4 6) (a c e b d f))
     List([List([Num(1), Num(3), Num(5), Num(2), Num(4), Num(6)]),
           List([Sym('a'), Sym('c'), Sym('e'), Sym('b'), Sym('d'), Sym('f')])]));
+
+  // ((a ... a ...) ...)
+  T(List([List([Sym('a'), ELLIPSIS, Sym('a'), ELLIPSIS]), ELLIPSIS]),
+    {
+      // a <- [[1, 3, 5], [a, c, e]]
+      'a': C([C([C(Num(1)), C(Num(3)), C(Num(5))]),
+              C([C(Sym('a')), C(Sym('c')), C(Sym('e'))])]),
+    },
+    // ((1 3 5 1 3 5) (a c e a c e))
+    List([List([Num(1), Num(3), Num(5), Num(1), Num(3), Num(5)]),
+          List([Sym('a'), Sym('c'), Sym('e'), Sym('a'), Sym('c'), Sym('e')])]));
 }

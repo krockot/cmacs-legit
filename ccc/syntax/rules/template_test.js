@@ -149,3 +149,34 @@ function testInvalidExpansionRank() {
       'a': C([C(Num(1)), C(Num(2))])
     });
 }
+
+function testMultipleExpansionsOfOneVariable() {
+  // (a a)
+  T(List([Sym('a'), Sym('a')]),
+    {
+      'a': C(Num(42))
+    },
+    List([Num(42), Num(42)]));
+  // (a ... a ...)
+  T(List([Sym('a'), ELLIPSIS, Sym('a'), ELLIPSIS]),
+    {
+      'a': C([C(Num(0)), C(Num(1))])
+    },
+    List([Num(0), Num(1), Num(0), Num(1)]));
+}
+
+function testRank2Expanion() {
+  // ((a ... b ...) ...)
+  T(List([List([Sym('a'), ELLIPSIS, Sym('b'), ELLIPSIS]), ELLIPSIS]),
+    {
+      // a <- [[1, 3, 5], [a, c, e]]
+      'a': C([C([C(Num(1)), C(Num(3)), C(Num(5))]),
+              C([C(Sym('a')), C(Sym('c')), C(Sym('e'))])]),
+      // b <- [[2, 4, 6], [b, d, f]].
+      'b': C([C([C(Num(2)), C(Num(4)), C(Num(6))]),
+              C([C(Sym('b')), C(Sym('d')), C(Sym('f'))])])
+    },
+    // ((1 3 5 2 4 6) (a c e b d f))
+    List([List([Num(1), Num(3), Num(5), Num(2), Num(4), Num(6)]),
+          List([Sym('a'), Sym('c'), Sym('e'), Sym('b'), Sym('d'), Sym('f')])]));
+}

@@ -86,9 +86,11 @@ ccc.syntax.Template.prototype.expandSymbol_ = function(
     return symbol;
   if (generator.depth() != rank)
     throw new Error(goog.string.format(
-        'Invalid ellipsis depth for pattern variable |%s|. ' +
-        'Found %d but expected %d', symbol.name(), generator.depth(), rank));
+        'Invalid ellipsis depth for pattern variable |%s|', symbol.name()));
   var output = generator.get();
+  if (output instanceof ccc.syntax.Generator)
+    throw new Error(goog.string.format(
+        'Invalid ellipsis depth for pattern variable |%s|', symbol.name()));
   goog.asserts.assert(goog.isNull(output) || output instanceof ccc.base.Object);
   return output;
 };

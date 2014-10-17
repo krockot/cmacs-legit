@@ -137,13 +137,6 @@ function testInvalidExpansionRank() {
     {
       'a': C(Num(42))
     });
-  // ((a b) ...) with rank-0 capture in |a|
-  T(List([List([Sym('a'), Sym('b')]), ELLIPSIS]),
-    {
-      'a': C(Num(42)),
-      'b': C([C(Sym('foo')), C(Sym('bar'))])
-    },
-    List([List([Num(42), Sym('foo')]), List([Num(42), Sym('bar')])]));
   // (a) with rank-1 capture in |a|
   F(List([Sym('a')]),
     {
@@ -164,6 +157,13 @@ function testMultipleExpansionsOfOneVariable() {
       'a': C([C(Num(0)), C(Num(1))])
     },
     List([Num(0), Num(1), Num(0), Num(1)]));
+  // ((a b) ...) with rank-0 capture in |a|
+  T(List([List([Sym('a'), Sym('b')]), ELLIPSIS]),
+    {
+      'a': C(Num(42)),
+      'b': C([C(Sym('foo')), C(Sym('bar'))])
+    },
+    List([List([Num(42), Sym('foo')]), List([Num(42), Sym('bar')])]));
 }
 
 function testRank2Expansion() {
@@ -191,4 +191,32 @@ function testRank2Expansion() {
     // ((1 3 5 1 3 5) (a c e a c e))
     List([List([Num(1), Num(3), Num(5), Num(1), Num(3), Num(5)]),
           List([Sym('a'), Sym('c'), Sym('e'), Sym('a'), Sym('c'), Sym('e')])]));
+}
+
+function testHigherRankExpansions() {
+  // (((c ... b) ... a) ...)
+  T(List([
+      List([List([Sym('c'), ELLIPSIS, Sym('b')]),
+            ELLIPSIS, Sym('a')]),
+      ELLIPSIS]),
+    {
+      // a <- [1, a, !]
+      'a': C([C(Num(1)), C(Sym('a')), C(Sym('!'))]),
+      // b <- [[2, 6], [b, f], [$, $]]
+      'b': C([C([C(Num(2)), C(Num(6))]),
+              C([C(Sym('b')), C(Sym('f'))]),
+              C([C(Sym('$'))])]),
+      // c <- [[[3, 4, 5], [7, 8]], [[c, d, e], [g]], [[$, $]]]
+      'c': C([C([C([C(Num(3)), C(Num(4)), C(Num(5))]),
+                 C([C(Num(7)), C(Num(8))])]),
+              C([C([C(Sym('c')), C(Sym('d')), C(Sym('e'))]),
+                 C([C(Sym('g'))])]),
+              C([C([C(Sym('$')), C(Sym('$'))])])])
+    },
+    // (((3 4 5 2) (7 8 6) 1) ((c d e b) (g f) a) (($ $ $) !))
+    List([List([List([Num(3), Num(4), Num(5), Num(2)]),
+                List([Num(7), Num(8), Num(6)]), Num(1)]),
+          List([List([Sym('c'), Sym('d'), Sym('e'), Sym('b')]),
+                List([Sym('g'), Sym('f')]), Sym('a')]),
+          List([List([Sym('$'), Sym('$'), Sym('$')]), Sym('!')])]));
 }

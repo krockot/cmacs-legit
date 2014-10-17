@@ -9,8 +9,8 @@ goog.require('ccc.syntax.Capture');
 
 
 /**
- * A CaptureIterator is used to iterate over a single (possibly nested)
- * {@code ccc.syntax.Capture} during template expansion.
+ * A CaptureIterator is used to iterate over a single {@code ccc.syntax.Capture}
+ * during template expansion.
  *
  * @param {!ccc.syntax.Capture} capture
  * @constructor
@@ -26,15 +26,15 @@ ccc.syntax.CaptureIterator = function(capture) {
 
 
 /**
- * Gets the current capture. It is an error to call this if the iterator is
- * at the end of the capture.
+ * Gets the current child capture. It is an error to call this if the iterator
+ * is at the end of the capture. Single-valued captures repeat indefinitely.
  *
  * @return {!ccc.syntax.Capture}
  * @public
  */
 ccc.syntax.CaptureIterator.prototype.get = function() {
   if (this.capture_.rank() == 0) {
-    goog.asserts.assert(!(this.capture_.contents() instanceof Array));
+    goog.asserts.assert(this.capture_.contents() instanceof ccc.base.Object);
     return this.capture_;
   }
   goog.asserts.assert(this.capture_.contents() instanceof Array &&
@@ -64,7 +64,8 @@ ccc.syntax.CaptureIterator.prototype.advance = function() {
  * @public
  */
 ccc.syntax.CaptureIterator.prototype.isAtEnd = function() {
-  return this.index_ >= this.capture_.contents().length;
+  return this.capture_.contents() instanceof Array &&
+      this.index_ >= this.capture_.contents().length;
 };
 
 

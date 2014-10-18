@@ -219,4 +219,28 @@ function testHigherRankExpansions() {
           List([List([Sym('c'), Sym('d'), Sym('e'), Sym('b')]),
                 List([Sym('g'), Sym('f')]), Sym('a')]),
           List([List([Sym('$'), Sym('$'), Sym('$')]), Sym('!')])]));
+
+  // (((a b ...) ...) ...)
+  T(List([List([List([Sym('a'), Sym('b'), ELLIPSIS]), ELLIPSIS]), ELLIPSIS]),
+    {
+      // a <- [[1, 2, 3, 4, 5], [5, 4, 3, 2, 1]]
+      'a': C([C([C(Num(1)), C(Num(2)), C(Num(3)), C(Num(4)), C(Num(5))]),
+              C([C(Num(5)), C(Num(4)), C(Num(3)), C(Num(2)), C(Num(1))])]),
+      // b <- [[[a, b, c, d], [x, y, z], [7, 7, 7, 7, 7]],
+      //       [[d, c, b, a], [z, y, x], [6, 6, 6, 6]]]
+      'b': C([C([C([C(Sym('a')), C(Sym('b')), C(Sym('c')), C(Sym('d'))]),
+                 C([C(Sym('x')), C(Sym('y')), C(Sym('z'))]),
+                 C([C(Num(7)), C(Num(7)), C(Num(7)), C(Num(7)), C(Num(7))])]),
+              C([C([C(Sym('d')), C(Sym('c')), C(Sym('b')), C(Sym('a'))]),
+                 C([C(Sym('z')), C(Sym('y')), C(Sym('x'))]),
+                 C([C(Num(6)), C(Num(6)), C(Num(6)), C(Num(6))])])])
+    },
+    // (((1 a b c d) (2 x y z) (3 7 7 7 7 7))
+    //  ((5 d c b a) (4 z y x) (3 6 6 6 6)))
+    List([List([List([Num(1), Sym('a'), Sym('b'), Sym('c'), Sym('d')]),
+                List([Num(2), Sym('x'), Sym('y'), Sym('z')]),
+                List([Num(3), Num(7), Num(7), Num(7), Num(7), Num(7)])]),
+          List([List([Num(5), Sym('d'), Sym('c'), Sym('b'), Sym('a')]),
+                List([Num(4), Sym('z'), Sym('y'), Sym('x')]),
+                List([Num(3), Num(6), Num(6), Num(6), Num(6)])])]));
 }

@@ -39,7 +39,7 @@ ccc.syntax.Template.prototype.expand = function(captures) {
   var iterators = goog.object.map(captures, function(capture) {
     return new ccc.syntax.CaptureIterator(capture);
   });
-  var expansion = this.expandForm_(this.form_, iterators, 0, {});
+  var expansion = this.expandForm_(this.form_, iterators, {});
   goog.asserts.assert(!goog.isNull(expansion));
   return expansion;
 };
@@ -50,21 +50,20 @@ ccc.syntax.Template.prototype.expand = function(captures) {
  *
  * @param {!ccc.base.Object} template
  * @param {!ccc.syntax.CaptureIteratorSet} iterators
- * @param {number} rank
  * @param {!Object.<string, boolean>} usedVars
  * @return {ccc.base.Object}
  * @private
  */
 ccc.syntax.Template.prototype.expandForm_ = function(
-    template, iterators, rank, usedVars) {
+    template, iterators, usedVars) {
   if (template.isSymbol())
     return this.expandSymbol_(/** @type {!ccc.base.Symbol} */ (template),
-        iterators, rank, usedVars);
+        iterators, usedVars);
   if (template.isPair())
-    return this.expandList_(template, iterators, rank, usedVars);
+    return this.expandList_(template, iterators, usedVars);
   if (template.isVector())
     return this.expandVector_(/** @type {!ccc.base.Vector} */ (template),
-        iterators, rank, usedVars);
+        iterators, usedVars);
   // Anything else just expands to itself.
   return template;
 };
@@ -75,13 +74,12 @@ ccc.syntax.Template.prototype.expandForm_ = function(
  *
  * @param {!ccc.base.Symbol} symbol
  * @param {!ccc.syntax.CaptureIteratorSet} iterators
- * @param {number} rank
  * @param {!Object.<string, boolean>} usedVars
  * @return {ccc.base.Object}
  * @private
  */
 ccc.syntax.Template.prototype.expandSymbol_ = function(
-    symbol, iterators, rank, usedVars) {
+    symbol, iterators, usedVars) {
   var iterator = goog.object.get(iterators, symbol.name());
   // Non-captured symbols expand to themselves.
   if (!goog.isDef(iterator))
@@ -99,13 +97,12 @@ ccc.syntax.Template.prototype.expandSymbol_ = function(
  *
  * @param {!ccc.base.Object} list
  * @param {!ccc.syntax.CaptureIteratorSet} iterators
- * @param {number} rank
  * @param {!Object.<string, boolean>} usedVars
  * @return {ccc.base.Object}
  * @private
  */
 ccc.syntax.Template.prototype.expandList_ = function(
-    list, iterators, rank, usedVars) {
+    list, iterators, usedVars) {
   var outputElements = [];
   while (list.isPair()) {
     var element = list.car();
@@ -120,20 +117,19 @@ ccc.syntax.Template.prototype.expandList_ = function(
       }
     }
     if (repeat) {
-      var newElements = this.expandRepeatingForm_(element, iterators, rank,
-          usedVars);
+      var newElements = this.expandRepeatingForm_(element, iterators, usedVars);
       if (goog.isNull(newElements))
         return null;
       outputElements.push.apply(outputElements, newElements);
     } else {
-      var newElement = this.expandForm_(element, iterators, rank, usedVars);
+      var newElement = this.expandForm_(element, iterators, usedVars);
       if (goog.isNull(newElement))
         return null;
       outputElements.push(newElement);
     }
     list = list.cdr();
   }
-  var tail = this.expandForm_(list, iterators, rank, usedVars);
+  var tail = this.expandForm_(list, iterators, usedVars);
   goog.asserts.assert(!goog.isNull(tail));
   return ccc.base.Pair.makeList(outputElements, tail);
 };
@@ -144,13 +140,12 @@ ccc.syntax.Template.prototype.expandList_ = function(
  *
  * @param {!ccc.base.Vector} vector
  * @param {!ccc.syntax.CaptureIteratorSet} iterators
- * @param {number} rank
  * @param {!Object.<string, boolean>} usedVars
  * @return {ccc.base.Object}
  * @private
  */
 ccc.syntax.Template.prototype.expandVector_ = function(
-    vector, iterators, rank, usedVars) {
+    vector, iterators, usedVars) {
   var outputElements = [];
   for (var i = 0; i < vector.size(); ++i) {
     var element = vector.get(i);
@@ -162,13 +157,12 @@ ccc.syntax.Template.prototype.expandVector_ = function(
     if (!goog.isNull(nextElement) && nextElement.isSymbol() &&
         nextElement.name() == ccc.syntax.Pattern.ELLIPSIS_NAME) {
       ++i;
-      var newElements = this.expandRepeatingForm_(element, iterators, rank,
-          usedVars);
+      var newElements = this.expandRepeatingForm_(element, iterators, usedVars);
       if (goog.isNull(newElements))
         return null;
       outputElements.push.apply(outputElements, newElements);
     } else {
-      var newElement = this.expandForm_(element, iterators, rank, usedVars);
+      var newElement = this.expandForm_(element, iterators, usedVars);
       if (goog.isNull(newElement))
         return null;
       outputElements.push(newElement);
@@ -183,13 +177,12 @@ ccc.syntax.Template.prototype.expandVector_ = function(
  *
  * @param {!ccc.base.Object} template
  * @param {!ccc.syntax.CaptureIteratorSet} iterators
- * @param {number} rank
  * @param {!Object.<string, boolean>} usedVars
  * @return {!Array.<!ccc.base.Object>}
  * @private
  */
 ccc.syntax.Template.prototype.expandRepeatingForm_ = function(
-    template, iterators, rank, usedVars) {
+    template, iterators, usedVars) {
   var expansions = [];
   while (true) {
     var exhausted = false;
@@ -205,8 +198,7 @@ ccc.syntax.Template.prototype.expandRepeatingForm_ = function(
       break;
 
     var innerUsedVars = {};
-    var expansion = this.expandForm_(template, subIterators, rank + 1,
-        innerUsedVars);
+    var expansion = this.expandForm_(template, subIterators, innerUsedVars);
     goog.object.extend(usedVars, innerUsedVars);
     if (goog.isNull(expansion))
       break;

@@ -37,8 +37,6 @@ ccc.syntax.Capture = function(contents) {
     } else {
       this.rank_ = 1;
     }
-  } else {
-    goog.asserts.assert(this.rank_ == 0);
   }
 };
 

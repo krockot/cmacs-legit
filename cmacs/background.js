@@ -17,6 +17,7 @@ cmacs.background.main = function() {
   environment.set('define-syntax', ccc.syntax.DEFINE_SYNTAX);
   environment.set('if', ccc.syntax.IF);
   environment.set('lambda', ccc.syntax.LAMBDA);
+  environment.set('let', ccc.syntax.LET);
   environment.set('\u03bb', ccc.syntax.LAMBDA);
   environment.set('quote', ccc.syntax.QUOTE);
   environment.set('set!', ccc.syntax.SET);

@@ -56,19 +56,19 @@ ccc.syntax.Match.prototype.mergeCaptures = function(captures) {
 /**
  * Joins a list of matches together. Every match in the list should have an
  * identical set of capture variables. The output Match combines the captures
- * for each variable into a new higher-rank capture. For example, if the input
+ * for each variable into a new higher-order capture. For example, if the input
  * set is:
  *
  * matches: [
- *   { 'a': Capture(NIL, 0), 'b': Capture(#t, 0) },
- *   { 'a': Capture(42, 0), 'b': Capture(#f, 0) }
+ *   { 'a': Capture(NIL), 'b': Capture(#t) },
+ *   { 'a': Capture(42), 'b': Capture(#f) }
  * ]
  *
  * Then the joined output Match will be:
  *
  * {
- *   'a': Capture([Capture(NIL, 0), Capture(42, 0)], 1)
- *   'b': Capture([Capture(#t, 0), Capture(#f, 0)], 1)
+ *   'a': Capture([Capture(NIL), Capture(42)])
+ *   'b': Capture([Capture(#t), Capture(#f)])
  * }
  *
  * @param {!Array.<!ccc.syntax.Match>} matches

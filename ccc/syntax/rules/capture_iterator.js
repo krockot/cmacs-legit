@@ -27,19 +27,19 @@ ccc.syntax.CaptureIterator = function(capture) {
 
 /**
  * Gets the current child capture. It is an error to call this if the iterator
- * is at the end of the capture. Single-valued captures repeat indefinitely.
+ * is at the end of the capture. Singular captures return themselves
+ * indefinitely.
  *
  * @return {!ccc.syntax.Capture}
  * @public
  */
 ccc.syntax.CaptureIterator.prototype.get = function() {
-  if (this.capture_.rank() == 0) {
-    goog.asserts.assert(this.capture_.contents() instanceof ccc.base.Object);
+  if (this.capture_.isSingular()) {
     return this.capture_;
   }
-  goog.asserts.assert(this.capture_.contents() instanceof Array &&
-      this.index_ < this.capture_.contents().length);
-  return this.capture_.contents()[this.index_];
+  var children = this.capture_.children();
+  goog.asserts.assert(this.index_ < children.length);
+  return children[this.index_];
 };
 
 
@@ -49,11 +49,11 @@ ccc.syntax.CaptureIterator.prototype.get = function() {
  * @public
  */
 ccc.syntax.CaptureIterator.prototype.advance = function() {
-  if (this.capture_.rank() > 0) {
-    goog.asserts.assert(this.capture_.contents() instanceof Array);
-    if (this.index_ < this.capture_.contents().length)
-      ++this.index_;
-  }
+  if (this.capture_.isSingular())
+    return;
+  var children = this.capture_.children();
+  if (this.index_ < children.length)
+    ++this.index_;
 };
 
 
@@ -64,8 +64,8 @@ ccc.syntax.CaptureIterator.prototype.advance = function() {
  * @public
  */
 ccc.syntax.CaptureIterator.prototype.isAtEnd = function() {
-  return this.capture_.contents() instanceof Array &&
-      this.index_ >= this.capture_.contents().length;
+  return !this.capture_.isSingular() &&
+      this.index_ >= this.capture_.children().length;
 };
 
 

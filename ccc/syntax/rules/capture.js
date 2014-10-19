@@ -15,51 +15,50 @@ goog.require('goog.asserts');
  * nested value series with arbitrary depth.
  *
  * @param {!ccc.base.Object|!Array.<!ccc.syntax.Capture>} contents The contents
- *     of this new capture. May either be a single base Object or a collection
- *     of equal-rank captures.
+ *     of the capture, which may be a single object for terminal captures or
+ *     an array of child captures.
  * @constructor
  * @public
  */
 ccc.syntax.Capture = function(contents) {
-  /** @private {number} */
-  this.rank_ = 0;
+  /** @private {ccc.base.Object} */
+  this.object_ = contents instanceof ccc.base.Object ? contents : null;
 
-  /** @private {!ccc.base.Object|!Array.<!ccc.syntax.Capture>} */
-  this.contents_ = contents;
-
-  if (contents instanceof Array) {
-    if (contents.length > 0) {
-      var baseRank = contents[0].rank_;
-      goog.array.forEach(contents, function(capture) {
-        goog.asserts.assert(capture.rank_ == baseRank);
-      });
-      this.rank_ = baseRank + 1;
-    } else {
-      this.rank_ = 1;
-    }
-  }
+  /** @private {!Array.<!ccc.syntax.Capture>} */
+  this.children_ = contents instanceof Array ? contents : [];
 };
 
 
 /**
- * Returns the rank of this capture.
+ * Indicates if this capture is has a single object associated with it.
  *
- * @return {number}
+ * @return {boolean}
  * @public
  */
-ccc.syntax.Capture.prototype.rank = function() {
-  return this.rank_;
+ccc.syntax.Capture.prototype.isSingular = function() {
+  return !goog.isNull(this.object_);
 };
 
 
 /**
- * Return the contents of this capture.
+ * Returns the object contents of this capture, or {@code null} for captures
+ * with no directly associated object.
  *
- * @return {!ccc.base.Object|!Array.<!ccc.syntax.Capture>}
+ * @return {ccc.base.Object}
+ */
+ccc.syntax.Capture.prototype.object = function() {
+  return this.object_;
+};
+
+
+/**
+ * Returns the children of this capture.
+ *
+ * @return {!Array.<!ccc.syntax.Capture>}
  * @public
  */
-ccc.syntax.Capture.prototype.contents = function() {
-  return this.contents_;
+ccc.syntax.Capture.prototype.children = function() {
+  return this.children_;
 };
 
 
@@ -70,15 +69,16 @@ ccc.syntax.Capture.prototype.contents = function() {
  * @return {boolean}
  */
 ccc.syntax.Capture.prototype.equal = function(other) {
-  if (this.rank_ !== other.rank_)
+  if (this.isSingular() != other.isSingular())
     return false;
-  if (!(this.contents_ instanceof Array) && !(other.contents_ instanceof Array))
-    return this.contents_.equal(other.contents_);
-  if (this.contents_.length !== other.contents_.length)
+  if (this.isSingular()) {
+    goog.asserts.assert(!goog.isNull(other.object_));
+    return this.object_.equal(other.object_);
+  }
+  if (this.children_.length != other.children_.length)
     return false;
-  goog.asserts.assert(this.contents_ instanceof Array);
-  return goog.array.every(this.contents_, function(capture, i) {
-    return capture.equal(other.contents_[i]);
+  return goog.array.every(this.children_, function(capture, i) {
+    return capture.equal(other.children_[i]);
   });
 };
 
@@ -89,9 +89,9 @@ ccc.syntax.Capture.prototype.equal = function(other) {
  * @return {string}
  */
 ccc.syntax.Capture.prototype.toString = function() {
-  return ((this.contents_ instanceof Array)
-      ? ('<' + this.contents_.join(', ') + '>')
-      : this.contents_.toString());
+  return (goog.isNull(this.object_)
+      ? ('<' + this.children_.join(', ') + '>')
+      : this.object_.toString());
 };
 
 

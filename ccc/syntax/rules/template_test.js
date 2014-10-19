@@ -132,12 +132,12 @@ function testExpansionLimiting() {
 }
 
 function testInvalidExpansionRank() {
-  // (a ...) with rank-0 capture in |a|
+  // (a ...) with terminal capture in |a|
   F(List([Sym('a'), ELLIPSIS]),
     {
       'a': C(Num(42))
     });
-  // (a) with rank-1 capture in |a|
+  // (a) with non-terminal capture in |a|
   F(List([Sym('a')]),
     {
       'a': C([C(Num(1)), C(Num(2))])
@@ -157,7 +157,7 @@ function testMultipleExpansionsOfOneVariable() {
       'a': C([C(Num(0)), C(Num(1))])
     },
     List([Num(0), Num(1), Num(0), Num(1)]));
-  // ((a b) ...) with rank-0 capture in |a|
+  // ((a b) ...) with terminal capture in |a|
   T(List([List([Sym('a'), Sym('b')]), ELLIPSIS]),
     {
       'a': C(Num(42)),

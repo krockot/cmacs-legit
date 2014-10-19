@@ -85,10 +85,10 @@ ccc.syntax.Template.prototype.expandSymbol_ = function(
   if (!goog.isDef(iterator))
     return symbol;
   usedVars[symbol.name()] = true;
-  if (iterator.capture().rank() != 0)
+  if (!iterator.capture().isSingular())
     throw new Error(goog.string.format(
         'Invalid ellipsis placement when expanding |%s|', symbol.name()));
-  return iterator.get().contents();
+  return iterator.get().object();
 };
 
 
@@ -209,9 +209,9 @@ ccc.syntax.Template.prototype.expandRepeatingForm_ = function(
       var iterator = goog.object.get(iterators, name);
       goog.asserts.assert(goog.isDef(iterator));
       iterator.advance();
-      // At least one pattern variable of rank > 0 must have been accessed for
-      // this to be a valid ellipsis expansion.
-      if (iterator.capture().rank() > 0)
+      // At least one pattern variable with a non-terminal capture must have
+      // been accessed for this to be a valid ellipsis expansion.
+      if (!iterator.capture().isSingular())
         isValid = true;
     });
     if (!isValid)

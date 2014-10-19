@@ -30,7 +30,7 @@ ccc.syntax.Capture = function(contents) {
 
 
 /**
- * Indicates if this capture is has a single object associated with it.
+ * Indicates if this capture has only a single object associated with it.
  *
  * @return {boolean}
  * @public

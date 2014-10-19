@@ -6,7 +6,7 @@ goog.provide('ccc.syntax.RuleBasedTransformer');
 goog.require('ccc.base');
 goog.require('ccc.syntax.Pattern');
 goog.require('ccc.syntax.Template');
-
+goog.require('goog.Promise');
 
 
 /**
@@ -36,7 +36,16 @@ ccc.syntax.RuleBasedTransformer.prototype.toString = function() {
 /** @override */
 ccc.syntax.RuleBasedTransformer.prototype.transform = function(
     environment, args) {
-  return goog.Promise.resolve(ccc.base.NIL);
+  return new goog.Promise(function(resolve, reject) {
+    for (var i = 0; i < this.rules_.length; ++i) {
+      var rule = this.rules_[i];
+      var match = rule.pattern.match(args);
+      if (match.success) {
+        return resolve(rule.template.expand(match.captures));
+      }
+    }
+    reject(new Error('Special form did not match any syntax rules'));
+  }, this);
 };
 
 

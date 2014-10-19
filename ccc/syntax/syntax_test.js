@@ -11,15 +11,25 @@ goog.require('goog.testing.jsunit');
 
 
 var asyncTestCase = goog.testing.AsyncTestCase.createAndInstall(document.title);
-var List = ccc.base.Pair.makeList;
+
 var Define = new ccc.syntax.Define();
+var DefineSyntax = new ccc.syntax.DefineSyntax();
 var If = new ccc.syntax.If();
 var Lambda = new ccc.syntax.Lambda();
 var Quote = new ccc.syntax.Quote();
 var Set = new ccc.syntax.Set();
-var Sym = function(name) { return new ccc.base.Symbol(name); };
+var SyntaxRules = new ccc.syntax.SyntaxRules();
+
+var List = ccc.base.Pair.makeList;
 var Num = function(value) { return new ccc.base.Number(value); };
+var Str = function(value) { return new ccc.base.String(value); };
+var Sym = function(name) { return new ccc.base.Symbol(name); };
+
+var FALSE = ccc.base.FALSE;
 var NIL = ccc.base.NIL;
+var TRUE = ccc.base.TRUE;
+var UNSPECIFIED = ccc.base.UNSPECIFIED;
+
 
 function setUpPage() {
   asyncTestCase.stepTimeout = 100;
@@ -273,7 +283,7 @@ function testBadLambdaSyntax() {
   ]).then(continueTesting, justFail);
 }
 
-function testTailRecursion() {
+function testLambdaTailRecursion() {
   var N = 100;
   asyncTestCase.waitForAsync();
   var environment = new ccc.base.Environment();
@@ -297,7 +307,7 @@ function testTailRecursion() {
   environment.set('z', Num(0));
 
   var evaluator = new ccc.base.Evaluator(environment);
-  var conditionalForm = If.transform(environment, List([List([xIsPositive]),
+  If.transform(environment, List([List([xIsPositive]),
       List([Sym('loop')]), ccc.base.T])).then(function(conditional) {
     // Build a procedure and bind it to 'loop:
     // (lambda () (decrementX) (if (xIsPositive) (loop) #t))
@@ -313,5 +323,40 @@ function testTailRecursion() {
   }).then(function() {
     // Verify that the loop ran N times.
     assertEquals(N, environment.get('z').value());
+  }).then(continueTesting, justFail);
+}
+
+function testDefineSyntax() {
+  asyncTestCase.waitForAsync();
+  var environment = new ccc.base.Environment();
+  DefineSyntax.transform(environment, List([Sym('cita'), Quote])).then(
+      function(result) {
+        assertEquals(ccc.base.UNSPECIFIED, result);
+        assertEquals(environment.get('cita'), Quote);
+  }).then(continueTesting, justFail);
+}
+
+function testSyntaxRules() {
+  asyncTestCase.waitForAsync();
+  var environment = new ccc.base.Environment();
+
+  var literals = List([Sym('::')]);
+
+  // Match (1 :: a) and expand to (quote a)
+  var rule1 = List([Num(1), Sym('::'), Sym('a')]);
+  var template1 = List([Sym('quote'), Sym('a')]);
+
+  // Match (2 :: a) and expand to (quote a a)
+  var rule2 = List([Num(2), Sym('::'), Sym('a')]);
+  var template2 = List([Sym('quote'), Sym('a'), Sym('a')]);
+
+  SyntaxRules.transform(environment, List([literals, List([rule1, template1]),
+      List([rule2, template2])])).then(function(transformer) {
+    return RunTests([
+      T(transformer, List([Num(1), Sym('::'), Sym('foo')]),
+        List([Sym('quote'), Sym('foo')])),
+      T(transformer, List([Num(2), Sym('::'), Sym('foo')]),
+        List([Sym('quote'), Sym('foo'), Sym('foo')]))
+    ]);
   }).then(continueTesting, justFail);
 }

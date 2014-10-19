@@ -29,19 +29,21 @@ goog.require('goog.object');
  * 4. If o is a boolean, output either {@code ccc.base.T} or {@code ccc.base.F}
  * 5. If o is {@code null}, output {@code ccc.base.NIL}
  * 6. If o is {@code undefined}, output {@code ccc.base.UNSPECIFIED}
- * 7. If o is an Object:
+ * 7. If o is a {@code ccc.base.Object}, it's emitted as-is.
+ * 8. If o is an Object:
  *    7a. If o['vec'] is an Array, build a {@code ccc.base.Vector} from its
  *        built contents.
  *    7b. If o['str'] is a string, build a {@code ccc.base.String} with its
  *        value.
  *    7c. If o['list'] is an Array, build a list as if o were the Array, and
  *        if present, also use o['tail'] as the optional tail component.
- *    7d. If o['object'] is set, its value is emitted as-is.
  *
  * This should be used whenever a complex object is being constructed and
  * readability or brevity is a concern.
  *
  * @param {*} spec
+ * @return {!ccc.base.Object}
+ * @public
  */
 ccc.base.build = function(spec) {
   if (spec instanceof Array)
@@ -56,6 +58,8 @@ ccc.base.build = function(spec) {
     return ccc.base.NIL;
   if (!goog.isDef(spec))
     return ccc.base.UNSPECIFIED;
+  if (spec instanceof ccc.base.Object)
+    return spec;
   if (typeof spec == 'object') {
     if (goog.object.containsKey(spec, 'object'))
       return spec['object'];

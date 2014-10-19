@@ -129,6 +129,13 @@ function testExpansionLimiting() {
       'b': C([C(Num(3)), C(Num(4)), C(Num(42))])
     },
     List([List([Num(1), Num(3)]), List([Num(2), Num(4)])]));
+  // ((a b) ...) with empty |b| capture
+  T(List([List([Sym('a'), Sym('b')]), ELLIPSIS]),
+    {
+      'a': C([C(Num(1)), C(Num(2)), C(Num(3))]),
+      'b': C([])
+    },
+    ccc.base.NIL);
 }
 
 function testInvalidExpansionRank() {

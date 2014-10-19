@@ -2,6 +2,7 @@
 
 goog.provide('ccc.syntax');
 
+goog.require('ccc.syntax.Begin');
 goog.require('ccc.syntax.Define');
 goog.require('ccc.syntax.DefineSyntax');
 goog.require('ccc.syntax.If');

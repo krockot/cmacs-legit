@@ -12,6 +12,7 @@ goog.require('goog.testing.jsunit');
 
 var asyncTestCase = goog.testing.AsyncTestCase.createAndInstall(document.title);
 
+var Begin = new ccc.syntax.Begin();
 var Define = new ccc.syntax.Define();
 var DefineSyntax = new ccc.syntax.DefineSyntax();
 var If = new ccc.syntax.If();
@@ -359,4 +360,26 @@ function testSyntaxRules() {
         List([Sym('quote'), Sym('foo'), Sym('foo')]))
     ]);
   }).then(continueTesting, justFail);
+}
+
+function testBegin() {
+  asyncTestCase.waitForAsync();
+  var count = 0;
+  var native1 = new ccc.base.NativeProcedure(
+      function(environment, args, continuation) {
+    assertEquals(0, count++);
+    return continuation(Num(1));
+  });
+  var native2 = new ccc.base.NativeProcedure(
+      function(environment, args, continuation) {
+    assertEquals(1, count++);
+    return continuation(Num(2));
+  });
+  var native3 = new ccc.base.NativeProcedure(
+      function(environment, args, continuation) {
+    assertEquals(2, count);
+    return continuation(Num(3));
+  });
+  TE(Begin, List([List([native1]), List([native2]), List([native3])]), Num(3))
+      .then(continueTesting, justFail);
 }

@@ -12,6 +12,7 @@ goog.require('goog.Promise');
 
 cmacs.background.main = function() {
   var environment = new ccc.base.Environment();
+  environment.set('begin', new ccc.syntax.Begin());
   environment.set('define', new ccc.syntax.Define());
   environment.set('define-syntax', new ccc.syntax.DefineSyntax());
   environment.set('if', new ccc.syntax.If());

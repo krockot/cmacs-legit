@@ -105,6 +105,14 @@ function testRank1Expansion() {
       'a': C([])
     },
     Vec([]));
+  // (1 (a ...) 2 b ... c ...) with empty |c|
+  T(List([Num(1), List([Sym('a'), ELLIPSIS]), Num(2), Sym('b'), ELLIPSIS]),
+    {
+      'a': C([C(Num(42)), C(Num(43))]),
+      'b': C([C(Num(44)), C(Num(45))]),
+      'c': C([])
+    },
+    List([Num(1), List([Num(42), Num(43)]), Num(2), Num(44), Num(45)]));
 }
 
 function testExpansionLimiting() {

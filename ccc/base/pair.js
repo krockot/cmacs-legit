@@ -5,6 +5,8 @@ goog.provide('ccc.base.Pair');
 goog.require('ccc.base.NIL');
 goog.require('ccc.base.Object');
 goog.require('goog.Promise');
+goog.require('goog.array');
+goog.require('goog.asserts');
 
 
 
@@ -101,9 +103,9 @@ ccc.base.Pair.prototype.cdr = function() {
  */
 ccc.base.Pair.makeList = function(objects, opt_tail) {
   var list = goog.isDef(opt_tail) ? opt_tail : ccc.base.NIL;
-  for (var i = objects.length - 1; i >= 0; --i) {
-    list = new ccc.base.Pair(objects[i], list);
-  }
+  goog.array.forEachRight(objects, function(object) {
+    list = new ccc.base.Pair(object, list);
+  });
   return list;
 };
 

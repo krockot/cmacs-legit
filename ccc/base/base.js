@@ -19,3 +19,4 @@ goog.require('ccc.base.Thunk');
 goog.require('ccc.base.Transformer');
 goog.require('ccc.base.UNSPECIFIED');
 goog.require('ccc.base.Vector');
+goog.require('ccc.base.build');

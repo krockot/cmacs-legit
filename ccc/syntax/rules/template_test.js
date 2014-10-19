@@ -136,6 +136,13 @@ function testExpansionLimiting() {
       'b': C([])
     },
     ccc.base.NIL);
+  // ((a b ...) ...) with empty a and b captures
+  T(List([List([Sym('a'), Sym('b'), ELLIPSIS]), ELLIPSIS]),
+    {
+      'a': C([]),
+      'b': C([C([])])
+    },
+    ccc.base.NIL);
 }
 
 function testInvalidExpansionRank() {

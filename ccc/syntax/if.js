@@ -45,11 +45,9 @@ ccc.syntax.IfTransformer_.prototype.transform = function(environment, args) {
   }
   return alternate.compile(environment).then(function(alternate) {
     return consequent.compile(environment).then(function(consequent) {
-      return new ccc.base.Pair(
-          new ccc.base.NativeProcedure(
-              goog.partial(ccc.syntax.IfTransformer_.nativeImpl_,
-                  consequent, alternate)),
-              new ccc.base.Pair(condition, ccc.base.NIL));
+      var branchProcedure = new ccc.base.NativeProcedure(goog.partial(
+          ccc.syntax.IfTransformer_.nativeImpl_, consequent, alternate));
+      return ccc.base.Pair.makeList([branchProcedure, condition]);
     });
   })
 };

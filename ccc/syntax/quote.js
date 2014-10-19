@@ -29,10 +29,9 @@ ccc.syntax.QuoteTransformer_.prototype.toString = function() {
 ccc.syntax.QuoteTransformer_.prototype.transform = function(environment, args) {
   if (!args.isPair() || !args.cdr().isNil())
     return goog.Promise.reject(new Error('quote: Invalid syntax'));
-  return goog.Promise.resolve(new ccc.base.Pair(
-      new ccc.base.NativeProcedure(
-          goog.partial(ccc.syntax.QuoteTransformer_.nativeImpl_, args.car())),
-      ccc.base.NIL));
+  var quoteProcedure = new ccc.base.NativeProcedure(goog.partial(
+      ccc.syntax.QuoteTransformer_.nativeImpl_, args.car()));
+  return goog.Promise.resolve(new ccc.base.Pair(quoteProcedure, ccc.base.NIL));
 };
 
 

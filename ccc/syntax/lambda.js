@@ -48,11 +48,9 @@ ccc.syntax.LambdaTransformer_.prototype.transform = function(
     });
   };
   return compile(args.cdr()).then(function(args) {
-    return new ccc.base.Pair(
-        new ccc.base.NativeProcedure(
-            goog.partial(ccc.syntax.LambdaTransformer_.generateProcedure_,
-                formals, args)),
-        ccc.base.NIL);
+    var generatingProcedure = new ccc.base.NativeProcedure(goog.partial(
+        ccc.syntax.LambdaTransformer_.generateProcedure_, formals, args));
+    return new ccc.base.Pair(generatingProcedure, ccc.base.NIL);
   });
 };
 

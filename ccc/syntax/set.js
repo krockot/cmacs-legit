@@ -39,12 +39,9 @@ ccc.syntax.SetTransformer_.prototype.transform = function(environment, args) {
     return goog.Promise.reject(new Error('set!: Invalid syntax'));
   if (!args.cdr().cdr().isNil())
     return goog.Promise.reject(new Error('set!: Too many arguments'));
-  return goog.Promise.resolve(
-      new ccc.base.Pair(
-          new ccc.base.NativeProcedure(
-              goog.partial(ccc.syntax.SetTransformer_.updateBinding_,
-                  args.car())),
-          args.cdr()));
+  var setProcedure = new ccc.base.NativeProcedure(goog.partial(
+      ccc.syntax.SetTransformer_.updateBinding_, args.car()));
+  return goog.Promise.resolve(new ccc.base.Pair(setProcedure, args.cdr()));
 };
 
 

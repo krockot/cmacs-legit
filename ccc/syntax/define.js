@@ -40,12 +40,9 @@ ccc.syntax.DefineTransformer_.prototype.transform = function(
     return goog.Promise.reject(new Error('define: Invalid syntax'));
   if (!args.cdr().cdr().isNil())
     return goog.Promise.reject(new Error('define: Too many arguments'));
-  return goog.Promise.resolve(
-      new ccc.base.Pair(
-          new ccc.base.NativeProcedure(
-              goog.partial(ccc.syntax.DefineTransformer_.bindSymbol_,
-                           args.car())),
-          args.cdr()));
+  var bindProcedure = new ccc.base.NativeProcedure(goog.partial(
+      ccc.syntax.DefineTransformer_.bindSymbol_, args.car()));
+  return goog.Promise.resolve(new ccc.base.Pair(bindProcedure, args.cdr()));
 };
 
 

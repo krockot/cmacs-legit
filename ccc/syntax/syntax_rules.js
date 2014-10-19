@@ -57,7 +57,8 @@ ccc.syntax.SyntaxRules.prototype.transform = function(environment, args) {
         !rule.cdr().cdr().isNil()) {
       return goog.Promise.reject(new Error('syntax-rules: Invalid rule form'));
     }
-    rules.push(new ccc.syntax.Rule(new ccc.syntax.Pattern(literals, rule.car()),
+    rules.push(new ccc.syntax.Rule(
+        new ccc.syntax.Pattern(literals, rule.car().cdr()),
         new ccc.syntax.Template(rule.cdr().car())));
     rulesList = rulesList.cdr();
   }

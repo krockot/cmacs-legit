@@ -33,8 +33,8 @@ ccc.syntax.Begin.prototype.transform = function(environment, args) {
     return goog.Promise.reject(new Error(
         'begin: One or more expressions required'));
   var lambda = new ccc.syntax.Lambda();
-  return lambda.transform(environment, List([ccc.base.NIL], args)).then(
-      function(procedure) {
+  return lambda.transform(environment,
+      ccc.base.Pair.makeList([ccc.base.NIL], args)).then(function(procedure) {
     return new ccc.base.Pair(procedure, ccc.base.NIL);
   });
 };

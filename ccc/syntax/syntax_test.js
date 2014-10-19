@@ -343,12 +343,12 @@ function testSyntaxRules() {
 
   var literals = List([Sym('::')]);
 
-  // Match (1 :: a) and expand to (quote a)
-  var rule1 = List([Num(1), Sym('::'), Sym('a')]);
+  // Match (_ 1 :: a) and expand to (quote a)
+  var rule1 = List([Sym('_'), Num(1), Sym('::'), Sym('a')]);
   var template1 = List([Sym('quote'), Sym('a')]);
 
-  // Match (2 :: a) and expand to (quote a a)
-  var rule2 = List([Num(2), Sym('::'), Sym('a')]);
+  // Match (_ 2 :: a) and expand to (quote a a)
+  var rule2 = List([Sym('_'), Num(2), Sym('::'), Sym('a')]);
   var template2 = List([Sym('quote'), Sym('a'), Sym('a')]);
 
   SyntaxRules.transform(environment, List([literals, List([rule1, template1]),

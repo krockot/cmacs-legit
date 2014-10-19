@@ -12,15 +12,15 @@ goog.require('goog.Promise');
 
 cmacs.background.main = function() {
   var environment = new ccc.base.Environment();
-  environment.set('begin', new ccc.syntax.Begin());
-  environment.set('define', new ccc.syntax.Define());
-  environment.set('define-syntax', new ccc.syntax.DefineSyntax());
-  environment.set('if', new ccc.syntax.If());
-  environment.set('lambda', new ccc.syntax.Lambda());
-  environment.set('\u03bb', new ccc.syntax.Lambda());
-  environment.set('quote', new ccc.syntax.Quote());
-  environment.set('set!', new ccc.syntax.Set());
-  environment.set('syntax-rules', new ccc.syntax.SyntaxRules());
+  environment.set('begin', ccc.syntax.BEGIN);
+  environment.set('define', ccc.syntax.DEFINE);
+  environment.set('define-syntax', ccc.syntax.DEFINE_SYNTAX);
+  environment.set('if', ccc.syntax.IF);
+  environment.set('lambda', ccc.syntax.LAMBDA);
+  environment.set('\u03bb', ccc.syntax.LAMBDA);
+  environment.set('quote', ccc.syntax.QUOTE);
+  environment.set('set!', ccc.syntax.SET);
+  environment.set('syntax-rules', ccc.syntax.SYNTAX_RULES);
   // Add some test library functions to play with.
   environment.set('-', new ccc.base.NativeProcedure(function(
       environment, args, continuation) {

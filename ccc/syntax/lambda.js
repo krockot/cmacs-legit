@@ -1,6 +1,6 @@
 // The Cmacs Project.
 
-goog.provide('ccc.syntax.Lambda');
+goog.provide('ccc.syntax.LAMBDA');
 
 goog.require('ccc.base');
 goog.require('goog.Promise');
@@ -15,21 +15,22 @@ goog.require('goog.asserts');
  *
  * @constructor
  * @extends {ccc.base.Transformer}
- * @public
+ * @private
  */
-ccc.syntax.Lambda = function() {
+ccc.syntax.LambdaTransformer_ = function() {
 };
-goog.inherits(ccc.syntax.Lambda, ccc.base.Transformer);
+goog.inherits(ccc.syntax.LambdaTransformer_, ccc.base.Transformer);
 
 
 /** @override */
-ccc.syntax.Lambda.prototype.toString = function() {
+ccc.syntax.LambdaTransformer_.prototype.toString = function() {
   return '#<lambda-transformer>';
 };
 
 
 /** @override */
-ccc.syntax.Lambda.prototype.transform = function(environment, args) {
+ccc.syntax.LambdaTransformer_.prototype.transform = function(
+    environment, args) {
   if (!args.isPair() || args.cdr().isNil())
     return goog.Promise.reject(new Error('lambda: Invalid syntax'));
   var formals = args.car();
@@ -49,7 +50,8 @@ ccc.syntax.Lambda.prototype.transform = function(environment, args) {
   return compile(args.cdr()).then(function(args) {
     return new ccc.base.Pair(
         new ccc.base.NativeProcedure(
-            goog.partial(ccc.syntax.Lambda.generateProcedure_, formals, args)),
+            goog.partial(ccc.syntax.LambdaTransformer_.generateProcedure_,
+                formals, args)),
         ccc.base.NIL);
   });
 };
@@ -66,9 +68,16 @@ ccc.syntax.Lambda.prototype.transform = function(environment, args) {
  * @return {ccc.base.Thunk}
  * @private
  */
-ccc.syntax.Lambda.generateProcedure_ = function(
+ccc.syntax.LambdaTransformer_.generateProcedure_ = function(
     formals, body, environment, args, continuation) {
   goog.asserts.assert(args.isNil(),
       'Compiled procedure generator should never receive arguments.');
   return continuation(new ccc.base.Procedure(environment, formals, body));
 };
+
+
+/**
+ * @public {!ccc.base.Transformer}
+ * @const
+ */
+ccc.syntax.LAMBDA = new ccc.syntax.LambdaTransformer_();

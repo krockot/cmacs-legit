@@ -1,6 +1,6 @@
 // The Cmacs Project.
 
-goog.provide('ccc.syntax.Define');
+goog.provide('ccc.syntax.DEFINE');
 
 goog.require('ccc.base');
 goog.require('goog.Promise');
@@ -13,21 +13,22 @@ goog.require('goog.Promise');
  *
  * @constructor
  * @extends {ccc.base.Transformer}
- * @public
+ * @private
  */
-ccc.syntax.Define = function() {
+ccc.syntax.DefineTransformer_ = function() {
 };
-goog.inherits(ccc.syntax.Define, ccc.base.Transformer);
+goog.inherits(ccc.syntax.DefineTransformer_, ccc.base.Transformer);
 
 
 /** @override */
-ccc.syntax.Define.prototype.toString = function() {
+ccc.syntax.DefineTransformer_.prototype.toString = function() {
   return '#<define-transformer>';
 };
 
 
 /** @override */
-ccc.syntax.Define.prototype.transform = function(environment, args) {
+ccc.syntax.DefineTransformer_.prototype.transform = function(
+    environment, args) {
   if (!args.isPair())
     return goog.Promise.reject(new Error('define: Invalid argument list'));
   if (!args.car().isSymbol())
@@ -42,7 +43,8 @@ ccc.syntax.Define.prototype.transform = function(environment, args) {
   return goog.Promise.resolve(
       new ccc.base.Pair(
           new ccc.base.NativeProcedure(
-              goog.partial(ccc.syntax.Define.bindSymbol_, args.car())),
+              goog.partial(ccc.syntax.DefineTransformer_.bindSymbol_,
+                           args.car())),
           args.cdr()));
 };
 
@@ -58,10 +60,17 @@ ccc.syntax.Define.prototype.transform = function(environment, args) {
  * @return {ccc.base.Thunk}
  * @private
  */
-ccc.syntax.Define.bindSymbol_ = function(
+ccc.syntax.DefineTransformer_.bindSymbol_ = function(
     symbol, environment, args, continuation) {
   goog.asserts.assert(args.isPair() && args.cdr().isNil(),
       'Compiled define should always receive exactly one argument.');
   environment.set(symbol.name(), args.car());
   return continuation(ccc.base.UNSPECIFIED);
 };
+
+
+/**
+ * @public {!ccc.base.Transformer}
+ * @const
+ */
+ccc.syntax.DEFINE = new ccc.syntax.DefineTransformer_();

@@ -1,6 +1,6 @@
 // The Cmacs Project.
 
-goog.provide('ccc.syntax.If')
+goog.provide('ccc.syntax.IF')
 
 goog.require('ccc.base');
 goog.require('goog.Promise');
@@ -14,21 +14,21 @@ goog.require('goog.Promise');
  *
  * @constructor
  * @extends {ccc.base.Transformer}
- * @public
+ * @private
  */
-ccc.syntax.If = function() {
+ccc.syntax.IfTransformer_ = function() {
 };
-goog.inherits(ccc.syntax.If, ccc.base.Transformer);
+goog.inherits(ccc.syntax.IfTransformer_, ccc.base.Transformer);
 
 
 /** @override */
-ccc.syntax.If.prototype.toString = function() {
+ccc.syntax.IfTransformer_.prototype.toString = function() {
   return '#<if-transformer>';
 };
 
 
 /** @override */
-ccc.syntax.If.prototype.transform = function(environment, args) {
+ccc.syntax.IfTransformer_.prototype.transform = function(environment, args) {
   if (!args.isPair() || !args.cdr().isPair())
     return goog.Promise.reject(new Error('if: Not enough arguments'));
   var condition = args.car();
@@ -47,8 +47,8 @@ ccc.syntax.If.prototype.transform = function(environment, args) {
     return consequent.compile(environment).then(function(consequent) {
       return new ccc.base.Pair(
           new ccc.base.NativeProcedure(
-              goog.partial(ccc.syntax.If.nativeImpl_,
-                           consequent, alternate)),
+              goog.partial(ccc.syntax.IfTransformer_.nativeImpl_,
+                  consequent, alternate)),
               new ccc.base.Pair(condition, ccc.base.NIL));
     });
   })
@@ -67,10 +67,17 @@ ccc.syntax.If.prototype.transform = function(environment, args) {
  * @return {ccc.base.Thunk}
  * @private
  */
-ccc.syntax.If.nativeImpl_ = function(
+ccc.syntax.IfTransformer_.nativeImpl_ = function(
     consequent, alternate, environment, args, continuation) {
   if (args.car().isFalse()) {
     return alternate.eval(environment, continuation);
   }
   return consequent.eval(environment, continuation);
 };
+
+
+/**
+ * @public {!ccc.base.Transformer}
+ * @const
+ */
+ccc.syntax.IF = new ccc.syntax.IfTransformer_();

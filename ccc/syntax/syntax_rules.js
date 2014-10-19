@@ -1,6 +1,6 @@
 // The Cmacs Project.
 
-goog.provide('ccc.syntax.SyntaxRules');
+goog.provide('ccc.syntax.SYNTAX_RULES');
 
 goog.require('ccc.base');
 goog.require('ccc.syntax.Pattern');
@@ -17,21 +17,22 @@ goog.require('goog.Promise');
  *
  * @constructor
  * @extends {ccc.base.Transformer}
- * @public
+ * @private
  */
-ccc.syntax.SyntaxRules = function() {
+ccc.syntax.SyntaxRulesTransformer_ = function() {
 };
-goog.inherits(ccc.syntax.SyntaxRules, ccc.base.Transformer);
+goog.inherits(ccc.syntax.SyntaxRulesTransformer_, ccc.base.Transformer);
 
 
 /** @override */
-ccc.syntax.SyntaxRules.prototype.toString = function() {
+ccc.syntax.SyntaxRulesTransformer_.prototype.toString = function() {
   return '#<syntax-rules-transformer>';
 };
 
 
 /** @override */
-ccc.syntax.SyntaxRules.prototype.transform = function(environment, args) {
+ccc.syntax.SyntaxRulesTransformer_.prototype.transform = function(
+    environment, args) {
   if (!args.isPair() || !args.cdr().isPair())
     return goog.Promise.reject(new Error('syntax-rules: Not enough arguments'));
   var literals = [];
@@ -66,3 +67,10 @@ ccc.syntax.SyntaxRules.prototype.transform = function(environment, args) {
     return goog.Promise.reject(new Error('syntax-rules: Invalid rules list'));
   return goog.Promise.resolve(new ccc.syntax.RuleBasedTransformer(rules));
 };
+
+
+/**
+ * @public {!ccc.base.Transformer}
+ * @const
+ */
+ccc.syntax.SYNTAX_RULES = new ccc.syntax.SyntaxRulesTransformer_();

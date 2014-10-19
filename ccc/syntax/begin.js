@@ -1,9 +1,9 @@
 // The Cmacs Project.
 
-goog.provide('ccc.syntax.Begin');
+goog.provide('ccc.syntax.BEGIN');
 
 goog.require('ccc.base');
-goog.require('ccc.syntax.Lambda')
+goog.require('ccc.syntax.LAMBDA')
 goog.require('goog.Promise');
 
 
@@ -14,27 +14,33 @@ goog.require('goog.Promise');
  *
  * @constructor
  * @extends {ccc.base.Transformer}
- * @public
+ * @private
  */
-ccc.syntax.Begin = function() {
+ccc.syntax.BeginTransformer_ = function() {
 };
-goog.inherits(ccc.syntax.Begin, ccc.base.Transformer);
+goog.inherits(ccc.syntax.BeginTransformer_, ccc.base.Transformer);
 
 
 /** @override */
-ccc.syntax.Begin.prototype.toString = function() {
+ccc.syntax.BeginTransformer_.prototype.toString = function() {
   return '#<begin-transformer>';
 };
 
 
 /** @override */
-ccc.syntax.Begin.prototype.transform = function(environment, args) {
+ccc.syntax.BeginTransformer_.prototype.transform = function(environment, args) {
   if (!args.isPair())
     return goog.Promise.reject(new Error(
         'begin: One or more expressions required'));
-  var lambda = new ccc.syntax.Lambda();
-  return lambda.transform(environment,
+  return ccc.syntax.LAMBDA.transform(environment,
       ccc.base.Pair.makeList([ccc.base.NIL], args)).then(function(procedure) {
     return new ccc.base.Pair(procedure, ccc.base.NIL);
   });
 };
+
+
+/**
+ * @public {!ccc.base.Transformer}
+ * @const
+ */
+ccc.syntax.BEGIN = new ccc.syntax.BeginTransformer_();

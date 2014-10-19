@@ -12,14 +12,14 @@ goog.require('goog.testing.jsunit');
 
 var asyncTestCase = goog.testing.AsyncTestCase.createAndInstall(document.title);
 
-var Begin = new ccc.syntax.Begin();
-var Define = new ccc.syntax.Define();
-var DefineSyntax = new ccc.syntax.DefineSyntax();
-var If = new ccc.syntax.If();
-var Lambda = new ccc.syntax.Lambda();
-var Quote = new ccc.syntax.Quote();
-var Set = new ccc.syntax.Set();
-var SyntaxRules = new ccc.syntax.SyntaxRules();
+var BEGIN = ccc.syntax.BEGIN;
+var DEFINE = ccc.syntax.DEFINE;
+var DEFINE_SYNTAX = ccc.syntax.DEFINE_SYNTAX;
+var IF = ccc.syntax.IF;
+var LAMBDA = ccc.syntax.LAMBDA;
+var QUOTE = ccc.syntax.QUOTE;
+var SET = ccc.syntax.SET;
+var SYNTAX_RULES = ccc.syntax.SYNTAX_RULES;
 
 var List = ccc.base.Pair.makeList;
 var Num = function(value) { return new ccc.base.Number(value); };
@@ -89,7 +89,7 @@ var TL = function(formalsAndBody, args, expectedOutput, opt_environment) {
       ? opt_environment
       : new ccc.base.Environment());
   var evaluator = new ccc.base.Evaluator();
-  return Lambda.transform(environment, formalsAndBody).then(function(
+  return LAMBDA.transform(environment, formalsAndBody).then(function(
       procedureGenerator) {
     var expr = List([procedureGenerator], args);
     return evaluator.evalObject(expr).then(function(result) {
@@ -112,11 +112,11 @@ var ExpectFailures = function(tests) {
   }).thenCatch(function() {});
 };
 
-function testDefine() {
+function testDEFINE() {
   asyncTestCase.waitForAsync();
   var environment = new ccc.base.Environment();
   var args = List([Sym('foo'), Num(42)]);
-  TE(Define, args, ccc.base.UNSPECIFIED, environment).then(function() {
+  TE(DEFINE, args, ccc.base.UNSPECIFIED, environment).then(function() {
     var foo = environment.get('foo');
     assertNotNull(foo);
     assert(foo.isNumber());
@@ -124,37 +124,37 @@ function testDefine() {
   }).then(continueTesting, justFail);
 }
 
-function testBadDefineSyntax() {
+function testBadDEFINE_SYNTAX() {
   asyncTestCase.waitForAsync();
   var symbol = Sym('bananas');
   ExpectFailures([
-    // Define with no arguments.
-    T(Define, NIL),
-    // Define with only a symbol argument.
-    T(Define, List([symbol])),
-    // Define with a non-symbol first argument.
-    T(Define, List([ccc.base.T, ccc.base.T])),
-    // Define with too many arguments!
-    T(Define, List([symbol, ccc.base.T, ccc.base.T])),
+    // DEFINE with no arguments.
+    T(DEFINE, NIL),
+    // DEFINE with only a symbol argument.
+    T(DEFINE, List([symbol])),
+    // DEFINE with a non-symbol first argument.
+    T(DEFINE, List([ccc.base.T, ccc.base.T])),
+    // DEFINE with too many arguments!
+    T(DEFINE, List([symbol, ccc.base.T, ccc.base.T])),
   ]).then(continueTesting, justFail);
 }
 
-function testSet() {
+function testSET() {
   asyncTestCase.waitForAsync();
   var environment = new ccc.base.Environment();
   var defineArgs = List([Sym('foo'), Num(41)]);
   var setArgs = List([Sym('foo'), Num(42)]);
 
   // First try to set unbound symbol 'foo and expect it to fail.
-  TE(Set, setArgs, null, environment).then(justFail).thenCatch(function() {
+  TE(SET, setArgs, null, environment).then(justFail).thenCatch(function() {
     // Now bind foo to 41
-    return TE(Define, defineArgs, null, environment).then(function() {
+    return TE(DEFINE, defineArgs, null, environment).then(function() {
       var foo = environment.get('foo');
       assertNotNull(foo);
       assert(foo.isNumber());
       assertEquals(41, foo.value());
       // And finally set the existing binding to 42
-      return TE(Set, setArgs, null, environment).then(function() {
+      return TE(SET, setArgs, null, environment).then(function() {
         var foo = environment.get('foo');
         assertNotNull(foo);
         assert(foo.isNumber());
@@ -164,71 +164,71 @@ function testSet() {
   }).then(continueTesting);
 }
 
-function testBadSetSyntax() {
+function testBadSETSyntax() {
   asyncTestCase.waitForAsync();
   var symbol = Sym('catpants');
 
   ExpectFailures([
-    // Set with no arguments: FAIL!
-    T(Set, NIL),
-    // Set with only a symbol argument: FAIL!
-    T(Set, List([symbol])),
-    // Set a non-symbol first argument: FAIL!
-    T(Set, List([ccc.base.T, ccc.base.T])),
-    // Set with too many arguments: FAIL!
-    T(Set, List([symbol, ccc.base.T, ccc.base.T]))
+    // SET with no arguments: FAIL!
+    T(SET, NIL),
+    // SET with only a symbol argument: FAIL!
+    T(SET, List([symbol])),
+    // SET a non-symbol first argument: FAIL!
+    T(SET, List([ccc.base.T, ccc.base.T])),
+    // SET with too many arguments: FAIL!
+    T(SET, List([symbol, ccc.base.T, ccc.base.T]))
   ]).then(continueTesting, justFail);
 }
 
-function testIfTrue() {
+function testIFTrue() {
   asyncTestCase.waitForAsync();
   var ifArgs = List([NIL, ccc.base.T]);
-  TE(If, ifArgs, ccc.base.T).then(continueTesting, justFail);
+  TE(IF, ifArgs, ccc.base.T).then(continueTesting, justFail);
 }
 
-function testIfFalse() {
+function testIFFalse() {
   asyncTestCase.waitForAsync();
   var ifArgs = List([ccc.base.F, ccc.base.T, NIL]);
-  TE(If, ifArgs, NIL).then(continueTesting, justFail);
+  TE(IF, ifArgs, NIL).then(continueTesting, justFail);
 }
 
-function testIfFalseWithNoAlternate() {
+function testIFFalseWithNoAlternate() {
   asyncTestCase.waitForAsync();
   var ifArgs = List([ccc.base.F, ccc.base.T]);
-  TE(If, ifArgs, ccc.base.UNSPECIFIED).then(continueTesting, justFail);
+  TE(IF, ifArgs, ccc.base.UNSPECIFIED).then(continueTesting, justFail);
 }
 
-function testBadIfSyntax() {
+function testBadIFSyntax() {
   asyncTestCase.waitForAsync();
   ExpectFailures([
-    // If with no arguments: FAIL!
-    T(If, NIL),
-    // If with only a condition: FAIL!
-    T(If, List([ccc.base.T])),
-    // If with too many arguments: FAIL!
-    T(If, List([ccc.base.T, ccc.base.T, ccc.base.T, NIL])),
-    // If with weird improper list: DEFINITELY FAIL!
-    T(If, List([ccc.base.T, ccc.base.T], ccc.base.T))
+    // IF with no arguments: FAIL!
+    T(IF, NIL),
+    // IF with only a condition: FAIL!
+    T(IF, List([ccc.base.T])),
+    // IF with too many arguments: FAIL!
+    T(IF, List([ccc.base.T, ccc.base.T, ccc.base.T, NIL])),
+    // IF with weird improper list: DEFINITELY FAIL!
+    T(IF, List([ccc.base.T, ccc.base.T], ccc.base.T))
   ]).then(continueTesting, justFail);
 }
 
-function testQuote() {
+function testQUOTE() {
   asyncTestCase.waitForAsync();
   var list = List([ccc.base.T, ccc.base.F, NIL]);
-  TE(Quote, List([list]), list).then(continueTesting, justFail);
+  TE(QUOTE, List([list]), list).then(continueTesting, justFail);
 }
 
-function testBadQuoteSyntax() {
+function testBadQUOTESyntax() {
   asyncTestCase.waitForAsync();
   ExpectFailures([
     // No arguments
-    T(Quote, NIL),
+    T(QUOTE, NIL),
     // Too many arguments
-    T(Quote, List([ccc.base.T, ccc.base.T]))
+    T(QUOTE, List([ccc.base.T, ccc.base.T]))
   ]).then(continueTesting, justFail);
 }
 
-function testSimpleLambda() {
+function testSimpleLAMBDA() {
   asyncTestCase.waitForAsync();
   var formals = NIL;
   var body = List([ccc.base.T, Num(42)]);
@@ -237,7 +237,7 @@ function testSimpleLambda() {
   ]).then(continueTesting, justFail);
 }
 
-function testLambdaClosure() {
+function testLAMBDAClosure() {
   asyncTestCase.waitForAsync();
   var environment = new ccc.base.Environment();
   var formals = List([Sym('x')]);
@@ -251,7 +251,7 @@ function testLambdaClosure() {
   }).then(continueTesting, justFail);
 }
 
-function testLambdaTailArgs() {
+function testLAMBDATailArgs() {
   asyncTestCase.waitForAsync();
   var body = List([Sym('rest')]);
   var args = List([Num(1), Num(2), Num(3), Num(4)]);
@@ -270,7 +270,7 @@ function testLambdaTailArgs() {
   ]).then(continueTesting, justFail);
 }
 
-function testBadLambdaSyntax() {
+function testBadLAMBDASyntax() {
   asyncTestCase.waitForAsync();
   ExpectFailures([
     // ((lambda))
@@ -284,7 +284,7 @@ function testBadLambdaSyntax() {
   ]).then(continueTesting, justFail);
 }
 
-function testLambdaTailRecursion() {
+function testLAMBDATailRecursion() {
   var N = 100;
   asyncTestCase.waitForAsync();
   var environment = new ccc.base.Environment();
@@ -308,13 +308,13 @@ function testLambdaTailRecursion() {
   environment.set('z', Num(0));
 
   var evaluator = new ccc.base.Evaluator(environment);
-  If.transform(environment, List([List([xIsPositive]),
+  IF.transform(environment, List([List([xIsPositive]),
       List([Sym('loop')]), ccc.base.T])).then(function(conditional) {
     // Build a procedure and bind it to 'loop:
     // (lambda () (decrementX) (if (xIsPositive) (loop) #t))
     var loopForm = List([NIL, List([decrementX]), List([incrementZ]),
         conditional]);
-    return Lambda.transform(environment, loopForm);
+    return LAMBDA.transform(environment, loopForm);
   }).then(function(loopGenerator) {
     return evaluator.evalObject(loopGenerator);
   }).then(function(loop) {
@@ -327,17 +327,17 @@ function testLambdaTailRecursion() {
   }).then(continueTesting, justFail);
 }
 
-function testDefineSyntax() {
+function testDEFINE_SYNTAX() {
   asyncTestCase.waitForAsync();
   var environment = new ccc.base.Environment();
-  DefineSyntax.transform(environment, List([Sym('cita'), Quote])).then(
+  DEFINE_SYNTAX.transform(environment, List([Sym('cita'), QUOTE])).then(
       function(result) {
         assertEquals(ccc.base.UNSPECIFIED, result);
-        assertEquals(environment.get('cita'), Quote);
+        assertEquals(environment.get('cita'), QUOTE);
   }).then(continueTesting, justFail);
 }
 
-function testSyntaxRules() {
+function testSYNTAX_RULES() {
   asyncTestCase.waitForAsync();
   var environment = new ccc.base.Environment();
 
@@ -351,7 +351,7 @@ function testSyntaxRules() {
   var rule2 = List([Sym('_'), Num(2), Sym('::'), Sym('a')]);
   var template2 = List([Sym('quote'), Sym('a'), Sym('a')]);
 
-  SyntaxRules.transform(environment, List([literals, List([rule1, template1]),
+  SYNTAX_RULES.transform(environment, List([literals, List([rule1, template1]),
       List([rule2, template2])])).then(function(transformer) {
     return RunTests([
       T(transformer, List([Num(1), Sym('::'), Sym('foo')]),
@@ -362,7 +362,7 @@ function testSyntaxRules() {
   }).then(continueTesting, justFail);
 }
 
-function testBegin() {
+function testBEGIN() {
   asyncTestCase.waitForAsync();
   var count = 0;
   var native1 = new ccc.base.NativeProcedure(
@@ -380,6 +380,6 @@ function testBegin() {
     assertEquals(2, count);
     return continuation(Num(3));
   });
-  TE(Begin, List([List([native1]), List([native2]), List([native3])]), Num(3))
+  TE(BEGIN, List([List([native1]), List([native2]), List([native3])]), Num(3))
       .then(continueTesting, justFail);
 }

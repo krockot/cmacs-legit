@@ -1,6 +1,6 @@
 // The Cmacs Project.
 
-goog.provide('ccc.syntax.DefineSyntax');
+goog.provide('ccc.syntax.DEFINE_SYNTAX');
 
 goog.require('ccc.base');
 goog.require('goog.Promise');
@@ -13,21 +13,22 @@ goog.require('goog.Promise');
  *
  * @constructor
  * @extends {ccc.base.Transformer}
- * @public
+ * @private
  */
-ccc.syntax.DefineSyntax = function() {
+ccc.syntax.DefineSyntaxTransformer_ = function() {
 };
-goog.inherits(ccc.syntax.DefineSyntax, ccc.base.Transformer);
+goog.inherits(ccc.syntax.DefineSyntaxTransformer_, ccc.base.Transformer);
 
 
 /** @override */
-ccc.syntax.DefineSyntax.prototype.toString = function() {
+ccc.syntax.DefineSyntaxTransformer_.prototype.toString = function() {
   return '#<define-syntax-transformer>';
 };
 
 
 /** @override */
-ccc.syntax.DefineSyntax.prototype.transform = function(environment, args) {
+ccc.syntax.DefineSyntaxTransformer_.prototype.transform = function(
+    environment, args) {
   if (!args.isPair())
     return goog.Promise.reject(new Error(
         'define-syntax: Invalid argument list'));
@@ -50,3 +51,10 @@ ccc.syntax.DefineSyntax.prototype.transform = function(environment, args) {
     return ccc.base.UNSPECIFIED;
   });
 };
+
+
+/**
+ * @public {!ccc.base.Transformer}
+ * @const
+ */
+ccc.syntax.DEFINE_SYNTAX = new ccc.syntax.DefineSyntaxTransformer_();

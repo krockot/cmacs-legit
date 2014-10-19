@@ -1,6 +1,6 @@
 // The Cmacs Project.
 
-goog.provide('ccc.syntax.Set');
+goog.provide('ccc.syntax.SET');
 
 goog.require('ccc.base');
 goog.require('goog.Promise');
@@ -13,21 +13,21 @@ goog.require('goog.Promise');
  *
  * @constructor
  * @extends {ccc.base.Transformer}
- * @public
+ * @private
  */
-ccc.syntax.Set = function() {
+ccc.syntax.SetTransformer_ = function() {
 };
-goog.inherits(ccc.syntax.Set, ccc.base.Transformer);
+goog.inherits(ccc.syntax.SetTransformer_, ccc.base.Transformer);
 
 
 /** @override */
-ccc.syntax.Set.prototype.toString = function() {
+ccc.syntax.SetTransformer_.prototype.toString = function() {
   return '#<set-transformer>';
 };
 
 
 /** @override */
-ccc.syntax.Set.prototype.transform = function(environment, args) {
+ccc.syntax.SetTransformer_.prototype.transform = function(environment, args) {
   if (!args.isPair())
     return goog.Promise.reject(new Error('set!: Invalid argument list'));
   if (!args.car().isSymbol())
@@ -42,7 +42,8 @@ ccc.syntax.Set.prototype.transform = function(environment, args) {
   return goog.Promise.resolve(
       new ccc.base.Pair(
           new ccc.base.NativeProcedure(
-              goog.partial(ccc.syntax.Set.updateBinding_, args.car())),
+              goog.partial(ccc.syntax.SetTransformer_.updateBinding_,
+                  args.car())),
           args.cdr()));
 };
 
@@ -58,7 +59,7 @@ ccc.syntax.Set.prototype.transform = function(environment, args) {
  * @return {ccc.base.Thunk}
  * @private
  */
-ccc.syntax.Set.updateBinding_ = function(
+ccc.syntax.SetTransformer_.updateBinding_ = function(
     symbol, environment, args, continuation) {
   goog.asserts.assert(args.isPair() && args.cdr().isNil(),
       'Compiled set! should always receive exactly one argument.');
@@ -67,3 +68,10 @@ ccc.syntax.Set.updateBinding_ = function(
         'Cannot update binding for unbound symbol \'' + symbol.name()));
   return continuation(ccc.base.UNSPECIFIED);
 };
+
+
+/**
+ * @public {!ccc.base.Transformer}
+ * @const
+ */
+ccc.syntax.SET = new ccc.syntax.SetTransformer_();

@@ -121,6 +121,11 @@ ccc.base.Pair.prototype.compile = function(environment) {
           return transformed.compile(environment);
         });
       }
+    } else if (compiledHead.isTransformer()) {
+      return compiledHead.transform(environment, this.cdr_).then(
+          function(transformed) {
+        return transformed.compile(environment);
+      });
     }
     var compileArgs = function(args) {
       if (args.isNil())

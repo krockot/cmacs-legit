@@ -24,17 +24,6 @@ var QUOTE = ccc.syntax.QUOTE;
 var SET = ccc.syntax.SET;
 var SYNTAX_RULES = ccc.syntax.SYNTAX_RULES;
 
-var List = ccc.base.Pair.makeList;
-var Num = function(value) { return new ccc.base.Number(value); };
-var Str = function(value) { return new ccc.base.String(value); };
-var Sym = function(name) { return new ccc.base.Symbol(name); };
-
-var FALSE = ccc.base.FALSE;
-var NIL = ccc.base.NIL;
-var TRUE = ccc.base.TRUE;
-var UNSPECIFIED = ccc.base.UNSPECIFIED;
-
-
 function setUpPage() {
   asyncTestCase.stepTimeout = 100;
 
@@ -53,53 +42,74 @@ function justFail(reason) {
 
 // Single test case which applies a transformer to a list and validates the
 // resulting object.
-var T = function(transformer, args, expectedOutput, opt_environment) {
+var T = function(
+    transformer, argsSpec, opt_expectedOutputSpec, opt_environment) {
   var environment = (goog.isDef(opt_environment)
       ? opt_environment
       : new ccc.base.Environment());
+  var args = ccc.base.build(argsSpec);
   return transformer.transform(environment, args).then(function(transformed) {
     assertNotNull(transformed);
-    if (!goog.isNull(expectedOutput) && !transformed.equal(expectedOutput)) {
-      return goog.Promise.reject('Objet mismatch.\n' +
-          'Expected: ' + expectedOutput.toString() +
-          '\nActual: ' + transformed.toString() + '\n');
+    if (goog.isDef(opt_expectedOutputSpec)) {
+      var expectedOutput = ccc.base.build(opt_expectedOutputSpec);
+      if (!transformed.equal(expectedOutput))
+        return goog.Promise.reject('Objet mismatch.\n' +
+            'Expected: ' + expectedOutput.toString() +
+            '\nActual: ' + transformed.toString() + '\n');
     }
     return transformed;
   });
 };
 
+var F = function(transformer, argsSpec) {
+  return T(transformer, argsSpec).then(
+      goog.partial(justFail, 'Expected failure; got success'),
+      function() {});
+};
+
 // Single test case which applies a transformer to a list, evaluates the result,
 // and then validates the result of the evaluation.
-var TE = function(transformer, args, expectedOutput, opt_environment) {
+var TE = function(
+    transformer, argsSpec, opt_expectedOutputSpec, opt_environment) {
   var environment = (goog.isDef(opt_environment)
       ? opt_environment
       : new ccc.base.Environment());
   var evaluator = new ccc.base.Evaluator(environment);
+  var args = ccc.base.build(argsSpec);
   return transformer.transform(environment, args).then(function(transformed) {
     return evaluator.evalObject(transformed).then(function(result) {
-      if (!goog.isNull(expectedOutput) && !result.equal(expectedOutput))
-        return goog.Promise.reject(new Error('Object mismatch.\n' +
-            'Expected: ' + expectedOutput.toString() +
-            '\nActual: ' + result.toString() + '\n'));
+      if (goog.isDef(opt_expectedOutputSpec)) {
+        var expectedOutput = ccc.base.build(opt_expectedOutputSpec);
+        if (!result.equal(expectedOutput))
+          return goog.Promise.reject(new Error('Object mismatch.\n' +
+              'Expected: ' + expectedOutput.toString() +
+              '\nActual: ' + result.toString() + '\n'));
+      }
     });
   });
 };
 
 // Single test case which transforms a supplied lambda expression and applies
 // it to a list of arguments, validating the result.
-var TL = function(formalsAndBody, args, expectedOutput, opt_environment) {
+var TL = function(
+    formalsAndBodySpec, argsSpec, opt_expectedOutputSpec, opt_environment) {
   var environment = (goog.isDef(opt_environment)
       ? opt_environment
       : new ccc.base.Environment());
   var evaluator = new ccc.base.Evaluator();
+  var formalsAndBody = ccc.base.build(formalsAndBodySpec);
+  var args = ccc.base.build(argsSpec);
   return LAMBDA.transform(environment, formalsAndBody).then(function(
       procedureGenerator) {
-    var expr = List([procedureGenerator], args);
+    var expr = new ccc.base.Pair(procedureGenerator, args);
     return evaluator.evalObject(expr).then(function(result) {
-      if (!goog.isNull(expectedOutput) && !result.equal(expectedOutput))
-        return goog.Promise.reject(new Error('Object mismatch.\n' +
-            'Expected: ' + expectedOutput.toString() +
-            '\nActual: ' + result.toString() + '\n'));
+      if (goog.isDef(opt_expectedOutputSpec)) {
+        var expectedOutput = ccc.base.build(opt_expectedOutputSpec);
+        if (!result.equal(expectedOutput))
+          return goog.Promise.reject(new Error('Object mismatch.\n' +
+              'Expected: ' + expectedOutput.toString() +
+              '\nActual: ' + result.toString() + '\n'));
+      }
     });
   });
 };
@@ -118,8 +128,7 @@ var ExpectFailures = function(tests) {
 function testDefine() {
   asyncTestCase.waitForAsync();
   var environment = new ccc.base.Environment();
-  var args = List([Sym('foo'), Num(42)]);
-  TE(DEFINE, args, ccc.base.UNSPECIFIED, environment).then(function() {
+  TE(DEFINE, ['foo', 42], ccc.base.UNSPECIFIED, environment).then(function() {
     var foo = environment.get('foo');
     assertNotNull(foo);
     assert(foo.isNumber());
@@ -129,35 +138,31 @@ function testDefine() {
 
 function testBadDefineSyntax() {
   asyncTestCase.waitForAsync();
-  var symbol = Sym('bananas');
   ExpectFailures([
     // DEFINE with no arguments.
-    T(DEFINE, NIL),
+    T(DEFINE, []),
     // DEFINE with only a symbol argument.
-    T(DEFINE, List([symbol])),
+    T(DEFINE, ['bananas']),
     // DEFINE with a non-symbol first argument.
-    T(DEFINE, List([ccc.base.T, ccc.base.T])),
+    T(DEFINE, [true, true]),
     // DEFINE with too many arguments!
-    T(DEFINE, List([symbol, ccc.base.T, ccc.base.T])),
+    T(DEFINE, ['bananas', true, true]),
   ]).then(continueTesting, justFail);
 }
 
 function testSet() {
   asyncTestCase.waitForAsync();
   var environment = new ccc.base.Environment();
-  var defineArgs = List([Sym('foo'), Num(41)]);
-  var setArgs = List([Sym('foo'), Num(42)]);
-
   // First try to set unbound symbol 'foo and expect it to fail.
-  TE(SET, setArgs, null, environment).then(justFail).thenCatch(function() {
+  TE(SET, ['foo', 42], null, environment).then(justFail).thenCatch(function() {
     // Now bind foo to 41
-    return TE(DEFINE, defineArgs, null, environment).then(function() {
+    return TE(DEFINE, ['foo', 41], undefined, environment).then(function() {
       var foo = environment.get('foo');
       assertNotNull(foo);
       assert(foo.isNumber());
       assertEquals(41, foo.value());
       // And finally set the existing binding to 42
-      return TE(SET, setArgs, null, environment).then(function() {
+      return TE(SET, ['foo', 42], undefined, environment).then(function() {
         var foo = environment.get('foo');
         assertNotNull(foo);
         assert(foo.isNumber());
@@ -169,86 +174,77 @@ function testSet() {
 
 function testBadSetSyntax() {
   asyncTestCase.waitForAsync();
-  var symbol = Sym('catpants');
-
   ExpectFailures([
     // SET with no arguments: FAIL!
-    T(SET, NIL),
+    T(SET, []),
     // SET with only a symbol argument: FAIL!
-    T(SET, List([symbol])),
+    T(SET, ['bananas']),
     // SET a non-symbol first argument: FAIL!
-    T(SET, List([ccc.base.T, ccc.base.T])),
+    T(SET, [true, true]),
     // SET with too many arguments: FAIL!
-    T(SET, List([symbol, ccc.base.T, ccc.base.T]))
+    T(SET, ['bananas', true, true]),
   ]).then(continueTesting, justFail);
 }
 
 function testIfTrue() {
   asyncTestCase.waitForAsync();
-  var ifArgs = List([NIL, ccc.base.T]);
-  TE(IF, ifArgs, ccc.base.T).then(continueTesting, justFail);
+  TE(IF, [[], true], true).then(continueTesting, justFail);
 }
 
 function testIfFalse() {
   asyncTestCase.waitForAsync();
-  var ifArgs = List([ccc.base.F, ccc.base.T, NIL]);
-  TE(IF, ifArgs, NIL).then(continueTesting, justFail);
+  TE(IF, [false, true, []], []).then(continueTesting, justFail);
 }
 
-function testIfFalseWithNoAlternate() {
+function testIfFalseWithNoAlternateIsUnspecified() {
   asyncTestCase.waitForAsync();
-  var ifArgs = List([ccc.base.F, ccc.base.T]);
-  TE(IF, ifArgs, ccc.base.UNSPECIFIED).then(continueTesting, justFail);
+  TE(IF, [false, true], ccc.base.UNSPECIFIED).then(continueTesting, justFail);
 }
 
 function testBadIfSyntax() {
   asyncTestCase.waitForAsync();
   ExpectFailures([
     // IF with no arguments: FAIL!
-    T(IF, NIL),
+    T(IF, []),
     // IF with only a condition: FAIL!
-    T(IF, List([ccc.base.T])),
+    T(IF, [true]),
     // IF with too many arguments: FAIL!
-    T(IF, List([ccc.base.T, ccc.base.T, ccc.base.T, NIL])),
+    T(IF, [true, true, true, []]),
     // IF with weird improper list: DEFINITELY FAIL!
-    T(IF, List([ccc.base.T, ccc.base.T], ccc.base.T))
+    T(IF, { 'list': [true, true], 'tail': true }),
   ]).then(continueTesting, justFail);
 }
 
 function testQuote() {
   asyncTestCase.waitForAsync();
-  var list = List([ccc.base.T, ccc.base.F, NIL]);
-  TE(QUOTE, List([list]), list).then(continueTesting, justFail);
+  var list = [true, false, []];
+  TE(QUOTE, [list], list).then(continueTesting, justFail);
 }
 
 function testBadQuoteSyntax() {
   asyncTestCase.waitForAsync();
   ExpectFailures([
     // No arguments
-    T(QUOTE, NIL),
+    T(QUOTE, []),
     // Too many arguments
-    T(QUOTE, List([ccc.base.T, ccc.base.T]))
+    T(QUOTE, [true, true]),
   ]).then(continueTesting, justFail);
 }
 
 function testSimpleLambda() {
   asyncTestCase.waitForAsync();
-  var formals = NIL;
-  var body = List([ccc.base.T, Num(42)]);
   RunTests([
-    TL(List([formals], body), NIL, Num(42))
+    TL([[], true, 42], [], 42)
   ]).then(continueTesting, justFail);
 }
 
 function testLambdaClosure() {
   asyncTestCase.waitForAsync();
   var environment = new ccc.base.Environment();
-  var formals = List([Sym('x')]);
-  var body = List([Sym('x')]);
   environment.set('x', ccc.base.F);
   // Apply the identity lambda and verify that the symbol 'x must have
   // been internally bound to the argument #t.
-  TL(List([formals], body), List([ccc.base.T]), ccc.base.T).then(function() {
+  TL([['x'], 'x'], [true], true).then(function() {
     // Then also verify that the outer environment's 'x is still bound to #f.
     assertEquals(ccc.base.F, environment.get('x'));
   }).then(continueTesting, justFail);
@@ -256,20 +252,17 @@ function testLambdaClosure() {
 
 function testLambdaTailArgs() {
   asyncTestCase.waitForAsync();
-  var body = List([Sym('rest')]);
-  var args = List([Num(1), Num(2), Num(3), Num(4)]);
-  var formals1 = List([Sym('foo')], Sym('rest'));
-  var formals2 = List([Sym('foo'), Sym('bar')], Sym('rest'));
-  var formals4 = List([Sym('a'), Sym('b'), Sym('c'), Sym('d')], Sym('rest'));
   RunTests([
     // ((lambda rest rest) 1 2 3 4) -> (1 2 3 4)
-    TL(List([Sym('rest')], body), args, args),
+    TL(['rest', 'rest'], [1, 2, 3, 4], [1, 2, 3, 4]),
     // ((lambda (foo . rest) rest) 1 2 3 4) -> (2 3 4)
-    TL(List([formals1], body), args, args.cdr()),
-    // ((lambda (foo bar . rest) rest) 1 2 3 4) -> (3 4)
-    TL(List([formals2], body), args, args.cdr().cdr()),
+    TL([{ 'list': ['foo'], 'tail': 'rest' }, 'rest'], [1, 2, 3, 4], [2, 3, 4]),
+    // ((lambda (a b . rest) rest) 1 2 3 4) -> (3 4)
+    TL([{ 'list': ['a', 'b'], 'tail': 'rest' }, 'rest'], [1, 2, 3, 4], [3, 4]),
     // ((lambda (a b c d . rest) rest) 1 2 3 4) -> ()
-    TL(List([formals4], body), args, NIL)
+    TL([{ 'list': ['a', 'b', 'c', 'd'], 'tail': 'rest' }, 'rest'],
+       [1, 2, 3, 4],
+       []),
   ]).then(continueTesting, justFail);
 }
 
@@ -277,13 +270,13 @@ function testBadLambdaSyntax() {
   asyncTestCase.waitForAsync();
   ExpectFailures([
     // ((lambda))
-    TL(NIL, NIL, NIL),
+    TL([], [], []),
     // ((lambda foo) 1)
-    TL(List([Sym('foo')]), List([Num(1)]), NIL),
+    TL(['foo'], [1], []),
     // ((lambda 42) 1)
-    TL(List([Num(42)]), List([Num(1)]), NIL),
+    TL([42], [1], []),
     // ((lambda foo . foo) 1)
-    TL(List([Sym('foo')], Sym('foo')), List([Num(1)]), Num(1))
+    TL([{ 'list': ['foo'], 'tail': 'foo' }, 1], [1], 1),
   ]).then(continueTesting, justFail);
 }
 
@@ -291,11 +284,12 @@ function testLambdaTailRecursion() {
   var N = 100;
   asyncTestCase.waitForAsync();
   var environment = new ccc.base.Environment();
-  environment.set('x', Num(N));
+  environment.set('x', new ccc.base.Number(N));
   var decrementX = new ccc.base.NativeProcedure(function(
       environment, args, continuation) {
-    environment.update('x', Num(environment.get('x').value() - 1));
-    return continuation(NIL);
+    environment.update('x', new ccc.base.Number(
+        environment.get('x').value() - 1));
+    return continuation(ccc.base.NIL);
   });
   var xIsPositive = new ccc.base.NativeProcedure(function(
       environment, args, continuation) {
@@ -305,25 +299,25 @@ function testLambdaTailRecursion() {
   });
   var incrementZ = new ccc.base.NativeProcedure(function(
       environment, args, continuation) {
-    environment.update('z', Num(environment.get('z').value() + 1));
+    environment.update('z', new ccc.base.Number(
+        environment.get('z').value() + 1));
     return continuation(ccc.base.T);
   });
-  environment.set('z', Num(0));
+  environment.set('z', new ccc.base.Number(0));
 
   var evaluator = new ccc.base.Evaluator(environment);
-  IF.transform(environment, List([List([xIsPositive]),
-      List([Sym('loop')]), ccc.base.T])).then(function(conditional) {
+  var ifForm = ccc.base.build([[xIsPositive], ['loop'], true]);
+  IF.transform(environment, ifForm).then(function(conditional) {
     // Build a procedure and bind it to 'loop:
     // (lambda () (decrementX) (if (xIsPositive) (loop) #t))
-    var loopForm = List([NIL, List([decrementX]), List([incrementZ]),
-        conditional]);
-    return LAMBDA.transform(environment, loopForm);
+    var loop = ccc.base.build([[], [decrementX], [incrementZ], conditional]);
+    return LAMBDA.transform(environment, loop);
   }).then(function(loopGenerator) {
     return evaluator.evalObject(loopGenerator);
   }).then(function(loop) {
     environment.set('loop', loop);
     // Run the loop!
-    return evaluator.evalObject(List([Sym('loop')]));
+    return evaluator.evalObject(ccc.base.build(['loop']));
   }).then(function() {
     // Verify that the loop ran N times.
     assertEquals(N, environment.get('z').value());
@@ -333,10 +327,9 @@ function testLambdaTailRecursion() {
 function testDefineSyntax() {
   asyncTestCase.waitForAsync();
   var environment = new ccc.base.Environment();
-  DEFINE_SYNTAX.transform(environment, List([Sym('cita'), QUOTE])).then(
+  T(DEFINE_SYNTAX, ['cita', QUOTE], ccc.base.UNSPECIFIED, environment).then(
       function(result) {
-        assertEquals(ccc.base.UNSPECIFIED, result);
-        assertEquals(environment.get('cita'), QUOTE);
+    assertEquals(environment.get('cita'), QUOTE);
   }).then(continueTesting, justFail);
 }
 
@@ -344,23 +337,23 @@ function testSyntaxRules() {
   asyncTestCase.waitForAsync();
   var environment = new ccc.base.Environment();
 
-  var literals = List([Sym('::')]);
+  var literals = ['::'];
 
   // Match (_ 1 :: a) and expand to (quote a)
-  var rule1 = List([Sym('_'), Num(1), Sym('::'), Sym('a')]);
-  var template1 = List([Sym('quote'), Sym('a')]);
+  var pattern1 = ['_', 1, '::', 'a'];
+  var template1 = ['quote', 'a'];
 
   // Match (_ 2 :: a) and expand to (quote a a)
-  var rule2 = List([Sym('_'), Num(2), Sym('::'), Sym('a')]);
-  var template2 = List([Sym('quote'), Sym('a'), Sym('a')]);
+  var pattern2 = ['_', 2, '::', 'a'];
+  var template2 = ['quote', 'a', 'a'];
 
-  SYNTAX_RULES.transform(environment, List([literals, List([rule1, template1]),
-      List([rule2, template2])])).then(function(transformer) {
+  var rules = [literals, [pattern1, template1], [pattern2, template2]];
+
+  T(SYNTAX_RULES, rules).then(function(transformer) {
     return RunTests([
-      T(transformer, List([Num(1), Sym('::'), Sym('foo')]),
-        List([Sym('quote'), Sym('foo')])),
-      T(transformer, List([Num(2), Sym('::'), Sym('foo')]),
-        List([Sym('quote'), Sym('foo'), Sym('foo')]))
+      T(transformer, [1, '::', 'foo'], ['quote', 'foo']),
+      T(transformer, [2, '::', 'foo'], ['quote', 'foo', 'foo']),
+      F(transformer, [3, '::', 'foo']),
     ]);
   }).then(continueTesting, justFail);
 }
@@ -371,18 +364,18 @@ function testBegin() {
   var native1 = new ccc.base.NativeProcedure(
       function(environment, args, continuation) {
     assertEquals(0, count++);
-    return continuation(Num(1));
+    return continuation(new ccc.base.Number(1));
   });
   var native2 = new ccc.base.NativeProcedure(
       function(environment, args, continuation) {
     assertEquals(1, count++);
-    return continuation(Num(2));
+    return continuation(new ccc.base.Number(2));
   });
   var native3 = new ccc.base.NativeProcedure(
       function(environment, args, continuation) {
     assertEquals(2, count);
-    return continuation(Num(3));
+    return continuation(new ccc.base.Number(3));
   });
-  TE(BEGIN, List([List([native1]), List([native2]), List([native3])]), Num(3))
-      .then(continueTesting, justFail);
+  TE(BEGIN, [[native1], [native2], [native3]], 3).then(
+      continueTesting, justFail);
 }

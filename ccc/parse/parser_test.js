@@ -71,27 +71,6 @@ var NUMERIC_LITERAL = function(value) {
 };
 var DOT = function() { return new ccc.parse.Token(K.DOT, '.', 1, 1); };
 
-// Some additional shortcuts
-
-var NIL = ccc.base.NIL;
-var UNSPEC = ccc.base.UNSPECIFIED;
-var T = ccc.base.T;
-var F = ccc.base.F;
-
-var Symbol_ = function(name) { return new ccc.base.Symbol(name); };
-var String_ = function(value) { return new ccc.base.String(value); };
-var Number_ = function(value) { return new ccc.base.Number(value); };
-var Char_ = function(value) { return new ccc.base.Char(value); };
-var Vector_ = function(elements) { return new ccc.base.Vector(elements); };
-var Pair_ = function(car, cdr) { return new ccc.base.Pair(car, cdr); };
-var List_ = function(elements, opt_tail) {
-  var tail = goog.isDef(opt_tail) ? opt_tail : ccc.base.NIL;
-  for (var i = elements.length - 1; i >= 0; --i) {
-    tail = new ccc.base.Pair(elements[i], tail);
-  }
-  return tail;
-};
-
 // Test framework for the parser tests
 
 /** @implements {ccc.parse.TokenReader} */
@@ -107,10 +86,11 @@ TestTokenReader.prototype.readToken = function() {
 };
 
 // Expect a specific object to match under equality (Object.equal).
-var E = function(match) {
+var E = function(matchSpec) {
   return function(parser) {
     return parser.readObject().then(function(object) {
       assertNotNull('Ran out of parsed objects!', object);
+      var match = ccc.base.build(matchSpec);
       if (!object.equal(match)) {
         fail('Object mismatch:\n' +
              '  Expected: ' + match.toString() +
@@ -178,13 +158,13 @@ function testSimpleData() {
     CHAR_LITERAL(10),
     NUMERIC_LITERAL(-42e3),
   ], [
-    E(T),
-    E(F),
-    E(UNSPEC),
-    E(String_('Hello, world!')),
-    E(Symbol_('hello-world')),
-    E(Char_(10)),
-    E(Number_(-42e3))
+    E(true),
+    E(false),
+    E(undefined),
+    E({ 'str': 'Hello, world!' }),
+    E('hello-world'),
+    E({ 'chr': 10 }),
+    E(-42e3),
   ]));
 }
 
@@ -197,7 +177,7 @@ function testSimpleVector() {
     NUMERIC_LITERAL(42),
     CLOSE_FORM(')')
   ], [
-    E(Vector_([T, F, UNSPEC, Number_(42)]))
+    E({ 'vec': [true, false, undefined, 42] }),
   ]));
 }
 
@@ -213,7 +193,7 @@ function testNestedVector() {
     NUMERIC_LITERAL(42),
     CLOSE_FORM(')')
   ], [
-    E(Vector_([T, F, Vector_([T]), UNSPEC, Number_(42)]))
+    E({ 'vec': [true, false, { 'vec': [true] }, undefined, 42] }),
   ]));
 }
 
@@ -225,7 +205,7 @@ function testSimplePair() {
     SYMBOL('b'),
     CLOSE_FORM(')')
   ], [
-    E(Pair_(Symbol_('a'), Symbol_('b')))
+    E({ 'pair': ['a', 'b'] }),
   ]));
 }
 
@@ -236,7 +216,7 @@ function testSimpleList() {
     FALSE(),
     CLOSE_FORM(')')
   ], [
-    E(List_([T, F]))
+    E([true, false]),
   ]));
 }
 
@@ -252,7 +232,7 @@ function testNestedList() {
     CLOSE_FORM(']'),
     CLOSE_FORM(')')
   ], [
-    E(List_([T, NIL, List_([F, Number_(7)])]))
+    E([true, [], [false, 7]]),
   ]));
 }
 
@@ -265,7 +245,7 @@ function testDottedTail() {
     NUMERIC_LITERAL(3),
     CLOSE_FORM(']')
   ], [
-    E(List_([Number_(1), Number_(2)], Number_(3)))
+    E({ 'list': [1, 2], 'tail': 3 }),
   ]));
 }
 
@@ -274,7 +254,7 @@ function testMissingClosingBracket() {
 }
 
 function testMissingOpeningBracket() {
-  RunSingleTest(S([TRUE(), CLOSE_FORM(')')], [E(T), FAIL]));
+  RunSingleTest(S([TRUE(), CLOSE_FORM(')')], [E(true), FAIL]));
 }
 
 function testBracketMismatch() {
@@ -282,12 +262,12 @@ function testBracketMismatch() {
 }
 
 function testNil() {
-  RunSingleTest(S([OPEN_LIST('['), CLOSE_FORM(']')], [E(NIL)]));
+  RunSingleTest(S([OPEN_LIST('['), CLOSE_FORM(']')], [E([])]));
 }
 
 function testNoDottedTailsInOuterSpace() {
   RunSingleTest(S([TRUE(), FALSE(), DOT(), TRUE()],
-    [E(T), E(F), FAIL]));
+    [E(true), E(false), FAIL]));
 }
 
 function testNoDottedTailInVector() {
@@ -324,7 +304,7 @@ function testComplexNesting() {
     NUMERIC_LITERAL(1),
     OPEN_VECTOR('('),
     STRING_LITERAL('foo'),
-    STRING_LITERAL('bar'),
+    SYMBOL('bar'),
     SYMBOL('baz'),
     OPEN_LIST('['),
     FALSE(),
@@ -343,24 +323,18 @@ function testComplexNesting() {
     OPEN_LIST('{'),
     CLOSE_FORM('}')
   ], [
-    E(T),
-    E(Number_(42)),
-    E(List_([
-        Char_(10),
-        Number_(1),
-        Vector_([
-            String_('foo'),
-            String_('bar'),
-            Symbol_('baz'),
-            List_([F, T], Vector_([UNSPEC, NIL])),
-            T]),
-        Number_(3.14)])),
-    E(NIL)
+    E(true),
+    E(42),
+    E([{ 'chr': 10 }, 1, { 'vec': [
+        { 'str': 'foo' }, 'bar', 'baz',
+        { 'list': [false, true], 'tail': { 'vec': [undefined, []] } },
+        true] }, 3.14]),
+    E([])
   ]));
 }
 
 function testExpressionComment() {
-  RunSingleTest(S([TRUE(), OMIT_DATUM(), FALSE(), TRUE()], [E(T), E(T)]));
+  RunSingleTest(S([TRUE(), OMIT_DATUM(), FALSE(), TRUE()], [E(true), E(true)]));
 }
 
 function testExpressionCommentInList() {
@@ -374,7 +348,7 @@ function testExpressionCommentInList() {
     SYMBOL('hay'),
     CLOSE_FORM(')')
   ], [
-    E(List_([Number_(1), String_('hey')], Symbol_('hay')))
+    E({ 'list': [1, { 'str': 'hey' }], 'tail': 'hay' }),
   ]));
 }
 
@@ -392,7 +366,7 @@ function testExpressionCommentInVector() {
     SYMBOL('e'),
     CLOSE_FORM(')')
   ], [
-    E(Vector_([Symbol_('a'), Symbol_('e')]))
+    E({ 'vec': ['a', 'e'] }),
   ]));
 }
 
@@ -410,7 +384,7 @@ function testDoubleExpressionComment() {
     SYMBOL('f'),
     CLOSE_FORM(')')
   ], [
-    E(List_([Symbol_('a'), Symbol_('f')]))
+    E(['a', 'f']),
   ]));
 }
 
@@ -477,7 +451,7 @@ function testQuote() {
     QUOTE(),
     SYMBOL('a')
   ], [
-    E(List_([Symbol_('quote'), Symbol_('a')]))
+    E(['quote', 'a']),
   ]));
 }
 
@@ -493,12 +467,9 @@ function testListQuote() {
     CLOSE_FORM(')'),
     FALSE()
   ], [
-    E(T),
-    E(List_([Symbol_('quote'),
-            List_([Symbol_('a'),
-                   Symbol_('b'),
-                   List_([Symbol_('quote'), Symbol_('c')])])])),
-    E(F)
+    E(true),
+    E(['quote', ['a', 'b', ['quote', 'c']]]),
+    E(false)
   ]));
 }
 
@@ -509,30 +480,27 @@ function testNestedQuotes() {
     QUOTE(),
     SYMBOL('a')
   ], [
-    E(List_([Symbol_('quote'),
-             List_([Symbol_('quote'),
-                    List_([Symbol_('quote'),
-                           Symbol_('a')])])]))
+    E(['quote', ['quote', ['quote', 'a']]]),
   ]));
 }
 
 function testUnquote() {
   RunSingleTest(S([UNQUOTE(), SYMBOL('a')],
-    [E(List_([Symbol_('unquote'), Symbol_('a')]))]));
+    [E(['unquote', 'a'])]));
 }
 
 function testUnquoteSplicing() {
   RunSingleTest(S([UNQUOTE_SPLICING(), SYMBOL('a')],
-    [E(List_([Symbol_('unquote-splicing'), Symbol_('a')]))]));
+    [E(['unquote-splicing', 'a'])]));
 }
 
 function testQuasiquote() {
   RunSingleTest(S([QUASIQUOTE(), SYMBOL('a')],
-    [E(List_([Symbol_('quasiquote'), Symbol_('a')]))]));
+    [E(['quasiquote', 'a'])]));
 }
 
 function testNoQuoteAtEof() {
-  RunSingleTest(S([SYMBOL('a'), QUOTE()], [E(Symbol_('a')), FAIL]));
+  RunSingleTest(S([SYMBOL('a'), QUOTE()], [E('a'), FAIL]));
 }
 
 function testNoQuoteAtEndOfList() {
@@ -564,15 +532,15 @@ function testEofCases() {
     S([UNQUOTE()], [FAIL]),
     S([UNQUOTE_SPLICING()], [FAIL]),
     S([CLOSE_FORM('}')], [FAIL]),
-    S([NUMERIC_LITERAL(1)], [E(Number_(1))]),
-    S([CHAR_LITERAL(65)], [E(Char_(65))]),
-    S([SYMBOL('foo')], [E(Symbol_('foo'))]),
-    S([STRING_LITERAL('hello')], [E(String_('hello'))]),
+    S([NUMERIC_LITERAL(1)], [E(1)]),
+    S([CHAR_LITERAL(65)], [E({ 'chr': 65 })]),
+    S([SYMBOL('foo')], [E('foo')]),
+    S([STRING_LITERAL('hello')], [E({ 'str': 'hello' })]),
     S([DOT()], [FAIL]),
     S([OMIT_DATUM()], [FAIL]),
-    S([TRUE()], [E(T)]),
-    S([FALSE()], [E(F)]),
-    S([UNSPECIFIED()], [E(UNSPEC)]),
+    S([TRUE()], [E(true)]),
+    S([FALSE()], [E(false)]),
+    S([UNSPECIFIED()], [E(undefined)]),
     S([OPEN_LIST('('), OPEN_LIST('['), SYMBOL('a')], [FAIL])
   ]);
 }

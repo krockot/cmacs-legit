@@ -37,6 +37,9 @@ goog.require('goog.object');
  *        value.
  *    7c. If o['list'] is an Array, build a list as if o were the Array, and
  *        if present, also use o['tail'] as the optional tail component.
+ *    7d. If o['chr'] is a number, build a {@code ccc.base.Char} with its value.
+ *    7e. If o['pair'] is an array, build a {@code ccc.base.Pair} from its first
+ *        two elements.
  *
  * This should be used whenever a complex object is being constructed and
  * readability or brevity is a concern.
@@ -67,6 +70,11 @@ ccc.base.build = function(spec) {
       return new ccc.base.Vector(goog.array.map(spec['vec'], ccc.base.build));
     if (goog.object.containsKey(spec, 'str'))
       return new ccc.base.String(spec['str']);
+    if (goog.object.containsKey(spec, 'chr'))
+      return new ccc.base.Char(spec['chr']);
+    if (goog.object.containsKey(spec, 'pair'))
+      return new ccc.base.Pair(ccc.base.build(spec['pair'][0]),
+          ccc.base.build(spec['pair'][1]));
     if (goog.object.containsKey(spec, 'list')) {
       var tail = (goog.object.containsKey(spec, 'tail')
           ? ccc.base.build(spec['tail'])

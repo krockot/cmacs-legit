@@ -49,6 +49,18 @@ ccc.syntax.RuleBasedTransformer.prototype.transform = function(
 };
 
 
+/**
+ * Adds a rule to this transformer. Useful in constructing transformers which
+ * must recursively refer to themselves in one or more templates.
+ *
+ * @param {!ccc.syntax.Rule} rule
+ * @public
+ */
+ccc.syntax.RuleBasedTransformer.prototype.addRule = function(rule) {
+  this.rules_.push(rule);
+};
+
+
 
 /**
  * A Rule consists of a single pattern and template.

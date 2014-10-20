@@ -4,7 +4,7 @@ goog.provide('ccc.syntax.LET');
 
 goog.require('ccc.base');
 goog.require('ccc.syntax.LAMBDA');
-goog.require('ccc.syntax.build');
+goog.require('ccc.syntax.buildTransformer');
 
 
 
@@ -15,12 +15,12 @@ goog.require('ccc.syntax.build');
  * @public {!ccc.base.Transformer}
  * @const
  */
-ccc.syntax.LET = ccc.syntax.build([
+ccc.syntax.LET = ccc.syntax.buildTransformer([
   [
     // Match (((var expr) ...) body0 body ...)
     [[['var', 'expr'], '...'], 'body0', 'body', '...'],
     // Expand to ((lambda (var ...) body0 body ...) expr ...)
     [[ccc.syntax.LAMBDA, ['var', '...'], 'body0', 'body', '...'],
-      'expr', '...'],
-  ],
+      'expr', '...']
+  ]
 ]);

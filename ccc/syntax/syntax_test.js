@@ -17,6 +17,9 @@ var DEFINE = ccc.syntax.DEFINE;
 var DEFINE_SYNTAX = ccc.syntax.DEFINE_SYNTAX;
 var IF = ccc.syntax.IF;
 var LAMBDA = ccc.syntax.LAMBDA;
+var LET = ccc.syntax.LET;
+var LETSEQ = ccc.syntax.LET_SEQUENTIAL;
+var LETREC = ccc.syntax.LETREC;
 var QUOTE = ccc.syntax.QUOTE;
 var SET = ccc.syntax.SET;
 var SYNTAX_RULES = ccc.syntax.SYNTAX_RULES;
@@ -112,7 +115,7 @@ var ExpectFailures = function(tests) {
   }).thenCatch(function() {});
 };
 
-function testDEFINE() {
+function testDefine() {
   asyncTestCase.waitForAsync();
   var environment = new ccc.base.Environment();
   var args = List([Sym('foo'), Num(42)]);
@@ -124,7 +127,7 @@ function testDEFINE() {
   }).then(continueTesting, justFail);
 }
 
-function testBadDEFINE_SYNTAX() {
+function testBadDefineSyntax() {
   asyncTestCase.waitForAsync();
   var symbol = Sym('bananas');
   ExpectFailures([
@@ -139,7 +142,7 @@ function testBadDEFINE_SYNTAX() {
   ]).then(continueTesting, justFail);
 }
 
-function testSET() {
+function testSet() {
   asyncTestCase.waitForAsync();
   var environment = new ccc.base.Environment();
   var defineArgs = List([Sym('foo'), Num(41)]);
@@ -164,7 +167,7 @@ function testSET() {
   }).then(continueTesting);
 }
 
-function testBadSETSyntax() {
+function testBadSetSyntax() {
   asyncTestCase.waitForAsync();
   var symbol = Sym('catpants');
 
@@ -180,25 +183,25 @@ function testBadSETSyntax() {
   ]).then(continueTesting, justFail);
 }
 
-function testIFTrue() {
+function testIfTrue() {
   asyncTestCase.waitForAsync();
   var ifArgs = List([NIL, ccc.base.T]);
   TE(IF, ifArgs, ccc.base.T).then(continueTesting, justFail);
 }
 
-function testIFFalse() {
+function testIfFalse() {
   asyncTestCase.waitForAsync();
   var ifArgs = List([ccc.base.F, ccc.base.T, NIL]);
   TE(IF, ifArgs, NIL).then(continueTesting, justFail);
 }
 
-function testIFFalseWithNoAlternate() {
+function testIfFalseWithNoAlternate() {
   asyncTestCase.waitForAsync();
   var ifArgs = List([ccc.base.F, ccc.base.T]);
   TE(IF, ifArgs, ccc.base.UNSPECIFIED).then(continueTesting, justFail);
 }
 
-function testBadIFSyntax() {
+function testBadIfSyntax() {
   asyncTestCase.waitForAsync();
   ExpectFailures([
     // IF with no arguments: FAIL!
@@ -212,13 +215,13 @@ function testBadIFSyntax() {
   ]).then(continueTesting, justFail);
 }
 
-function testQUOTE() {
+function testQuote() {
   asyncTestCase.waitForAsync();
   var list = List([ccc.base.T, ccc.base.F, NIL]);
   TE(QUOTE, List([list]), list).then(continueTesting, justFail);
 }
 
-function testBadQUOTESyntax() {
+function testBadQuoteSyntax() {
   asyncTestCase.waitForAsync();
   ExpectFailures([
     // No arguments
@@ -228,7 +231,7 @@ function testBadQUOTESyntax() {
   ]).then(continueTesting, justFail);
 }
 
-function testSimpleLAMBDA() {
+function testSimpleLambda() {
   asyncTestCase.waitForAsync();
   var formals = NIL;
   var body = List([ccc.base.T, Num(42)]);
@@ -237,7 +240,7 @@ function testSimpleLAMBDA() {
   ]).then(continueTesting, justFail);
 }
 
-function testLAMBDAClosure() {
+function testLambdaClosure() {
   asyncTestCase.waitForAsync();
   var environment = new ccc.base.Environment();
   var formals = List([Sym('x')]);
@@ -251,7 +254,7 @@ function testLAMBDAClosure() {
   }).then(continueTesting, justFail);
 }
 
-function testLAMBDATailArgs() {
+function testLambdaTailArgs() {
   asyncTestCase.waitForAsync();
   var body = List([Sym('rest')]);
   var args = List([Num(1), Num(2), Num(3), Num(4)]);
@@ -270,7 +273,7 @@ function testLAMBDATailArgs() {
   ]).then(continueTesting, justFail);
 }
 
-function testBadLAMBDASyntax() {
+function testBadLambdaSyntax() {
   asyncTestCase.waitForAsync();
   ExpectFailures([
     // ((lambda))
@@ -284,7 +287,7 @@ function testBadLAMBDASyntax() {
   ]).then(continueTesting, justFail);
 }
 
-function testLAMBDATailRecursion() {
+function testLambdaTailRecursion() {
   var N = 100;
   asyncTestCase.waitForAsync();
   var environment = new ccc.base.Environment();
@@ -327,7 +330,7 @@ function testLAMBDATailRecursion() {
   }).then(continueTesting, justFail);
 }
 
-function testDEFINE_SYNTAX() {
+function testDefineSyntax() {
   asyncTestCase.waitForAsync();
   var environment = new ccc.base.Environment();
   DEFINE_SYNTAX.transform(environment, List([Sym('cita'), QUOTE])).then(
@@ -337,7 +340,7 @@ function testDEFINE_SYNTAX() {
   }).then(continueTesting, justFail);
 }
 
-function testSYNTAX_RULES() {
+function testSyntaxRules() {
   asyncTestCase.waitForAsync();
   var environment = new ccc.base.Environment();
 
@@ -362,7 +365,7 @@ function testSYNTAX_RULES() {
   }).then(continueTesting, justFail);
 }
 
-function testBEGIN() {
+function testBegin() {
   asyncTestCase.waitForAsync();
   var count = 0;
   var native1 = new ccc.base.NativeProcedure(

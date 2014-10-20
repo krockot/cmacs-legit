@@ -8,7 +8,7 @@ goog.require('goog.Promise');
 
 
 /**
- * The builtin Set syntax transformer updates the value to which a symbol is
+ * The SET transformer (spelled "set!") updates the value to which a symbol is
  * bound. It's an error to set the value of an unbound symbol.
  *
  * @constructor

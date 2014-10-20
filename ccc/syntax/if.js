@@ -8,7 +8,7 @@ goog.require('goog.Promise');
 
 
 /**
- * The If transformer produces a native conditional procedure which evaluates
+ * The IF transformer produces a native conditional procedure which evaluates
  * a test express and then either the consequent or the alternate, but never
  * both.
  *

@@ -8,8 +8,7 @@ goog.require('goog.Promise');
 
 
 /**
- * DefineSyntax binds a symbol to a {@code ccc.base.Transformer}.
- * Transformers can themselves be generated using a SyntaxRules transformer.
+ * DEFINE_SYNTAX binds a symbol to a {@code ccc.base.Transformer}.
  *
  * @constructor
  * @extends {ccc.base.Transformer}

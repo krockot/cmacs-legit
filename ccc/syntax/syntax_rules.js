@@ -12,7 +12,7 @@ goog.require('goog.Promise');
 
 
 /**
- * SyntaxRules generates a transformer at compile time using a given set of
+ * SYNTAX_RULES generates a transformer at compile time using a given set of
  * literal symbols and pattern-template pairs.
  *
  * @constructor

@@ -9,7 +9,7 @@ goog.require('goog.asserts');
 
 
 /**
- * The Lambda transformer produces a native generator which itself evaluates to
+ * The LAMBDA transformer produces a native generator which itself evaluates to
  * new procedure objects when applied. Any generated procedure will execute in
  * the context of the environment in which the generator was applied.
  *

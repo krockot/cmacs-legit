@@ -8,7 +8,7 @@ goog.require('goog.Promise');
 
 
 /**
- * Quote syntax.
+ * QUOTE transformer.
  *
  * @constructor
  * @extends {ccc.base.Transformer}

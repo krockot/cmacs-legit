@@ -4,14 +4,13 @@ goog.provide('ccc.syntax.LET_SEQUENTIAL');
 
 goog.require('ccc.base');
 goog.require('ccc.syntax.LAMBDA');
-goog.require('ccc.syntax.LET');
 goog.require('ccc.syntax.buildRule');
 goog.require('ccc.syntax.buildTransformer');
 
 
 
 /**
- * The sequential LET form (spelled "let*") is similar to let, except that the
+ * The LET_SEQUENTIAL transformer (spelled "let*") is similar to let, except the
  * local bindings are established sequentially. As such, any given binding's
  * initializer expression may reference bindings which occur before it in the
  * same let* expression.
@@ -24,7 +23,7 @@ ccc.syntax.LET_SEQUENTIAL = ccc.syntax.buildTransformer([
   [
     // (() body0 body ...)
     [[], 'body0', 'body', '...'],
-    // (lambda () body0 body ...)
+    // ((lambda () body0 body ...))
     [[ccc.syntax.LAMBDA, [], 'body0', 'body', '...']]
   ]
 ]);

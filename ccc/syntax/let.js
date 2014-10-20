@@ -9,7 +9,7 @@ goog.require('ccc.syntax.buildTransformer');
 
 
 /**
- * The Let transformer provides syntactic sugar for a closure with some set of
+ * The LET transformer provides syntactic sugar for a closure with some set of
  * new local bindings.
  *
  * @public {!ccc.base.Transformer}
@@ -17,9 +17,9 @@ goog.require('ccc.syntax.buildTransformer');
  */
 ccc.syntax.LET = ccc.syntax.buildTransformer([
   [
-    // Match (((var expr) ...) body0 body ...)
+    // (((var expr) ...) body0 body ...)
     [[['var', 'expr'], '...'], 'body0', 'body', '...'],
-    // Expand to ((lambda (var ...) body0 body ...) expr ...)
+    // ((lambda (var ...) body0 body ...) expr ...)
     [[ccc.syntax.LAMBDA, ['var', '...'], 'body0', 'body', '...'],
       'expr', '...']
   ]

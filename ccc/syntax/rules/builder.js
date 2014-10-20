@@ -44,8 +44,6 @@ ccc.syntax.buildRule = function(patternSpec, templateSpec, opt_literals) {
  * @public
  */
 ccc.syntax.buildTransformer = function(ruleSpecs, opt_literals) {
-  goog.asserts.assert(ruleSpecs.length > 0,
-      'At least one rule is required to build a syntax transformer');
   var rules = goog.array.map(ruleSpecs, function(spec) {
     goog.asserts.assert(spec.length == 2,
         'Each builder rule must be of the form [pattern, template]');

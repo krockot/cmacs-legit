@@ -8,7 +8,7 @@ goog.require('goog.Promise');
 
 
 /**
- * The builtin Define syntax transformer binds variables in the innermost
+ * The builtin DEFINE syntax transformer binds variables in the innermost
  * environment.
  *
  * @constructor

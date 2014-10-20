@@ -9,7 +9,7 @@ goog.require('goog.Promise');
 
 
 /**
- * The builtin Begin performs a sequence of evaluations and yields the value of
+ * The builtin BEGIN performs a sequence of evaluations and yields the value of
  * the last one.
  *
  * @constructor

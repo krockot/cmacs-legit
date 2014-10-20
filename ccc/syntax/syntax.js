@@ -9,6 +9,7 @@ goog.require('ccc.syntax.IF');
 goog.require('ccc.syntax.LAMBDA');
 goog.require('ccc.syntax.LET');
 goog.require('ccc.syntax.LET_SEQUENTIAL');
+goog.require('ccc.syntax.LETREC');
 goog.require('ccc.syntax.QUOTE');
 goog.require('ccc.syntax.SET');
 goog.require('ccc.syntax.SYNTAX_RULES');

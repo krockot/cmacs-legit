@@ -8,18 +8,12 @@ goog.require('ccc.parse.Parser');
 goog.require('ccc.parse.Scanner');
 goog.require('ccc.syntax.Pattern');
 goog.require('goog.Promise');
+goog.require('goog.array');
 goog.require('goog.testing.AsyncTestCase');
 goog.require('goog.testing.jsunit');
 
 
 var asyncTestCase = goog.testing.AsyncTestCase.createAndInstall(document.title);
-var List = ccc.base.Pair.makeList;
-var Sym = function(name) { return new ccc.base.Symbol(name); };
-var Num = function(value) { return new ccc.base.Number(value); };
-var NIL = ccc.base.NIL;
-var TRUE = ccc.base.T;
-var FALSE = ccc.base.F;
-var UNSPEC = ccc.base.UNSPECIFIED;
 
 function setUpPage() {
   asyncTestCase.stepTimeout = 100;
@@ -85,7 +79,9 @@ function F(pattern, literals, input) {
 }
 
 function C(contents) {
-  return new ccc.syntax.Capture(contents);
+  if (contents instanceof Array)
+    return new ccc.syntax.Capture(contents);
+  return new ccc.syntax.Capture(ccc.base.build(contents));
 }
 
 function RunTests(tests) {
@@ -96,12 +92,12 @@ function RunTests(tests) {
 
 function testSimplePatterns() {
   RunTests([
-    T('(a)', [], '(42)', { 'a': C(Num(42)) }),
-    T('(a b)', [], '(42 43)', { 'a': C(Num(42)), 'b': C(Num(43)) }),
+    T('(a)', [], '(42)', { 'a': C(42) }),
+    T('(a b)', [], '(42 43)', { 'a': C(42), 'b': C(43) }),
     T('(a #t (b c))', [], '(1 #t (2 3))', {
-      'a': C(Num(1)),
-      'b': C(Num(2)),
-      'c': C(Num(3))
+      'a': C(1),
+      'b': C(2),
+      'c': C(3)
     }),
     F('(a)', [], '()'),
     F('(a b)', [], '(1 2 3)'),
@@ -110,11 +106,11 @@ function testSimplePatterns() {
 
 function testLiterals() {
   RunTests([
-    T('(a $$ b)', ['$$'], '(1 $$ 2)', { 'a': C(Num(1)), 'b': C(Num(2)) }),
+    T('(a $$ b)', ['$$'], '(1 $$ 2)', { 'a': C(1), 'b': C(2) }),
     T('(a ! b @ c)', ['!', '@'], '[1 ! 2 @ 3]', {
-      'a': C(Num(1)),
-      'b': C(Num(2)),
-      'c': C(Num(3))
+      'a': C(1),
+      'b': C(2),
+      'c': C(3)
     }),
   ]);
 }
@@ -123,18 +119,18 @@ function testSimpleRepetition() {
   RunTests([
     T('(a ...)', [],
       '(1 2 3 4)', {
-      'a': C([C(Num(1)), C(Num(2)), C(Num(3)), C(Num(4))])
+      'a': C([C(1), C(2), C(3), C(4)])
     }),
     T('(a b ...)', [],
       '(1 2 3 4)', {
-      'a': C(Num(1)),
-      'b': C([C(Num(2)), C(Num(3)), C(Num(4))])
+      'a': C(1),
+      'b': C([C(2), C(3), C(4)])
     }),
     T('(a (b c) ...)', [],
       '(1 (2 3) (4 5) (6 7) (8 9))', {
-      'a': C(Num(1)),
-      'b': C([C(Num(2)), C(Num(4)), C(Num(6)), C(Num(8))]),
-      'c': C([C(Num(3)), C(Num(5)), C(Num(7)), C(Num(9))])
+      'a': C(1),
+      'b': C([C(2), C(4), C(6), C(8)]),
+      'c': C([C(3), C(5), C(7), C(9)])
     }),
     F('(a ... b)', [], '(1 2 3)'),
     F('(a (b c) ...)', [],
@@ -146,22 +142,22 @@ function testNestedRepetition() {
   RunTests([
     T('((a b ...) ...)', [],
       '((1 2 3 4) (a b c d) (! @ $ %))', {
-      'a': C([C(Num(1)), C(Sym('a')), C(Sym('!'))]),
-      'b': C([C([C(Num(2)), C(Num(3)), C(Num(4))]),
-              C([C(Sym('b')), C(Sym('c')), C(Sym('d'))]),
-              C([C(Sym('@')), C(Sym('$')), C(Sym('%'))])]),
+      'a': C([C(1), C('a'), C('!')]),
+      'b': C([C([C(2), C(3), C(4)]),
+              C([C('b'), C('c'), C('d')]),
+              C([C('@'), C('$'), C('%')])]),
     }),
     T('((a (b c ...) ...) ...)', [],
       '((1 (2 3 4 5) (6 7 8)) (a (b c d e) (f g)) (! ($ $ $)))', {
-      'a': C([C(Num(1)), C(Sym('a')), C(Sym('!'))]),
-      'b': C([C([C(Num(2)), C(Num(6))]),
-              C([C(Sym('b')), C(Sym('f'))]),
-              C([C(Sym('$'))])]),
-      'c': C([C([C([C(Num(3)), C(Num(4)), C(Num(5))]),
-                 C([C(Num(7)), C(Num(8))])]),
-              C([C([C(Sym('c')), C(Sym('d')), C(Sym('e'))]),
-                 C([C(Sym('g'))])]),
-              C([C([C(Sym('$')), C(Sym('$'))])])])
+      'a': C([C(1), C('a'), C('!')]),
+      'b': C([C([C(2), C(6)]),
+              C([C('b'), C('f')]),
+              C([C('$')])]),
+      'c': C([C([C([C(3), C(4), C(5)]),
+                 C([C(7), C(8)])]),
+              C([C([C('c'), C('d'), C('e')]),
+                 C([C('g')])]),
+              C([C([C('$'), C('$')])])])
     }),
   ]);
 }
@@ -170,15 +166,15 @@ function testVector() {
   RunTests([
     T('(#(a b c))', [],
       '(#(1 2 3))', {
-      'a': C(Num(1)),
-      'b': C(Num(2)),
-      'c': C(Num(3))
+      'a': C(1),
+      'b': C(2),
+      'c': C(3)
     }),
     T('(#(a #(b c) ...))', [],
       '(#(1 #(2 3) #(4 5) #(6 7)))', {
-      'a': C(Num(1)),
-      'b': C([C(Num(2)), C(Num(4)), C(Num(6))]),
-      'c': C([C(Num(3)), C(Num(5)), C(Num(7))]),
+      'a': C(1),
+      'b': C([C(2), C(4), C(6)]),
+      'c': C([C(3), C(5), C(7)]),
     }),
   ]);
 }
@@ -187,14 +183,14 @@ function testDottedTail() {
   RunTests([
     T('(a . b)', [],
       '(1 2 3 4)', {
-      'a': C(Num(1)),
-      'b': C(List([Num(2), Num(3), Num(4)]))
+      'a': C(1),
+      'b': C({ 'list': [2, 3, 4] })
     }),
     T('(a . (b c))', [],
       '(1 2 3)', {
-      'a': C(Num(1)),
-      'b': C(Num(2)),
-      'c': C(Num(3))
+      'a': C(1),
+      'b': C(2),
+      'c': C(3)
     }),
   ]);
 }
@@ -212,7 +208,7 @@ function testEmptyCaptures() {
     }),
     T('#(a (b c ...) ...)', [],
       '#(42)', {
-      'a': C(Num(42)),
+      'a': C(42),
       'b': C([]),
       'c': C([C([])])
     }),

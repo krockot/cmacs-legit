@@ -51,7 +51,7 @@ ccc.syntax.Template.prototype.expand = function(captures) {
  * @param {!ccc.base.Object} template
  * @param {!ccc.syntax.CaptureIteratorSet} iterators
  * @param {!Object.<string, boolean>} usedVars
- * @return {ccc.base.Object}
+ * @return {!ccc.base.Object}
  * @private
  */
 ccc.syntax.Template.prototype.expandForm_ = function(
@@ -75,7 +75,7 @@ ccc.syntax.Template.prototype.expandForm_ = function(
  * @param {!ccc.base.Symbol} symbol
  * @param {!ccc.syntax.CaptureIteratorSet} iterators
  * @param {!Object.<string, boolean>} usedVars
- * @return {ccc.base.Object}
+ * @return {!ccc.base.Object}
  * @private
  */
 ccc.syntax.Template.prototype.expandSymbol_ = function(
@@ -98,7 +98,7 @@ ccc.syntax.Template.prototype.expandSymbol_ = function(
  * @param {!ccc.base.Object} list
  * @param {!ccc.syntax.CaptureIteratorSet} iterators
  * @param {!Object.<string, boolean>} usedVars
- * @return {ccc.base.Object}
+ * @return {!ccc.base.Object}
  * @private
  */
 ccc.syntax.Template.prototype.expandList_ = function(
@@ -117,21 +117,15 @@ ccc.syntax.Template.prototype.expandList_ = function(
       }
     }
     if (repeat) {
-      var newElements = this.expandRepeatingForm_(element, iterators, usedVars);
-      if (goog.isNull(newElements))
-        return null;
-      outputElements.push.apply(outputElements, newElements);
+      outputElements.push.apply(outputElements, this.expandRepeatingForm_(
+          element, iterators, usedVars));
     } else {
-      var newElement = this.expandForm_(element, iterators, usedVars);
-      if (goog.isNull(newElement))
-        return null;
-      outputElements.push(newElement);
+      outputElements.push(this.expandForm_(element, iterators, usedVars));
     }
     list = list.cdr();
   }
-  var tail = this.expandForm_(list, iterators, usedVars);
-  goog.asserts.assert(!goog.isNull(tail));
-  return ccc.base.Pair.makeList(outputElements, tail);
+  return ccc.base.Pair.makeList(outputElements, this.expandForm_(
+      list, iterators, usedVars));
 };
 
 
@@ -141,7 +135,7 @@ ccc.syntax.Template.prototype.expandList_ = function(
  * @param {!ccc.base.Vector} vector
  * @param {!ccc.syntax.CaptureIteratorSet} iterators
  * @param {!Object.<string, boolean>} usedVars
- * @return {ccc.base.Object}
+ * @return {!ccc.base.Object}
  * @private
  */
 ccc.syntax.Template.prototype.expandVector_ = function(
@@ -149,7 +143,7 @@ ccc.syntax.Template.prototype.expandVector_ = function(
   var outputElements = [];
   for (var i = 0; i < vector.size(); ++i) {
     var element = vector.get(i);
-    goog.asserts.assert(!goog.isNull(element));
+    /** @type {ccc.base.Object} */
     var nextElement = null;
     if (i < vector.size() - 1) {
       nextElement = vector.get(i + 1);
@@ -157,15 +151,10 @@ ccc.syntax.Template.prototype.expandVector_ = function(
     if (!goog.isNull(nextElement) && nextElement.isSymbol() &&
         nextElement.name() == ccc.syntax.Pattern.ELLIPSIS_NAME) {
       ++i;
-      var newElements = this.expandRepeatingForm_(element, iterators, usedVars);
-      if (goog.isNull(newElements))
-        return null;
-      outputElements.push.apply(outputElements, newElements);
+      outputElements.push.apply(outputElements, this.expandRepeatingForm_(
+          element, iterators, usedVars));
     } else {
-      var newElement = this.expandForm_(element, iterators, usedVars);
-      if (goog.isNull(newElement))
-        return null;
-      outputElements.push(newElement);
+      outputElements.push(this.expandForm_(element, iterators, usedVars));
     }
   }
   return new ccc.base.Vector(outputElements);
@@ -184,27 +173,37 @@ ccc.syntax.Template.prototype.expandVector_ = function(
 ccc.syntax.Template.prototype.expandRepeatingForm_ = function(
     template, iterators, usedVars) {
   var expansions = [];
-  while (true) {
-    var exhausted = false;
-    var subIterators = goog.object.map(iterators, function(iterator) {
-      if (iterator.isAtEnd()) {
-        exhausted = true;
-        return null;
-      } else {
-        return new ccc.syntax.CaptureIterator(iterator.get());
-      }
-    });
-    if (exhausted)
-      break;
 
+  /** @type {!Object.<string, boolean>} */
+  var emptyIterators = {};
+  var dummyIterator = new ccc.syntax.CaptureIterator(
+      new ccc.syntax.Capture(ccc.base.NIL));
+  var subIterators = goog.object.map(iterators, function(iterator, key) {
+    if (iterator.isAtEnd()) {
+      emptyIterators[key] = true;
+      return dummyIterator;
+    } else {
+      return new ccc.syntax.CaptureIterator(iterator.get());
+    }
+  });
+  var exhausted = false;
+  while (!exhausted) {
     var innerUsedVars = {};
     var expansion = this.expandForm_(template, subIterators, innerUsedVars);
     goog.object.extend(usedVars, innerUsedVars);
-    if (goog.isNull(expansion))
+
+    // Terminate immediately if any of the used capture variables were empty.
+    var usedEmpty = goog.object.some(innerUsedVars, function(value, key) {
+      return goog.object.containsKey(emptyIterators, key);
+    });
+    if (usedEmpty)
       break;
+
     expansions.push(expansion);
 
-    var isValid = false;
+    // Ensure that at least one non-terminal pattern variable was used.
+    // Otherwise expansion the expansion would be infinite.
+    var isFinite = false;
     goog.object.forEach(innerUsedVars, function(present, name) {
       var iterator = goog.object.get(iterators, name);
       goog.asserts.assert(goog.isDef(iterator));
@@ -212,10 +211,22 @@ ccc.syntax.Template.prototype.expandRepeatingForm_ = function(
       // At least one pattern variable with a non-terminal capture must have
       // been accessed for this to be a valid ellipsis expansion.
       if (!iterator.capture().isSingular())
-        isValid = true;
+        isFinite = true;
     });
-    if (!isValid)
+    if (!isFinite)
       throw new Error('Invalid ellipsis placement');
+
+    // Advance all non-empty iterators.
+    subIterators = goog.object.map(iterators, function(iterator, key) {
+      if (iterator.isAtEnd()) {
+        if (goog.object.containsKey(emptyIterators, key))
+          return dummyIterator;
+        exhausted = true;
+        return null;
+      } else {
+        return new ccc.syntax.CaptureIterator(iterator.get());
+      }
+    });
   }
   goog.object.forEach(iterators, function(iterator) {
     iterator.reset();

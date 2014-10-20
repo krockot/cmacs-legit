@@ -61,7 +61,7 @@ ccc.base.Vector.prototype.size = function() {
  * Returns the value at the given index.
  *
  * @param {number} index
- * @return {ccc.base.Object}
+ * @return {!ccc.base.Object}
  */
 ccc.base.Vector.prototype.get = function(index) {
   if (index >= this.elements_.length)

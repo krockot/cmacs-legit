@@ -18,6 +18,7 @@ var DEFINE_SYNTAX = ccc.syntax.DEFINE_SYNTAX;
 var IF = ccc.syntax.IF;
 var LAMBDA = ccc.syntax.LAMBDA;
 var LET = ccc.syntax.LET;
+var LET_SYNTAX = ccc.syntax.LET_SYNTAX;
 var LETSEQ = ccc.syntax.LET_SEQUENTIAL;
 var LETREC = ccc.syntax.LETREC;
 var QUOTE = ccc.syntax.QUOTE;
@@ -75,9 +76,9 @@ var TE = function(
       ? opt_environment
       : new ccc.base.Environment());
   var evaluator = new ccc.base.Evaluator(environment);
-  var args = ccc.base.build(argsSpec);
-  return transformer.transform(environment, args).then(function(transformed) {
-    return evaluator.evalObject(transformed).then(function(result) {
+  var form = new ccc.base.Pair(transformer, ccc.base.build(argsSpec));
+  return form.compile(environment).then(function(compiledForm) {
+    return evaluator.evalObject(compiledForm).then(function(result) {
       if (goog.isDef(opt_expectedOutputSpec)) {
         var expectedOutput = ccc.base.build(opt_expectedOutputSpec);
         if (!result.equal(expectedOutput))
@@ -97,12 +98,11 @@ var TL = function(
       ? opt_environment
       : new ccc.base.Environment());
   var evaluator = new ccc.base.Evaluator();
-  var formalsAndBody = ccc.base.build(formalsAndBodySpec);
+  var form = new ccc.base.Pair(LAMBDA, ccc.base.build(formalsAndBodySpec));
   var args = ccc.base.build(argsSpec);
-  return LAMBDA.transform(environment, formalsAndBody).then(function(
-      procedureGenerator) {
-    var expr = new ccc.base.Pair(procedureGenerator, args);
-    return evaluator.evalObject(expr).then(function(result) {
+  return form.compile(environment).then(function(procedureGenerator) {
+    var callExpr = new ccc.base.Pair(procedureGenerator, args);
+    return evaluator.evalObject(callExpr).then(function(result) {
       if (goog.isDef(opt_expectedOutputSpec)) {
         var expectedOutput = ccc.base.build(opt_expectedOutputSpec);
         if (!result.equal(expectedOutput))
@@ -378,4 +378,13 @@ function testBegin() {
   });
   TE(BEGIN, [[native1], [native2], [native3]], 3).then(
       continueTesting, justFail);
+}
+
+function testLet() {
+  asyncTestCase.waitForAsync();
+  var environment = new ccc.base.Environment();
+  environment.set('foo', new ccc.base.Number(9));
+  TE(LET, [[['foo', 42]], 'foo'], 42).then(function() {
+    assert(environment.get('foo').eq(new ccc.base.Number(9)));
+  }).then(continueTesting, justFail);
 }

@@ -90,6 +90,12 @@ var TE = function(
   });
 };
 
+var FE = function(transformer, argsSpec) {
+  return TE(transformer, argsSpec).then(
+      goog.partial(justFail, 'Expected failure; got success'),
+      function() {});
+};
+
 // Single test case which transforms a supplied lambda expression and applies
 // it to a list of arguments, validating the result.
 var TL = function(
@@ -384,7 +390,20 @@ function testLet() {
   asyncTestCase.waitForAsync();
   var environment = new ccc.base.Environment();
   environment.set('foo', new ccc.base.Number(9));
-  TE(LET, [[['foo', 42]], 'foo'], 42).then(function() {
-    assert(environment.get('foo').eq(new ccc.base.Number(9)));
-  }).then(continueTesting, justFail);
+  RunTests([
+    // |foo| will be bound within the closure but retain its outer binding after
+    TE(LET, [[['foo', 42]], 'foo'], 42).then(function() {
+      assert(environment.get('foo').eq(new ccc.base.Number(9)));
+    }),
+    // Will throw an error because |bar| is unbound during |foo| binding
+    FE(LET, [[['bar', 42], ['foo', 'bar']], 'foo'])
+  ]).then(continueTesting, justFail);
+}
+
+function testLetSeq() {
+  asyncTestCase.waitForAsync();
+  var environment = new ccc.base.Environment();
+  RunTests([
+    TE(LETSEQ, [[['foo', 42], ['bar', 'foo']], 'bar'], 42),
+  ]).then(continueTesting, justFail);
 }

@@ -407,3 +407,33 @@ function testLetSeq() {
     TE(LETSEQ, [[['foo', 42], ['bar', 'foo']], 'bar'], 42),
   ]).then(continueTesting, justFail);
 }
+
+function testLetRec() {
+  asyncTestCase.waitForAsync();
+  var environment = new ccc.base.Environment();
+  var isZero = new ccc.base.NativeProcedure(
+      function(environment, args, continuation) {
+    return continuation((args.isPair() && args.car().isNumber() &&
+        args.car().value() == 0) ? ccc.base.T : ccc.base.F);
+  });
+  var minusOne = new ccc.base.NativeProcedure(
+      function(environment, args, continuation) {
+    return continuation(new ccc.base.Number(args.car().value() - 1));
+  });
+  var addOne = new ccc.base.NativeProcedure(
+      function(environment, args, continuation) {
+    return continuation(new ccc.base.Number(args.car().value() + 1));
+  })
+  environment.set('z', new ccc.base.Number(0));
+  RunTests([
+    TE(LETREC, [
+        [['f', [LAMBDA, ['x'],
+                  [IF, [isZero, 'x'], true, ['g', 'x']]]],
+         ['g', [LAMBDA, ['x'],
+                  [SET, 'z', [addOne, 'z']],
+                  ['f', [minusOne, 'x']]]]],
+        ['f', 10]], undefined, environment).then(function() {
+      assert(environment.get('z').eq(new ccc.base.Number(10)));
+    }),
+  ]).then(continueTesting, justFail);
+}

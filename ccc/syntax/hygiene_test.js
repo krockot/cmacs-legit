@@ -7,6 +7,7 @@ goog.require('ccc.base')
 goog.require('ccc.syntax');
 goog.require('ccc.syntax.buildTransformer');
 goog.require('ccc.syntax.buildRule');
+goog.require('goog.Promise');
 goog.require('goog.testing.AsyncTestCase');
 goog.require('goog.testing.jsunit');
 
@@ -38,36 +39,31 @@ function continueTesting() {
 }
 
 function justFail(reason) {
-  continueTesting();
   console.error(goog.isDef(reason.stack) ? reason.stack : reason);
   fail(reason);
 }
 
 function T(programSpec, expectedOutput, opt_environment) {
-  var environment = (goog.isDef(opt_environment)
-      ? opt_environment
-      : new ccc.base.Environment);
-  var program = ccc.base.build(programSpec);
-  var evaluator = new ccc.base.Evaluator(environment);
-  return program.compile(environment).then(function(compiledProgram) {
-    return evaluator.evalObject(compiledProgram);
-  }).then(function(result) {
-    if (!result.equal(ccc.base.build(expectedOutput))) {
-      return goog.Promise.reject(new Error('Object mismatch.\n' +
-          'Expected: ' + expectedOutput.toString() +
-          '\nActual: ' + result.toString() + '\n'));
-    }
+  return new goog.Promise(function(resolve, reject) {
+    var environment = (goog.isDef(opt_environment)
+        ? opt_environment
+        : new ccc.base.Environment);
+    var program = ccc.base.build(programSpec);
+    var evaluator = new ccc.base.Evaluator(environment);
+    return program.compile(environment).then(function(compiledProgram) {
+      return evaluator.evalObject(compiledProgram).then(function(result) {
+        if (!result.equal(ccc.base.build(expectedOutput))) {
+          return goog.Promise.reject(new Error('Object mismatch.\n' +
+              'Expected: ' + expectedOutput.toString() +
+              '\nActual: ' + result.toString() + '\n'));
+        }
+      });
+    }).then(resolve, reject);
   });
 }
 
-function F(programSpec) {
-  return T(programSpec, []).then(
-      goog.partial(justFail, new Error('Expected failure, got success')),
-      function() {});
-}
-
 function RunTests(tests) {
-  asyncTestCase.waitForAsync()
+  asyncTestCase.waitForAsync();
   return goog.Promise.all(tests).then(continueTesting, justFail);
 }
 
@@ -92,7 +88,8 @@ function testLocalUseBindingsShadowRuleBindings() {
      *
      * which is perfectly legal and evaluates to 'ok.
      */
-    T([LET, [['=>', false]], [COND, [true, '=>', [QUOTE, 'ok']]]],
+    T([LET, [['=>', false]],
+        [COND, [true, '=>', [QUOTE, 'ok']]]],
       'ok'),
   ]);
 }
@@ -122,33 +119,33 @@ function testLetSyntaxEnvironmentIsolation() {
      * applicable or because the expanded form will try to evaluate the IF
      * transformer.
      */
-     T([LET_SYNTAX, [['when', [SYNTAX_RULES, [],
+    T([LET_SYNTAX, [['when', [SYNTAX_RULES, [],
                           [['when', 'test', 'stmt0', 'stmt', '...'],
                            [IF, 'test', [BEGIN, 'stmt0', 'stmt', '...']]]]]],
           [LET, [['if', true]],
-            ['when', 'if', [SET, 'if', [QUOTE, 'now']]],
+            //['when', 'if', [SET, 'if', [QUOTE, 'now']]],
             'if']],
-       'now'),
+      true, environment),
   ]);
 }
 
 function testEmittedSymbolLiteralsEvaluateInCapturedEnvironment() {
   RunTests([
-     /**
-      * Another example from R5RS 4.3.1.
-      *
-      * (let ((x 'outer))
-      *   (let-syntax ((m (syntax-rules () ((m) x))))
-      *     (let ((x 'inner))
-      *       (m))))
-      *
-      * This should evaluate to 'outer. Because the symbol 'x is emitted by
-      * the expansion rather than via capture substitution, it's evaluated in
-      * the environment of the transformer rather than of that of the
-      * invocation.
-      *
-      * If this isn't working correctly, the output will likely be 'inner.
-      */
+    /**
+     * Another example from R5RS 4.3.1.
+     *
+     * (let ((x 'outer))
+     *   (let-syntax ((m (syntax-rules () ((m) x))))
+     *     (let ((x 'inner))
+     *       (m))))
+     *
+     * This should evaluate to 'outer. Because the symbol 'x is emitted by
+     * the expansion rather than via capture substitution, it's evaluated in
+     * the environment of the transformer rather than of that of the
+     * invocation.
+     *
+     * If this isn't working correctly, the output will likely be 'inner.
+     */
     T([LET, [['x', [QUOTE, 'outer']]],
         [LET_SYNTAX, [['m', [SYNTAX_RULES, [], [['m'], 'x']]]],
           [LET, [['x', [QUOTE, 'inner']]],

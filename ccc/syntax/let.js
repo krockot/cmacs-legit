@@ -20,7 +20,6 @@ ccc.syntax.LET = ccc.syntax.buildTransformer([
     // (((var expr) ...) body0 body ...)
     [[['var', 'expr'], '...'], 'body0', 'body', '...'],
     // ((lambda (var ...) body0 body ...) expr ...)
-    [[ccc.syntax.LAMBDA, ['var', '...'], 'body0', 'body', '...'],
-      'expr', '...']
+    [[ccc.syntax.LAMBDA, ['var', '...'], 'body0', 'body', '...'], 'expr', '...']
   ]
 ]);

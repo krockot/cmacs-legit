@@ -52,7 +52,7 @@ function T(programSpec, expectedOutput, opt_environment) {
   return program.compile(environment).then(function(compiledProgram) {
     return evaluator.evalObject(compiledProgram);
   }).then(function(result) {
-    if (!result.equal(expectedOutput)) {
+    if (!result.equal(ccc.base.build(expectedOutput))) {
       return goog.Promise.reject(new Error('Object mismatch.\n' +
           'Expected: ' + expectedOutput.toString() +
           '\nActual: ' + result.toString() + '\n'));
@@ -93,6 +93,66 @@ function testLocalUseBindingsShadowRuleBindings() {
      * which is perfectly legal and evaluates to 'ok.
      */
     T([LET, [['=>', false]], [COND, [true, '=>', [QUOTE, 'ok']]]],
-      [QUOTE, 'ok']),
+      'ok'),
+  ]);
+}
+
+function testLetSyntaxEnvironmentIsolation() {
+  var environment = new ccc.base.Environment();
+  environment.set('if', IF);
+
+  RunTests([
+    /**
+     * An example from R5RS section 4.3.1.
+     *
+     * (let-syntax ((when (syntax-rules ()
+     *                      ((when test stmt0 stmt ...)
+     *                       (if test
+     *                           (begin stmt0
+     *                                  stmt ...))))))
+     *   (let ((if #t))
+     *     (when if (set! if 'now))
+     *     if))
+     *
+     * This should evaluate to 'now, because the 'if within the syntax rules
+     * is expanded outside of the inner LET's environment, and the expansion is
+     * in turn evaluated within the inner LET's environment.
+     *
+     * If things are awry, this can likely fail either because #t is not
+     * applicable or because the expanded form will try to evaluate the IF
+     * transformer.
+     */
+     T([LET_SYNTAX, [['when', [SYNTAX_RULES, [],
+                          [['when', 'test', 'stmt0', 'stmt', '...'],
+                           [IF, 'test', [BEGIN, 'stmt0', 'stmt', '...']]]]]],
+          [LET, [['if', true]],
+            ['when', 'if', [SET, 'if', [QUOTE, 'now']]],
+            'if']],
+       'now'),
+  ]);
+}
+
+function testEmittedSymbolLiteralsEvaluateInCapturedEnvironment() {
+  RunTests([
+     /**
+      * Another example from R5RS 4.3.1.
+      *
+      * (let ((x 'outer))
+      *   (let-syntax ((m (syntax-rules () ((m) x))))
+      *     (let ((x 'inner))
+      *       (m))))
+      *
+      * This should evaluate to 'outer. Because the symbol 'x is emitted by
+      * the expansion rather than via capture substitution, it's evaluated in
+      * the environment of the transformer rather than of that of the
+      * invocation.
+      *
+      * If this isn't working correctly, the output will likely be 'inner.
+      */
+    T([LET, [['x', [QUOTE, 'outer']]],
+        [LET_SYNTAX, [['m', [SYNTAX_RULES, [], [['m'], 'x']]]],
+          [LET, [['x', [QUOTE, 'inner']]],
+            ['m']]]],
+      'outer'),
   ]);
 }

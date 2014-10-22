@@ -19,7 +19,7 @@ goog.require('goog.object');
  *
  * @param {!Array.<!Array>} ruleSpecs
  * @param {!Array.<string>=} opt_literals
- * @return {!ccc.syntax.Rule}
+ * @return {!Array.<!ccc.syntax.Rule>}
  * @public
  */
 ccc.syntax.buildRules = function(ruleSpecs, opt_literals) {
@@ -27,6 +27,8 @@ ccc.syntax.buildRules = function(ruleSpecs, opt_literals) {
       ? goog.object.createSet(opt_literals)
       : {});
   return goog.array.map(ruleSpecs, function(spec) {
+    goog.asserts.assert(spec.length == 2,
+        'Each builder rule must be of the form [pattern, template]');
     var pattern = new ccc.syntax.Pattern(literals, ccc.base.build(spec[0]));
     var template = new ccc.syntax.Template(ccc.base.build(spec[1]));
     return new ccc.syntax.Rule(pattern, template);
@@ -45,10 +47,6 @@ ccc.syntax.buildRules = function(ruleSpecs, opt_literals) {
  * @public
  */
 ccc.syntax.buildTransformer = function(ruleSpecs, opt_literals) {
-  var rules = goog.array.map(ruleSpecs, function(spec) {
-    goog.asserts.assert(spec.length == 2,
-        'Each builder rule must be of the form [pattern, template]');
-    return ccc.syntax.buildRule(spec[0], spec[1], opt_literals);
-  });
-  return new ccc.syntax.RuleBasedTransformer(rules);
+  return new ccc.syntax.RuleBasedTransformer(ccc.syntax.buildRules(
+      ruleSpecs, opt_literals));
 };

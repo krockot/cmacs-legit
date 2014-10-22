@@ -29,10 +29,11 @@ ccc.syntax.LET_SEQUENTIAL = ccc.syntax.buildTransformer([
 ]);
 
 // let* with one or more bindings specified.
-ccc.syntax.LET_SEQUENTIAL.addRule(ccc.syntax.buildRule(
-    // (((var0 expr0) (var expr) ...) body0 body ...)
-    [[['var0', 'expr0'], ['var', 'expr'], '...'], 'body0', 'body', '...'],
-    // ((lambda (var0) (let* ((var expr) ...) body0 body ...)) expr0)
-    [[ccc.syntax.LAMBDA, ['var0'],
-      [ccc.syntax.LET_SEQUENTIAL, [['var', 'expr'], '...'],
-          'body0', 'body', '...']], 'expr0']));
+ccc.syntax.LET_SEQUENTIAL.addRules(ccc.syntax.buildRules([
+  // (((var0 expr0) (var expr) ...) body0 body ...)
+  [[['var0', 'expr0'], ['var', 'expr'], '...'], 'body0', 'body', '...'],
+  // ((lambda (var0) (let* ((var expr) ...) body0 body ...)) expr0)
+  [[ccc.syntax.LAMBDA, ['var0'],
+    [ccc.syntax.LET_SEQUENTIAL, [['var', 'expr'], '...'],
+        'body0', 'body', '...']], 'expr0']
+]));

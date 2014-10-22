@@ -29,13 +29,14 @@ ccc.syntax.LETREC_HELPER_ = ccc.syntax.buildTransformer([
 
 
 // Helper with at least one binding
-ccc.syntax.LETREC_HELPER_.addRule(ccc.syntax.buildRule(
+ccc.syntax.LETREC_HELPER_.addRules(ccc.syntax.buildRules([
   // ((var0 var ...) body0 body ...)
   [['var0', 'var', '...'], 'body0', 'body', '...'],
   // ((lambda (var0) (<HELPER> (var ...) body0 body ...)) #?)
   [[ccc.syntax.LAMBDA, ['var0'],
     [ccc.syntax.LETREC_HELPER_, ['var', '...'], 'body0', 'body', '...']],
-    undefined]));
+    undefined]
+]));
 
 
 

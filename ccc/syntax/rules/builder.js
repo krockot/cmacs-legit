@@ -17,19 +17,20 @@ goog.require('goog.object');
 /**
  * Builds a single transformer rule form pattern and template object specs.
  *
- * @param {*} patternSpec
- * @param {*} templateSpec
+ * @param {!Array.<!Array>} ruleSpecs
  * @param {!Array.<string>=} opt_literals
  * @return {!ccc.syntax.Rule}
  * @public
  */
-ccc.syntax.buildRule = function(patternSpec, templateSpec, opt_literals) {
+ccc.syntax.buildRules = function(ruleSpecs, opt_literals) {
   var literals = (goog.isDef(opt_literals)
       ? goog.object.createSet(opt_literals)
       : {});
-  var pattern = new ccc.syntax.Pattern(literals, ccc.base.build(patternSpec));
-  var template = new ccc.syntax.Template(ccc.base.build(templateSpec));
-  return new ccc.syntax.Rule(pattern, template);
+  return goog.array.map(ruleSpecs, function(spec) {
+    var pattern = new ccc.syntax.Pattern(literals, ccc.base.build(spec[0]));
+    var template = new ccc.syntax.Template(ccc.base.build(spec[1]));
+    return new ccc.syntax.Rule(pattern, template);
+  });
 };
 
 

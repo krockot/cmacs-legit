@@ -3,6 +3,7 @@
 goog.provide('ccc.syntax');
 
 goog.require('ccc.syntax.BEGIN');
+goog.require('ccc.syntax.COND');
 goog.require('ccc.syntax.DEFINE');
 goog.require('ccc.syntax.DEFINE_SYNTAX');
 goog.require('ccc.syntax.IF');

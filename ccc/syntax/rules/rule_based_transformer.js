@@ -40,23 +40,24 @@ ccc.syntax.RuleBasedTransformer.prototype.toString = function() {
 /** @override */
 ccc.syntax.RuleBasedTransformer.prototype.transform = function(
     environment, args) {
-  return new goog.Promise(function(resolve, reject) {
-    for (var i = 0; i < this.rules_.length; ++i) {
-      var rule = this.rules_[i];
-      var match = rule.pattern.match(args);
-      if (match.success) {
-        var expansion = rule.template.expand(match.captures);
-        if (goog.isDef(this.capturedEnvironment_)) {
-          resolve(ccc.base.build([[ccc.syntax.LAMBDA, [], expansion]]).compile(
-              this.capturedEnvironment_));
-        } else {
-          resolve(expansion);
-        }
-        return;
+  for (var i = 0; i < this.rules_.length; ++i) {
+    var rule = this.rules_[i];
+    var match = rule.pattern.match(args);
+    if (match.success) {
+      var expansion = rule.template.expand(match.captures);
+      if (goog.isDef(this.capturedEnvironment_)) {
+        var lambda = ccc.base.Pair.makeList([ccc.syntax.LAMBDA, ccc.base.NIL,
+            expansion]);
+        var call = new ccc.base.Pair(lambda, ccc.base.NIL);
+        return call.compile(this.capturedEnvironment_);
+      } else {
+        return goog.Promise.resolve(expansion);
       }
+      return;
     }
-    reject(new Error('Special form did not match any syntax rules'));
-  }, this);
+  }
+  return goog.Promise.reject(new Error(
+      'Special form did not match any syntax rules'));
 };
 
 

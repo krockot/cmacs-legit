@@ -41,6 +41,12 @@ ccc.base.Environment.prototype.isEnvironment = function() {
 };
 
 
+/** @override */
+ccc.base.Environment.prototype.eval = function(environment, continuation) {
+  return continuation(this);
+};
+
+
 /**
  * Binds a name to a value in the local frame of this environment.
  *

@@ -31,6 +31,12 @@ ccc.base.Transformer.prototype.isTransformer = function() {
 };
 
 
+/** @override */
+ccc.base.Transformer.prototype.eval = function(environment, continuation) {
+  return continuation(this);
+};
+
+
 /**
  * If a Transformer occurs at the head of a list at compile time, its
  * {@code transform} is called on the remainder of the list. The entire list is

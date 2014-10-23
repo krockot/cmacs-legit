@@ -26,9 +26,8 @@ var SET = ccc.syntax.SET;
 var SYNTAX_RULES = ccc.syntax.SYNTAX_RULES;
 
 function setUpPage() {
-  asyncTestCase.stepTimeout = 100;
-
-  goog.Promise.setUnhandledRejectionHandler(justFail);
+  asyncTestCase.stepTimeout = 50;
+  asyncTestCase.timeToSleepAfterFailure = 50;
 }
 
 function continueTesting() {
@@ -36,9 +35,9 @@ function continueTesting() {
 }
 
 function justFail(reason) {
-  continueTesting();
-  reason && reason.stack && console.error(reason.stack);
-  fail(reason);
+  console.error(goog.isDef(reason) && goog.isDef(reason.stack)
+      ? reason.stack : reason);
+  setTimeout(goog.partial(fail, reason), 0);
 }
 
 // Single test case which applies a transformer to a list and validates the

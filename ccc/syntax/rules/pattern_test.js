@@ -16,8 +16,8 @@ goog.require('goog.testing.jsunit');
 var asyncTestCase = goog.testing.AsyncTestCase.createAndInstall(document.title);
 
 function setUpPage() {
-  asyncTestCase.stepTimeout = 100;
-  goog.Promise.setUnhandledRejectionHandler(justFail);
+  asyncTestCase.stepTimeout = 50;
+  asyncTestCase.timeToSleepAfterFailure = 50;
 }
 
 function continueTesting() {
@@ -25,9 +25,9 @@ function continueTesting() {
 }
 
 function justFail(reason) {
-  continueTesting();
-  console.error(goog.isDef(reason.stack) ? reason.stack : reason);
-  fail(reason);
+  console.error(goog.isDef(reason) && goog.isDef(reason.stack)
+      ? reason.stack : reason);
+  setTimeout(goog.partial(fail, reason), 0);
 }
 
 function readObject(code) {

@@ -30,8 +30,8 @@ var SET = ccc.syntax.SET;
 var SYNTAX_RULES = ccc.syntax.SYNTAX_RULES;
 
 function setUpPage() {
-  asyncTestCase.stepTimeout = 100;
-  goog.Promise.setUnhandledRejectionHandler(justFail);
+  asyncTestCase.stepTimeout = 50;
+  asyncTestCase.timeToSleepAfterFailure = 50;
 }
 
 function continueTesting() {
@@ -39,26 +39,25 @@ function continueTesting() {
 }
 
 function justFail(reason) {
-  console.error(goog.isDef(reason.stack) ? reason.stack : reason);
-  fail(reason);
+  console.error(goog.isDef(reason) && goog.isDef(reason.stack)
+      ? reason.stack : reason);
+  setTimeout(goog.partial(fail, reason), 0);
 }
 
 function T(programSpec, expectedOutput, opt_environment) {
-  return new goog.Promise(function(resolve, reject) {
-    var environment = (goog.isDef(opt_environment)
-        ? opt_environment
-        : new ccc.base.Environment);
-    var program = ccc.base.build(programSpec);
-    var evaluator = new ccc.base.Evaluator(environment);
-    return program.compile(environment).then(function(compiledProgram) {
-      return evaluator.evalObject(compiledProgram).then(function(result) {
-        if (!result.equal(ccc.base.build(expectedOutput))) {
-          return goog.Promise.reject(new Error('Object mismatch.\n' +
-              'Expected: ' + expectedOutput.toString() +
-              '\nActual: ' + result.toString() + '\n'));
-        }
-      });
-    }).then(resolve, reject);
+  var environment = (goog.isDef(opt_environment)
+      ? opt_environment
+      : new ccc.base.Environment);
+  var program = ccc.base.build(programSpec);
+  var evaluator = new ccc.base.Evaluator(environment);
+  return program.compile(environment).then(function(compiledProgram) {
+    return evaluator.evalObject(compiledProgram);
+  }).then(function(result) {
+    if (!result.equal(ccc.base.build(expectedOutput))) {
+      return goog.Promise.reject(new Error('Object mismatch.\n' +
+          'Expected: ' + expectedOutput.toString() +
+          '\nActual: ' + result.toString() + '\n'));
+    }
   });
 }
 

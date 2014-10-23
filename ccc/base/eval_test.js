@@ -13,7 +13,8 @@ var asyncTestCase = goog.testing.AsyncTestCase.createAndInstall(document.title);
 var List = ccc.base.Pair.makeList;
 
 function setUpPage() {
-  asyncTestCase.stepTimeout = 200;
+  asyncTestCase.stepTimeout = 50;
+  asyncTestCase.timeToSleepAfterFailure = 50;
   goog.Promise.setUnhandledRejectionHandler(justFail);
 }
 
@@ -22,9 +23,9 @@ function continueTesting() {
 }
 
 function justFail(reason) {
-  asyncTestCase.continueTesting();
-  console.error(goog.isDef(reason.stack) ? reason.stack : reason);
-  fail(reason);
+  console.error(goog.isDef(reason) && goog.isDef(reason.stack)
+      ? reason.stack : reason);
+  setTimeout(goog.partial(fail, reason), 0);
 }
 
 // Single eval test. Takes an input object and an expected output object.

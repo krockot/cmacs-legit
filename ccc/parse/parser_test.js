@@ -16,7 +16,8 @@ var K = ccc.parse.TokenType;
 var asyncTestCase = goog.testing.AsyncTestCase.createAndInstall(document.title);
 
 function setUpPage() {
-  asyncTestCase.stepTimeout = 200;
+  asyncTestCase.stepTimeout = 50;
+  asyncTestCase.timeToSleepAfterFailure = 50;
 }
 
 function continueTesting() {
@@ -24,9 +25,9 @@ function continueTesting() {
 }
 
 function justFail(reason) {
-  console.error(reason.stack);
-  continueTesting();
-  fail(reason);
+  console.error(goog.isDef(reason) && goog.isDef(reason.stack)
+      ? reason.stack : reason);
+  setTimeout(goog.partial(fail, reason), 0);
 }
 
 // Simplified token constructors for test setup.

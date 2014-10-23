@@ -122,9 +122,9 @@ function testLetSyntaxEnvironmentIsolation() {
                           [['when', 'test', 'stmt0', 'stmt', '...'],
                            [IF, 'test', [BEGIN, 'stmt0', 'stmt', '...']]]]]],
           [LET, [['if', true]],
-            //['when', 'if', [SET, 'if', [QUOTE, 'now']]],
+            ['when', 'if', [SET, 'if', [QUOTE, 'now']]],
             'if']],
-      true, environment),
+      'now', environment),
   ]);
 }
 

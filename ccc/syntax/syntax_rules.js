@@ -65,7 +65,8 @@ ccc.syntax.SyntaxRulesTransformer_.prototype.transform = function(
   }
   if (!rulesList.isNil())
     return goog.Promise.reject(new Error('syntax-rules: Invalid rules list'));
-  return goog.Promise.resolve(new ccc.syntax.RuleBasedTransformer(rules));
+  return goog.Promise.resolve(new ccc.syntax.RuleBasedTransformer(rules,
+      environment));
 };
 
 

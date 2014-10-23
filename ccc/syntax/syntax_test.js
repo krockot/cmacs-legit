@@ -342,6 +342,7 @@ function testDefineSyntax() {
 function testSyntaxRules() {
   asyncTestCase.waitForAsync();
   var environment = new ccc.base.Environment();
+  environment.set('quote', QUOTE);
 
   var literals = ['::'];
 
@@ -351,14 +352,14 @@ function testSyntaxRules() {
 
   // Match (_ 2 :: a) and expand to (quote a a)
   var pattern2 = ['_', 2, '::', 'a'];
-  var template2 = ['quote', 'a', 'a'];
+  var template2 = ['quote', ['a', 'a']];
 
   var rules = [literals, [pattern1, template1], [pattern2, template2]];
 
-  T(SYNTAX_RULES, rules).then(function(transformer) {
+  T(SYNTAX_RULES, rules, undefined, environment).then(function(transformer) {
     return RunTests([
-      T(transformer, [1, '::', 'foo'], ['quote', 'foo']),
-      T(transformer, [2, '::', 'foo'], ['quote', 'foo', 'foo']),
+      TE(transformer, [1, '::', 'foo'], 'foo'),
+      TE(transformer, [2, '::', 'foo'], ['foo', 'foo']),
       F(transformer, [3, '::', 'foo']),
     ]);
   }).then(continueTesting, justFail);

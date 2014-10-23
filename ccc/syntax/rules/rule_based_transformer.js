@@ -16,13 +16,17 @@ goog.require('goog.Promise');
  * {@code ccc.syntax.Rule}.
  *
  * @param {!Array.<!ccc.syntax.Rule>} rules
+ * @param {!ccc.base.Environment=} opt_environment
  * @constructor
  * @extends {ccc.base.Transformer}
  * @public
  */
-ccc.syntax.RuleBasedTransformer = function(rules) {
+ccc.syntax.RuleBasedTransformer = function(rules, opt_environment) {
   /** @private {!Array.<!ccc.syntax.Rule>} */
   this.rules_ = rules;
+
+  /** @private {!ccc.base.Environment|undefined} */
+  this.capturedEnvironment_ = opt_environment;
 };
 goog.inherits(ccc.syntax.RuleBasedTransformer, ccc.base.Transformer);
 
@@ -41,7 +45,14 @@ ccc.syntax.RuleBasedTransformer.prototype.transform = function(
       var rule = this.rules_[i];
       var match = rule.pattern.match(args);
       if (match.success) {
-        return resolve(rule.template.expand(match.captures));
+        var expansion = rule.template.expand(match.captures);
+        if (goog.isDef(this.capturedEnvironment_)) {
+          resolve(ccc.base.build([[ccc.syntax.LAMBDA, [], expansion]]).compile(
+              this.capturedEnvironment_));
+        } else {
+          resolve(expansion);
+        }
+        return;
       }
     }
     reject(new Error('Special form did not match any syntax rules'));

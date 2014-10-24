@@ -50,10 +50,8 @@ ccc.syntax.RuleBasedTransformer.prototype.transform = function(
             expansion]);
         var call = new ccc.base.Pair(lambda, ccc.base.NIL);
         return call.compile(this.capturedEnvironment_);
-      } else {
-        return goog.Promise.resolve(expansion);
       }
-      return;
+      return goog.Promise.resolve(expansion);
     }
   }
   return goog.Promise.reject(new Error(

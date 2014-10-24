@@ -90,7 +90,7 @@ ccc.base.Procedure.prototype.apply = function(environment, args, continuation) {
   }
 
   return goog.partial(ccc.base.Procedure.evalBodyContinuationImpl_,
-      innerScope, continuation, this.body_, ccc.base.NIL);
+      this.scope_, innerScope, continuation, this.body_, ccc.base.NIL);
 };
 
 
@@ -98,7 +98,8 @@ ccc.base.Procedure.prototype.apply = function(environment, args, continuation) {
  * Unbound continuation used to step through expressions in the procedure's
  * body. The tail expression is passed the calling continuation.
  *
- * @param {!ccc.base.Environment} environment
+ * @param {!ccc.base.Environment} outerEnvironment
+ * @param {!ccc.base.Environment} innerEnvironment
  * @param {!ccc.base.Continuation} continuation
  * @param {!ccc.base.Object} form
  * @param {ccc.base.Object} unusedValue
@@ -107,13 +108,15 @@ ccc.base.Procedure.prototype.apply = function(environment, args, continuation) {
  * @private
  */
 ccc.base.Procedure.evalBodyContinuationImpl_ = function(
-    environment, continuation, form, unusedValue, opt_error) {
+    outerEnvironment, innerEnvironment, continuation, form, unusedValue,
+    opt_error) {
+  outerEnvironment.setActiveFrame(innerEnvironment);
   if (goog.isDef(opt_error))
     return continuation(null, opt_error);
   goog.asserts.assert(form.isPair());
   if (form.cdr().isNil())
-    return form.car().eval(environment, continuation)
-  return form.car().eval(environment, goog.partial(
+    return form.car().eval(innerEnvironment, continuation)
+  return form.car().eval(innerEnvironment, goog.partial(
       ccc.base.Procedure.evalBodyContinuationImpl_,
-      environment, continuation, form.cdr()));
+      outerEnvironment, innerEnvironment, continuation, form.cdr()));
 };

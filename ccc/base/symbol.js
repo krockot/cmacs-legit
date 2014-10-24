@@ -53,7 +53,7 @@ ccc.base.Symbol.prototype.name = function() {
 /** @override */
 ccc.base.Symbol.prototype.eval = function(environment, continuation) {
   var value = environment.get(this.name_);
-  if (goog.isNull(value))
+  if (!goog.isDef(value) || goog.isNull(value))
     return continuation(null, new Error('Unbound symbol: ' + this.name_));
   return continuation(value);
 };

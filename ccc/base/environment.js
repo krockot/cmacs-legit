@@ -21,8 +21,10 @@ ccc.base.Environment = function(opt_parent) {
   this.parent_ = goog.isDef(opt_parent) ? opt_parent : null;
 
   /**
-   * The set of active bindings local to this environment.
-   * @private {!Object.<string, !ccc.base.Object>}
+   * The set of active bindings local to this environment. A name bound to
+   * {@code null} during compilation indicates that a proper binding with that
+   * name will exist in the environment at evaluation time.
+   * @private {!Object.<string, ccc.base.Object>}
    */
   this.bindings_ = {};
 
@@ -68,14 +70,26 @@ ccc.base.Environment.prototype.set = function(name, value) {
 
 
 /**
- * Gets the value bound to a name or {@code null} if no such binding exists.
+ * Reserves a name (binds it to {@code null}) in the environment.
  *
  * @param {string} name
  */
+ccc.base.Environment.prototype.reserve = function(name) {
+  this.bindings_[name] = null;
+};
+
+
+/**
+ * Gets the value bound to a name. Returns {@code undefined} if the binding
+ * does not exist or {@code null} if it's not bound to a value.
+ *
+ * @param {string} name
+ * @return {ccc.base.Object|undefined}
+ */
 ccc.base.Environment.prototype.get = function(name) {
   var environment = goog.isNull(this.activeFrame_) ? this : this.activeFrame_;
-  var value = goog.object.get(environment.bindings_, name, null);
-  if (goog.isNull(value) && !goog.isNull(this.parent_))
+  var value = goog.object.get(environment.bindings_, name);
+  if (!goog.isDef(value) && !goog.isNull(this.parent_))
     return this.parent_.get(name);
   return value;
 };

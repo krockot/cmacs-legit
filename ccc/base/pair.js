@@ -115,7 +115,7 @@ ccc.base.Pair.prototype.compile = function(environment) {
   return this.car_.compile(environment).then(function(compiledHead) {
     if (compiledHead.isSymbol()) {
       var headValue = environment.get(compiledHead.name());
-      if (!goog.isNull(headValue) && headValue.isTransformer()) {
+      if (headValue instanceof ccc.base.Object && headValue.isTransformer()) {
         return headValue.transform(environment, this.cdr_).then(
             function(transformed) {
           return transformed.compile(environment);

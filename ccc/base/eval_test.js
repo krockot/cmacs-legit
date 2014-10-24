@@ -106,7 +106,7 @@ function testEnvironment() {
   assertEquals(ccc.base.T, outer.get('y'));
   assertEquals(ccc.base.T, inner.get('y'));
   assertEquals(ccc.base.NIL, inner.get('z'));
-  assertNull(outer.get('z'));
+  assertUndefined(outer.get('z'));
 }
 
 function testSelfEvaluators() {

@@ -70,7 +70,8 @@ ccc.syntax.LambdaTransformer_.generateProcedure_ = function(
     formals, body, environment, args, continuation) {
   goog.asserts.assert(args.isNil(),
       'Compiled procedure generator should never receive arguments.');
-  return continuation(new ccc.base.Procedure(environment, formals, body));
+  var scope = new ccc.base.Environment(environment);
+  return continuation(new ccc.base.Procedure(scope, formals, body));
 };
 
 

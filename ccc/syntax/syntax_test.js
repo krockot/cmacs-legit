@@ -102,7 +102,7 @@ var TL = function(
   var environment = (goog.isDef(opt_environment)
       ? opt_environment
       : new ccc.base.Environment());
-  var evaluator = new ccc.base.Evaluator();
+  var evaluator = new ccc.base.Evaluator(environment);
   var form = new ccc.base.Pair(LAMBDA, ccc.base.build(formalsAndBodySpec));
   var args = ccc.base.build(argsSpec);
   return form.compile(environment).then(function(procedureGenerator) {

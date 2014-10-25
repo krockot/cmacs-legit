@@ -42,7 +42,7 @@ ccc.syntax.RuleBasedTransformer.prototype.transform = function(
     environment, args) {
   for (var i = 0; i < this.rules_.length; ++i) {
     var rule = this.rules_[i];
-    var match = rule.pattern.match(args);
+    var match = rule.pattern.match(environment, args);
     if (match.success) {
       var expansion = rule.template.expand(match.captures);
       if (goog.isDef(this.capturedEnvironment_)) {

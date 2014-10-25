@@ -41,11 +41,12 @@ ccc.syntax.Pattern.ELLIPSIS_NAME = '...';
  * Attempts to match an input form against the pattern, extracting a set of
  * variable captures if successful.
  *
+ * @param {!ccc.base.Environment} environment
  * @param {!ccc.base.Object} input
  * @return {!ccc.syntax.Match}
  */
-ccc.syntax.Pattern.prototype.match = function(input) {
-  return this.matchPattern_(input, this.form_);
+ccc.syntax.Pattern.prototype.match = function(environment, input) {
+  return this.matchPattern_(environment, input, this.form_);
 };
 
 
@@ -53,24 +54,29 @@ ccc.syntax.Pattern.prototype.match = function(input) {
  * Attempts to match an input form against a pattern form, extracting a set of
  * variable captures if successful.
  *
+ * @param {!ccc.base.Environment} environment
  * @param {!ccc.base.Object} input
  * @param {!ccc.base.Object} pattern
  * @return {!ccc.syntax.Match}
  * @private
  */
-ccc.syntax.Pattern.prototype.matchPattern_ = function(input, pattern) {
+ccc.syntax.Pattern.prototype.matchPattern_ = function(
+    environment, input, pattern) {
   if (pattern.isSymbol())
-    return this.matchSymbol_(input, /** @type {!ccc.base.Symbol} */ (pattern));
+    return this.matchSymbol_(environment, input,
+        /** @type {!ccc.base.Symbol} */ (pattern));
   if (pattern.isVector()) {
     if (!input.isVector())
       return new ccc.syntax.Match(false);
-    return this.matchVector_(/** @type {!ccc.base.Vector} */ (input),
+    return this.matchVector_(environment,
+        /** @type {!ccc.base.Vector} */ (input),
         /** @type {!ccc.base.Vector} */ (pattern));
   }
   if (pattern.isPair()) {
     if (!input.isPair() && !input.isNil())
       return new ccc.syntax.Match(false);
-    return this.matchList_(input, /** @type {!ccc.base.Pair} */ (pattern));
+    return this.matchList_(environment, input,
+        /** @type {!ccc.base.Pair} */ (pattern));
   }
   if (pattern.isString())
     return new ccc.syntax.Match(input.isString() && input.eq(pattern));
@@ -95,12 +101,14 @@ ccc.syntax.Pattern.prototype.matchPattern_ = function(input, pattern) {
  * match, which can fail, or an unopinionated capture (i.e. any input matches
  * the non-literal symbol case.)
  *
+ * @param {!ccc.base.Environment} environment
  * @param {!ccc.base.Object} input
  * @param {!ccc.base.Symbol} symbol
  * @return {!ccc.syntax.Match}
  * @private
  */
-ccc.syntax.Pattern.prototype.matchSymbol_ = function(input, symbol) {
+ccc.syntax.Pattern.prototype.matchSymbol_ = function(
+    environment, input, symbol) {
   if (goog.object.containsKey(this.literals_, symbol.name())) {
     return new ccc.syntax.Match(input.isSymbol() &&
         input.name() == symbol.name());
@@ -114,12 +122,14 @@ ccc.syntax.Pattern.prototype.matchSymbol_ = function(input, symbol) {
 /**
  * Matches a vector pattern against an input vector.
  *
+ * @param {!ccc.base.Environment} environment
  * @param {!ccc.base.Vector} input
  * @param {!ccc.base.Vector} pattern
  * @return {!ccc.syntax.Match}
  * @private
  */
-ccc.syntax.Pattern.prototype.matchVector_ = function(input, pattern) {
+ccc.syntax.Pattern.prototype.matchVector_ = function(
+    environment, input, pattern) {
   if (pattern.size() == 0)
     return new ccc.syntax.Match(input.size() == 0);
   var lastPatternElement = pattern.get(pattern.size() - 1);
@@ -137,14 +147,15 @@ ccc.syntax.Pattern.prototype.matchVector_ = function(input, pattern) {
       throw new Error('Invalid ellipsis placement');
     }
     if (i == pattern.size() - 2 && repeatLast) {
-      var tailMatch = this.matchVectorTail_(input, i, patternElement);
+      var tailMatch = this.matchVectorTail_(environment, input, i,
+          patternElement);
       if (!tailMatch.success)
         return tailMatch;
       match.mergeCaptures(tailMatch.captures);
       return match;
     }
-    var elementMatch = this.matchPattern_(/** @type {!ccc.base.Object} */ (
-        input.get(i)), patternElement);
+    var elementMatch = this.matchPattern_(environment,
+        /** @type {!ccc.base.Object} */ (input.get(i)), patternElement);
     if (!elementMatch.success)
       return elementMatch;
     match.mergeCaptures(elementMatch.captures);
@@ -157,6 +168,7 @@ ccc.syntax.Pattern.prototype.matchVector_ = function(input, pattern) {
  * Matches a pattern against each remaining item in an input vector. Returns a
  * cumulative {@code ccc.syntax.Match} object.
  *
+ * @param {!ccc.base.Environment} environment
  * @param {!ccc.base.Vector} input
  * @param {number} startIndex
  * @param {!ccc.base.Object} elementPattern
@@ -164,13 +176,14 @@ ccc.syntax.Pattern.prototype.matchVector_ = function(input, pattern) {
  * @private
  */
 ccc.syntax.Pattern.prototype.matchVectorTail_ = function(
-    input, startIndex, elementPattern) {
+    environment, input, startIndex, elementPattern) {
   if (input.size() == startIndex)
-    return this.matchEmptyTail_(elementPattern);
+    return this.matchEmptyTail_(environment, elementPattern);
   var matches = [];
   for (var i = startIndex; i < input.size(); ++i) {
     var inputElement = /** @type {!ccc.base.Object} */ (input.get(i));
-    var elementMatch = this.matchPattern_(inputElement, elementPattern);
+    var elementMatch = this.matchPattern_(environment, inputElement,
+        elementPattern);
     if (!elementMatch.success)
       return elementMatch;
     matches.push(elementMatch);
@@ -182,12 +195,14 @@ ccc.syntax.Pattern.prototype.matchVectorTail_ = function(
 /**
  * Matches a list pattern against an input list.
  *
+ * @param {!ccc.base.Environment} environment
  * @param {!ccc.base.Object} input
  * @param {!ccc.base.Pair} pattern
  * @return {!ccc.syntax.Match}
  * @private
  */
-ccc.syntax.Pattern.prototype.matchList_ = function(input, pattern) {
+ccc.syntax.Pattern.prototype.matchList_ = function(
+    environment, input, pattern) {
   var match = new ccc.syntax.Match(true);
   var inputElement = /** @type {!ccc.base.Object} */ (input);
   var patternElement = /** @type {!ccc.base.Object} */ (pattern);
@@ -203,7 +218,7 @@ ccc.syntax.Pattern.prototype.matchList_ = function(input, pattern) {
     }
     if (!inputElement.isPair())
       break;
-    var elementMatch = this.matchPattern_(inputElement.car(),
+    var elementMatch = this.matchPattern_(environment, inputElement.car(),
         patternElement.car());
     if (!elementMatch.success)
       return elementMatch;
@@ -213,14 +228,16 @@ ccc.syntax.Pattern.prototype.matchList_ = function(input, pattern) {
   }
 
   if (matchTail) {
-    var tailMatch = this.matchListTail_(inputElement, patternElement.car());
+    var tailMatch = this.matchListTail_(environment, inputElement,
+        patternElement.car());
     if (!tailMatch.success)
       return tailMatch;
     match.mergeCaptures(tailMatch.captures);
     return match;
   }
 
-  var remainderMatch = this.matchPattern_(inputElement, patternElement);
+  var remainderMatch = this.matchPattern_(environment, inputElement,
+      patternElement);
   if (!remainderMatch.success)
     return remainderMatch;
   match.mergeCaptures(remainderMatch.captures);
@@ -232,17 +249,20 @@ ccc.syntax.Pattern.prototype.matchList_ = function(input, pattern) {
  * Matches a pattern against each remaining item in an input list. Returns a
  * cumulative {@code ccc.syntax.Match} object.
  *
+ * @param {!ccc.base.Environment} environment
  * @param {!ccc.base.Object} input
  * @param {!ccc.base.Object} elementPattern
  * @return {!ccc.syntax.Match}
  * @private
  */
-ccc.syntax.Pattern.prototype.matchListTail_ = function(input, elementPattern) {
+ccc.syntax.Pattern.prototype.matchListTail_ = function(
+    environment, input, elementPattern) {
   if (input.isNil())
-    return this.matchEmptyTail_(elementPattern);
+    return this.matchEmptyTail_(environment, elementPattern);
   var matches = [];
   while (input.isPair()) {
-    var elementMatch = this.matchPattern_(input.car(), elementPattern);
+    var elementMatch = this.matchPattern_(environment, input.car(),
+        elementPattern);
     if (!elementMatch.success)
       return elementMatch;
     matches.push(elementMatch);
@@ -259,10 +279,11 @@ ccc.syntax.Pattern.prototype.matchListTail_ = function(input, elementPattern) {
  * Useful when a (PATTERN ...) matches against NIL or the end of an input
  * vector.
  *
+ * @param {!ccc.base.Environment} environment
  * @param {!ccc.base.Object} pattern
  * @return {!ccc.syntax.Match}
  */
-ccc.syntax.Pattern.prototype.matchEmptyTail_ = function(pattern) {
+ccc.syntax.Pattern.prototype.matchEmptyTail_ = function(environment, pattern) {
   var match = new ccc.syntax.Match(true);
   if (pattern.isSymbol() &&
       !goog.object.containsKey(this.literals_, pattern.name())) {
@@ -284,10 +305,12 @@ ccc.syntax.Pattern.prototype.matchEmptyTail_ = function(pattern) {
           current.name() == ccc.syntax.Pattern.ELLIPSIS_NAME) {
         throw new Error('Invalid ellipsis placement');
       }
-      match.mergeCaptures(this.matchEmptyTail_(pattern.get(i)).captures);
+      match.mergeCaptures(
+          this.matchEmptyTail_(environment, pattern.get(i)).captures);
     }
     if (repeatLast) {
-      var lastCaptures = this.matchEmptyTail_(pattern.get(i)).captures;
+      var lastCaptures = this.matchEmptyTail_(
+          environment, pattern.get(i)).captures;
       var newCaptures = {};
       goog.object.forEach(lastCaptures, function(capture, name) {
         newCaptures[name] = new ccc.syntax.Capture([capture]);
@@ -308,7 +331,7 @@ ccc.syntax.Pattern.prototype.matchEmptyTail_ = function(pattern) {
           next.car().name() == ccc.syntax.Pattern.ELLIPSIS_NAME) {
         if (!next.cdr().isNil())
           throw new Error('Invalid ellipsis placement');
-        var lastCaptures = this.matchEmptyTail_(current).captures;
+        var lastCaptures = this.matchEmptyTail_(environment, current).captures;
         var newCaptures = {};
         goog.object.forEach(lastCaptures, function(capture, name) {
           newCaptures[name] = new ccc.syntax.Capture([capture]);
@@ -316,10 +339,10 @@ ccc.syntax.Pattern.prototype.matchEmptyTail_ = function(pattern) {
         match.mergeCaptures(newCaptures);
         return match;
       }
-      match.mergeCaptures(this.matchEmptyTail_(current).captures);
+      match.mergeCaptures(this.matchEmptyTail_(environment, current).captures);
       pattern = pattern.cdr();
     }
-    match.mergeCaptures(this.matchEmptyTail_(pattern).captures);
+    match.mergeCaptures(this.matchEmptyTail_(environment, pattern).captures);
     return match;
   }
   return match;

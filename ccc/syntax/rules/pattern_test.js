@@ -39,11 +39,12 @@ function readObject(code) {
 };
 
 function T(pattern, literals, input, opt_expectedMatches) {
+  var environment = new ccc.base.Environment();
   return readObject(pattern).then(function(pattern) {
     return readObject(input).then(function(input) {
       var literalSet = goog.object.createSet(literals);
       pattern = new ccc.syntax.Pattern(literalSet, pattern);
-      var match = pattern.match(input);
+      var match = pattern.match(environment, input);
       if (!match.success)
         return goog.Promise.reject(new Error('Pattern match failed.'));
       if (!goog.isDef(opt_expectedMatches))

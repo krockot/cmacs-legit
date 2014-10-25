@@ -36,13 +36,23 @@ ccc.syntax.LambdaTransformer_.prototype.transform = function(
   var formals = args.car();
   if (!formals.isSymbol() && !formals.isPair() && !formals.isNil())
     return goog.Promise.reject(new Error('lambda: Invalid syntax'));
+  var lexicalEnvironment = new ccc.base.Environment(environment);
+  var formal = formals;
+  while (formal.isPair()) {
+    if (!formal.car().isSymbol())
+      return goog.Promise.reject(new Error('lambda: Invalid syntax'));
+    lexicalEnvironment.reserve(formal.car().name());
+    formal = formal.cdr();
+  }
+  if (formal.isSymbol())
+    lexicalEnvironment.reserve(formal.name());
   var compileBody = function(body) {
     if (body.isNil())
       return goog.Promise.resolve(ccc.base.NIL);
     if (!body.isPair())
       return goog.Promise.reject(new Error('lambda: Invalid syntax'));
     return compileBody(body.cdr()).then(function(cdr) {
-      return body.car().compile(environment).then(function(car) {
+      return body.car().compile(lexicalEnvironment).then(function(car) {
         return new ccc.base.Pair(car, cdr);
       });
     });

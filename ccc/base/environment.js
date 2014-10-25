@@ -63,6 +63,7 @@ ccc.base.Environment.prototype.eval = function(environment, continuation) {
  *
  * @param {string} name
  * @param {!ccc.base.Object} value
+ * @public
  */
 ccc.base.Environment.prototype.set = function(name, value) {
   this.bindings_[name] = value;
@@ -73,6 +74,7 @@ ccc.base.Environment.prototype.set = function(name, value) {
  * Reserves a name (binds it to {@code null}) in the environment.
  *
  * @param {string} name
+ * @public
  */
 ccc.base.Environment.prototype.reserve = function(name) {
   this.bindings_[name] = null;
@@ -85,6 +87,7 @@ ccc.base.Environment.prototype.reserve = function(name) {
  *
  * @param {string} name
  * @return {ccc.base.Object|undefined}
+ * @public
  */
 ccc.base.Environment.prototype.get = function(name) {
   var environment = goog.isNull(this.activeFrame_) ? this : this.activeFrame_;
@@ -96,9 +99,28 @@ ccc.base.Environment.prototype.get = function(name) {
 
 
 /**
+ * Indicates if the environment has any binding (including a {@code null}
+ * binding for the given name.
+ *
+ * @param {string} name
+ * @return {boolean}
+ * @public
+ */
+ccc.base.Environment.prototype.hasBinding = function(name) {
+  var environment = goog.isNull(this.activeFrame_) ? this : this.activeFrame_;
+  if (goog.isDef(goog.object.get(environment.bindings_, name)))
+    return true;
+  if (!goog.isNull(this.parent_))
+    return this.parent_.hasBinding(name);
+  return false;
+};
+
+
+/**
  * Indicates if this is a top-level environment.
  *
  * @return {boolean}
+ * @public
  */
 ccc.base.Environment.prototype.isToplevel = function() {
   return goog.isNull(this.parent_);
@@ -111,6 +133,7 @@ ccc.base.Environment.prototype.isToplevel = function() {
  * @param {string} name
  * @param {!ccc.base.Object} value
  * @return {boolean} Indicates if the named binding was found and updated.
+ * @public
  */
 ccc.base.Environment.prototype.update = function(name, value) {
   var environment = goog.isNull(this.activeFrame_) ? this : this.activeFrame_;

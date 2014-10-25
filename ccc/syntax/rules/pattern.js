@@ -111,7 +111,8 @@ ccc.syntax.Pattern.prototype.matchSymbol_ = function(
     environment, input, symbol) {
   if (goog.object.containsKey(this.literals_, symbol.name())) {
     return new ccc.syntax.Match(input.isSymbol() &&
-        input.name() == symbol.name());
+        input.name() == symbol.name() &&
+        !environment.hasBinding(symbol.name()));
   }
   var match = new ccc.syntax.Match(true);
   match.captures[symbol.name()] = new ccc.syntax.Capture(input);

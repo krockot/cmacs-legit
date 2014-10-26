@@ -112,7 +112,8 @@ ccc.base.Environment.prototype.bindLocation = function(name, location) {
  */
 ccc.base.Environment.prototype.get = function(name) {
   var environment = goog.isNull(this.activeFrame_) ? this : this.activeFrame_;
-  var location = goog.object.get(environment.bindings_, name, null);
+  var location = /** @type {ccc.base.Location} */ (goog.object.get(
+      environment.bindings_, name, null));
   if (goog.isNull(location) && !goog.isNull(this.parent_))
     return this.parent_.get(name);
   return location;

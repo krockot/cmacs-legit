@@ -2,6 +2,7 @@
 
 goog.provide('ccc.base.Symbol');
 
+goog.require('ccc.base.Location');
 goog.require('ccc.base.Object');
 goog.require('goog.object');
 
@@ -56,7 +57,7 @@ ccc.base.Symbol.prototype.compile = function(environment) {
   if (goog.isNull(location))
     return goog.Promise.reject(new Error(
         'Reference to unbound symbol |' + this.name_ + '|'));
-  return goog.Promise.resolve(location);
+  return goog.Promise.resolve(/** @type {!ccc.base.Object} */ (location));
 };
 
 

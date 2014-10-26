@@ -134,8 +134,7 @@ function testDefine() {
   asyncTestCase.waitForAsync();
   var environment = new ccc.base.Environment();
   TE(DEFINE, ['foo', 42], ccc.base.UNSPECIFIED, environment).then(function() {
-    var foo = environment.get('foo');
-    assertNotNull(foo);
+    var foo = environment.get('foo').getValue();
     assert(foo.isNumber());
     assertEquals(42, foo.value());
   }).then(continueTesting, justFail);
@@ -159,22 +158,23 @@ function testSet() {
   asyncTestCase.waitForAsync();
   var environment = new ccc.base.Environment();
   // First try to set unbound symbol 'foo and expect it to fail.
-  TE(SET, ['foo', 42], null, environment).then(justFail).thenCatch(function() {
+  TE(SET, ['foo', 42], undefined, environment).then(justFail).thenCatch(
+      function() {
     // Now bind foo to 41
     return TE(DEFINE, ['foo', 41], undefined, environment).then(function() {
       var foo = environment.get('foo');
       assertNotNull(foo);
-      assert(foo.isNumber());
-      assertEquals(41, foo.value());
+      assert(foo.getValue().isNumber());
+      assertEquals(41, foo.getValue().value());
       // And finally set the existing binding to 42
       return TE(SET, ['foo', 42], undefined, environment).then(function() {
         var foo = environment.get('foo');
-        assertNotNull(foo);
-        assert(foo.isNumber());
-        assertEquals(42, foo.value());
+        assertNotNull(foo)
+        assert(foo.getValue().isNumber());
+        assertEquals(42, foo.getValue().value());
       });
     });
-  }).then(continueTesting);
+  }).then(continueTesting, justFail);
 }
 
 function testBadSetSyntax() {
@@ -246,12 +246,12 @@ function testSimpleLambda() {
 function testLambdaClosure() {
   asyncTestCase.waitForAsync();
   var environment = new ccc.base.Environment();
-  environment.set('x', ccc.base.F);
+  environment.allocate('x').setValue(ccc.base.F);
   // Apply the identity lambda and verify that the symbol 'x must have
   // been internally bound to the argument #t.
   TL([['x'], 'x'], [true], true).then(function() {
     // Then also verify that the outer environment's 'x is still bound to #f.
-    assertEquals(ccc.base.F, environment.get('x'));
+    assertEquals(ccc.base.F, environment.get('x').getValue());
   }).then(continueTesting, justFail);
 }
 
@@ -289,28 +289,29 @@ function testLambdaTailRecursion() {
   var N = 100;
   asyncTestCase.waitForAsync();
   var environment = new ccc.base.Environment();
-  environment.set('x', new ccc.base.Number(N));
+  var x = environment.allocate('x');
+  var z = environment.allocate('z');
+  x.setValue(new ccc.base.Number(N));
+  z.setValue(new ccc.base.Number(0));
   var decrementX = new ccc.base.NativeProcedure(function(
       environment, args, continuation) {
-    environment.update('x', new ccc.base.Number(
-        environment.get('x').value() - 1));
+    x.setValue(new ccc.base.Number(x.getValue().value() - 1));
     return continuation(ccc.base.NIL);
   });
   var xIsPositive = new ccc.base.NativeProcedure(function(
       environment, args, continuation) {
-    if (environment.get('x').value() > 0)
+    if (x.getValue().value() > 0)
       return continuation(ccc.base.T);
     return continuation(ccc.base.F);
   });
   var incrementZ = new ccc.base.NativeProcedure(function(
       environment, args, continuation) {
-    environment.update('z', new ccc.base.Number(
-        environment.get('z').value() + 1));
+    z.setValue(new ccc.base.Number(z.getValue().value() + 1));
     return continuation(ccc.base.T);
   });
-  environment.set('z', new ccc.base.Number(0));
 
   var evaluator = new ccc.base.Evaluator(environment);
+  var loopLocation = environment.allocate('loop');
   var ifForm = ccc.base.build([[xIsPositive], ['loop'], true]);
   IF.transform(environment, ifForm).then(function(conditional) {
     // Build a procedure and bind it to 'loop:
@@ -320,12 +321,12 @@ function testLambdaTailRecursion() {
   }).then(function(loopGenerator) {
     return evaluator.evalObject(loopGenerator);
   }).then(function(loop) {
-    environment.set('loop', loop);
+    loopLocation.setValue(loop);
     // Run the loop!
-    return evaluator.evalObject(ccc.base.build(['loop']));
+    return evaluator.evalObject(ccc.base.build([loop]));
   }).then(function() {
     // Verify that the loop ran N times.
-    assertEquals(N, environment.get('z').value());
+    assertEquals(N, z.getValue().value());
   }).then(continueTesting, justFail);
 }
 
@@ -334,14 +335,14 @@ function testDefineSyntax() {
   var environment = new ccc.base.Environment();
   T(DEFINE_SYNTAX, ['cita', QUOTE], ccc.base.UNSPECIFIED, environment).then(
       function(result) {
-    assertEquals(environment.get('cita'), QUOTE);
+    assertEquals(environment.get('cita').getValue(), QUOTE);
   }).then(continueTesting, justFail);
 }
 
 function testSyntaxRules() {
   asyncTestCase.waitForAsync();
   var environment = new ccc.base.Environment();
-  environment.set('quote', QUOTE);
+  environment.allocate('quote').setValue(QUOTE);
 
   var literals = ['::'];
 
@@ -389,11 +390,11 @@ function testBegin() {
 function testLet() {
   asyncTestCase.waitForAsync();
   var environment = new ccc.base.Environment();
-  environment.set('foo', new ccc.base.Number(9));
+  environment.allocate('foo').setValue(new ccc.base.Number(9));
   RunTests([
     // |foo| will be bound within the closure but retain its outer binding after
     TE(LET, [[['foo', 42]], 'foo'], 42).then(function() {
-      assert(environment.get('foo').eq(new ccc.base.Number(9)));
+      assert(environment.get('foo').getValue().eq(new ccc.base.Number(9)));
     }),
     // Will throw an error because |bar| is unbound during |foo| binding
     FE(LET, [[['bar', 42], ['foo', 'bar']], 'foo'])
@@ -411,6 +412,8 @@ function testLetSeq() {
 function testLetRec() {
   asyncTestCase.waitForAsync();
   var environment = new ccc.base.Environment();
+  var z = environment.allocate('z');
+  z.setValue(new ccc.base.Number(0));
   var isZero = new ccc.base.NativeProcedure(
       function(environment, args, continuation) {
     return continuation((args.isPair() && args.car().isNumber() &&
@@ -424,7 +427,6 @@ function testLetRec() {
       function(environment, args, continuation) {
     return continuation(new ccc.base.Number(args.car().value() + 1));
   })
-  environment.set('z', new ccc.base.Number(0));
   RunTests([
     TE(LETREC, [
         [['f', [LAMBDA, ['x'],
@@ -433,7 +435,7 @@ function testLetRec() {
                   [SET, 'z', [addOne, 'z']],
                   ['f', [minusOne, 'x']]]]],
         ['f', 10]], undefined, environment).then(function() {
-      assert(environment.get('z').eq(new ccc.base.Number(10)));
+      assert(z.getValue().eq(new ccc.base.Number(10)));
     }),
   ]).then(continueTesting, justFail);
 }

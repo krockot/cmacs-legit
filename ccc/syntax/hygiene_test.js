@@ -95,7 +95,7 @@ function testLocalUseBindingsShadowRuleBindings() {
 
 function testLetSyntaxEnvironmentIsolation() {
   var environment = new ccc.base.Environment();
-  environment.set('if', IF);
+  environment.allocate('if').setValue(IF);
 
   RunTests([
     /**

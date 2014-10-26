@@ -195,6 +195,17 @@ ccc.base.Object.prototype.isEnvironment = function() {
 
 
 /**
+ * Indicates if this object is an environment Location.
+ *
+ * @return {boolean}
+ * @public
+ */
+ccc.base.Object.prototype.isLocation = function() {
+  return false;
+};
+
+
+/**
  * Indicates if this object is a compiled Procedure.
  *
  * @return {boolean}

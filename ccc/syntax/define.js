@@ -61,7 +61,10 @@ ccc.syntax.DefineTransformer_.bindSymbol_ = function(
     symbol, environment, args, continuation) {
   goog.asserts.assert(args.isPair() && args.cdr().isNil(),
       'Compiled define should always receive exactly one argument.');
-  environment.set(symbol.name(), args.car());
+  var location = environment.get(symbol.name());
+  if (goog.isNull(location))
+    location = environment.allocate(symbol.name());
+  location.setValue(args.car());
   return continuation(ccc.base.UNSPECIFIED);
 };
 

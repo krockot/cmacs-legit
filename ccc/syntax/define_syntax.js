@@ -46,7 +46,11 @@ ccc.syntax.DefineSyntaxTransformer_.prototype.transform = function(
       return goog.Promise.reject(new Error(
           'define-syntax: ' + compiledForm.toString() +
           ' is not a syntax transformer'));
-    environment.set(args.car().name(), compiledForm);
+    var name = args.car().name();
+    var location = environment.get(name);
+    if (goog.isNull(location))
+      location = environment.allocate(name);
+    location.setValue(compiledForm);
     return ccc.base.UNSPECIFIED;
   });
 };

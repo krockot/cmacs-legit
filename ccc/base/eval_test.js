@@ -97,16 +97,16 @@ function RunTests(tests) {
 function testEnvironment() {
   var outer = new ccc.base.Environment();
   var inner = new ccc.base.Environment(outer);
-  outer.set('x', ccc.base.T);
-  outer.set('y', ccc.base.T);
-  inner.set('x', ccc.base.F);
-  inner.set('z', ccc.base.NIL);
-  assertEquals(ccc.base.T, outer.get('x'));
-  assertEquals(ccc.base.F, inner.get('x'));
-  assertEquals(ccc.base.T, outer.get('y'));
-  assertEquals(ccc.base.T, inner.get('y'));
-  assertEquals(ccc.base.NIL, inner.get('z'));
-  assertUndefined(outer.get('z'));
+  outer.allocate('x').setValue(ccc.base.T);
+  outer.allocate('y').setValue(ccc.base.T);
+  inner.allocate('x').setValue(ccc.base.F);
+  inner.allocate('z').setValue(ccc.base.NIL);
+  assertEquals(ccc.base.T, outer.get('x').getValue());
+  assertEquals(ccc.base.F, inner.get('x').getValue());
+  assertEquals(ccc.base.T, outer.get('y').getValue());
+  assertEquals(ccc.base.T, inner.get('y').getValue());
+  assertEquals(ccc.base.NIL, inner.get('z').getValue());
+  assertNull(outer.get('z'));
 }
 
 function testSelfEvaluators() {
@@ -126,11 +126,11 @@ function testSelfEvaluators() {
 
 function testSymbolLookup() {
   var environment = new ccc.base.Environment();
-  environment.set('answer', new ccc.base.Number(42));
-  environment.set('question', ccc.base.UNSPECIFIED);
+  environment.allocate('answer').setValue(new ccc.base.Number(42));
+  environment.allocate('question').setValue(ccc.base.UNSPECIFIED);
   RunTests([
-    E(new ccc.base.Symbol('answer'), new ccc.base.Number(42), environment),
-    E(new ccc.base.Symbol('question'), ccc.base.UNSPECIFIED, environment)
+    CE(new ccc.base.Symbol('answer'), new ccc.base.Number(42), environment),
+    CE(new ccc.base.Symbol('question'), ccc.base.UNSPECIFIED, environment)
   ]);
 }
 
@@ -161,7 +161,7 @@ function testSimpleTransformer() {
     return goog.Promise.resolve(List([adder], args.cdr()));
   });
   var environment = new ccc.base.Environment();
-  environment.set('the-machine', transformer);
+  environment.allocate('the-machine').setValue(transformer);
 
   // Construct (the-machine #t 26 16). We expect this to compile down to
   // (<adder> 26 16) according to the transformer definition above.
@@ -184,13 +184,13 @@ function testNestedTransformers() {
     return goog.Promise.resolve(List([adder], args.cdr()));
   });
   var environment = new ccc.base.Environment();
-  environment.set('the-machine', transformer);
+  environment.allocate('the-machine').setValue(transformer);
 
   var oneSix = new TestTransformer(function(environment, args) {
     // Transformer which always generates the number 16.
     return goog.Promise.resolve(new ccc.base.Number(16));
   });
-  environment.set('dieciséis', oneSix);
+  environment.allocate('dieciséis').setValue(oneSix);
 
   var needMoreLayers = new TestTransformer(function(environment, args) {
     // Transformer which always generates (the-machine #t 26 (dieciséis))
@@ -198,7 +198,7 @@ function testNestedTransformers() {
         ccc.base.T, new ccc.base.Number(26),
         List([new ccc.base.Symbol('dieciséis')])]));
   });
-  environment.set('meta-machine', needMoreLayers);
+  environment.allocate('meta-machine').setValue(needMoreLayers);
 
   var form = List([new ccc.base.Symbol('meta-machine')]);
   var numbers = List([new ccc.base.Number(26), new ccc.base.Number(16)]);

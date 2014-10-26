@@ -69,14 +69,14 @@ ccc.base.Procedure.prototype.apply = function(environment, args, continuation) {
     if (!args.isNil())
       return continuation(null, new Error('Too many arguments'));
   } else if (this.formals_.isSymbol()) {
-    innerScope.set(this.formals_.name(), args);
+    innerScope.allocate(this.formals_.name()).setValue(args);
   } else {
     var formal = this.formals_;
     var arg = args;
     while (formal.isPair() && arg.isPair()) {
       var symbol = formal.car();
       goog.asserts.assert(symbol.isSymbol(), 'Invalid argument name');
-      innerScope.set(symbol.name(), arg.car());
+      innerScope.allocate(symbol.name()).setValue(arg.car());
       formal = formal.cdr();
       arg = arg.cdr();
     }
@@ -86,7 +86,7 @@ ccc.base.Procedure.prototype.apply = function(environment, args, continuation) {
       return continuation(null, new Error('Not enough arguments'));
     goog.asserts.assert(arg.isPair() || arg.isNil(), 'Invalid argument list');
     if (formal.isSymbol())
-      innerScope.set(formal.name(), arg);
+      innerScope.allocate(formal.name()).setValue(arg);
   }
 
   return goog.partial(ccc.base.Procedure.evalBodyContinuationImpl_,

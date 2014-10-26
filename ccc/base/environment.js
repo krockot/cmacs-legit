@@ -1,6 +1,7 @@
 // The Cmacs Project.
 
 goog.provide('ccc.base.Environment');
+goog.provide('ccc.base.Location');
 
 goog.require('ccc.base.Object');
 goog.require('goog.object');
@@ -21,10 +22,8 @@ ccc.base.Environment = function(opt_parent) {
   this.parent_ = goog.isDef(opt_parent) ? opt_parent : null;
 
   /**
-   * The set of active bindings local to this environment. A name bound to
-   * {@code null} during compilation indicates that a proper binding with that
-   * name will exist in the environment at evaluation time.
-   * @private {!Object.<string, ccc.base.Object>}
+   * The set of active bindings local to this environment.
+   * @private {!ccc.base.BindingMap_}
    */
   this.bindings_ = {};
 
@@ -59,60 +58,76 @@ ccc.base.Environment.prototype.eval = function(environment, continuation) {
 
 
 /**
- * Binds a name to a value in the local frame of this environment.
+ * Binds a name to a new Location.
  *
- * @param {string} name
- * @param {!ccc.base.Object} value
+ * @param {string} name The name of the binding.
+ * @param {boolean=} opt_asProxy If {@code true}, the Location will be created
+ *     as a proxy. Defaults to {@code false}.
+ * @return {!ccc.base.Location} The newly allocated Location.
  * @public
  */
-ccc.base.Environment.prototype.set = function(name, value) {
-  this.bindings_[name] = value;
+ccc.base.Environment.prototype.allocate = function(name, opt_asProxy) {
+  var proxyName = goog.isDef(opt_asProxy) && opt_asProxy ? name : undefined;
+  return this.bindLocation(name, new ccc.base.Location(this, proxyName));
 };
 
 
 /**
- * Reserves a name (binds it to {@code null}) in the environment.
+ * Convenience form of allocate with opt_asProxy set to true.
  *
- * @param {string} name
+ * @param {string} name The name of the binding.
+ * @return {!ccc.base.Location}
  * @public
  */
-ccc.base.Environment.prototype.reserve = function(name) {
-  this.bindings_[name] = null;
+ccc.base.Environment.prototype.allocateProxy = function(name) {
+  return this.allocate(name, true);
 };
 
 
 /**
- * Gets the value bound to a name. Returns {@code undefined} if the binding
- * does not exist or {@code null} if it's not bound to a value.
+ * Binds a name to an existing Location. Ownership of the Location is
+ * transferred away from its previous owner if it had one.
+ *
+ * @param {string} name The name of the binding.
+ * @param {!ccc.base.Location} location The location to bind.
+ * @return {!ccc.base.Location}
+ * @public
+ */
+ccc.base.Environment.prototype.bindLocation = function(name, location) {
+  if (goog.object.containsKey(this.bindings_, name))
+    throw new Error('Duplicate binding encountered for symbol |' + name + '|');
+  goog.object.set(this.bindings_, name, location);
+  location.setEnvironment(this);
+  return location;
+};
+
+
+/**
+ * Gets the {@code ccc.base.Location} to which the given name is bound.
+ * Returns {@code null} if the binding does not exist.
  *
  * @param {string} name
- * @return {ccc.base.Object|undefined}
+ * @return {ccc.base.Location}
  * @public
  */
 ccc.base.Environment.prototype.get = function(name) {
   var environment = goog.isNull(this.activeFrame_) ? this : this.activeFrame_;
-  var value = goog.object.get(environment.bindings_, name);
-  if (!goog.isDef(value) && !goog.isNull(this.parent_))
+  var location = goog.object.get(environment.bindings_, name, null);
+  if (goog.isNull(location) && !goog.isNull(this.parent_))
     return this.parent_.get(name);
-  return value;
+  return location;
 };
 
 
 /**
- * Indicates if the environment has any binding (including a {@code null}
- * binding for the given name.
+ * Indicates if the environment has a location bound for the given name.
  *
  * @param {string} name
  * @return {boolean}
  * @public
  */
 ccc.base.Environment.prototype.hasBinding = function(name) {
-  var environment = goog.isNull(this.activeFrame_) ? this : this.activeFrame_;
-  if (goog.isDef(goog.object.get(environment.bindings_, name)))
-    return true;
-  if (!goog.isNull(this.parent_))
-    return this.parent_.hasBinding(name);
-  return false;
+  return goog.object.containsKey(this.bindings_, name);
 };
 
 
@@ -128,29 +143,8 @@ ccc.base.Environment.prototype.isToplevel = function() {
 
 
 /**
- * Updates the value bound to a name.
- *
- * @param {string} name
- * @param {!ccc.base.Object} value
- * @return {boolean} Indicates if the named binding was found and updated.
- * @public
- */
-ccc.base.Environment.prototype.update = function(name, value) {
-  var environment = goog.isNull(this.activeFrame_) ? this : this.activeFrame_;
-  if (!goog.object.containsKey(environment.bindings_, name)) {
-    if (!goog.isNull(this.parent_))
-      return this.parent_.update(name, value);
-    return false;
-  }
-  this.bindings_[name] = value;
-  return true;
-};
-
-
-/**
- * Sets this environment's active frame. This is used exclusively by procedure
- * applications to override their captured environment for a temporary program
- * extent.
+ * Sets this environment's active frame. Thunks within the extent of a procedure
+ * application use this to ensure the evaluation environment is correct.
  *
  * @param {!ccc.base.Environment} frame
  * @public
@@ -158,3 +152,167 @@ ccc.base.Environment.prototype.update = function(name, value) {
 ccc.base.Environment.prototype.setActiveFrame = function(frame) {
   this.activeFrame_ = frame;
 };
+
+
+
+/**
+ * A binding location. A Location holds a single {@code ccc.base.Object} and may
+ * be allocated at compile time or evaluation time. All symbols compile down to
+ * Locations, which may themselves be only lazy proxies for Locations generated
+ * at evaluation time.
+ *
+ * For example, the form (lambda (x) x) will allocate a Location at compile time
+ * and bind it to the symbol |x| witihn the lambda body's compilation
+ * environment. This location, when dereferenced in evaluation, will act as
+ * a proxy for the |x| binding established at call-time within the procedure's
+ * active frame.
+ *
+ * @param {!ccc.base.Environment} environment The environment which owns this
+ *     Location's binding.
+ * @param {string=} opt_proxyName The symbol name which this Location proxies,
+ *     if any.
+ * @constructor
+ * @extends {ccc.base.Object}
+ * @public
+ */
+ccc.base.Location = function(environment, opt_proxyName) {
+  /** @private {!ccc.base.Environment} */
+  this.environment_ = environment;
+
+  /** @private {string|undefined} */
+  this.proxyName_ = opt_proxyName;
+
+  /**
+   * The value stored in this location. Defaults to unspecified.
+   * @private {!ccc.base.Object}
+   */
+  this.value_ = ccc.base.UNSPECIFIED;
+};
+goog.inherits(ccc.base.Location, ccc.base.Object);
+
+
+/** @override */
+ccc.base.Location.prototype.toString = function() {
+  if (this.isProxy())
+    return '#<location-proxy:' + this.proxyName_ + '>';
+  return '#<location:' + this.value_ + '>';
+};
+
+
+/** @override */
+ccc.base.Location.prototype.eval = function(environment, continuation) {
+  try {
+    var value = this.getValue();
+  } catch (e) {
+    return continuation(null, e);
+  }
+  return continuation(value);
+};
+
+
+/** @override */
+ccc.base.Location.prototype.isLocation = function() {
+  return true;
+};
+
+
+/**
+ * Indicates if this Location is a proxy.
+ *
+ * @return {boolean}
+ * @public
+ */
+ccc.base.Location.prototype.isProxy = function() {
+  return goog.isDef(this.proxyName_);
+};
+
+
+/**
+ * Returns the environment which owns this Location.
+ *
+ * @return {!ccc.base.Environment}
+ * @public
+ */
+ccc.base.Location.prototype.getEnvironment = function() {
+  return this.environment_;
+};
+
+
+/**
+ * Updates the owning environment.
+ *
+ * @param {!ccc.base.Environment} environment
+ * @public
+ */
+ccc.base.Location.prototype.setEnvironment = function(environment) {
+  this.environment_ = environment;
+};
+
+
+/**
+ * Retrieves the value stored at this location. For proxy locations, this
+ * consults the owning environment (which should in turn consult its active
+ * frame.)
+ *
+ * @return {!ccc.base.Object}
+ * @public
+ */
+ccc.base.Location.prototype.getValue = function() {
+  if (goog.isDef(this.proxyName_)) {
+    var location = this.environment_.get(this.proxyName_);
+    goog.asserts.assert(!goog.isNull(location));
+    if (location == this)
+      // If the location is properly backed, its environment should return a
+      // location from its own active frame instead of this.
+      throw new Error(
+          'Invalid dereference of unbacked proxy location for symbol |' +
+          this.proxyName_ + '|');
+    return location.getValue();
+  }
+  return this.value_;
+};
+
+
+/**
+ * Sets the value stored at this location.
+ *
+ * @param {!ccc.base.Object} value
+ * @public
+ */
+ccc.base.Location.prototype.setValue = function(value) {
+  if (goog.isDef(this.proxyName_)) {
+    var location = this.environment_.get(this.proxyName_);
+    goog.asserts.assert(!goog.isNull(location));
+    if (location == this)
+      // If the location is properly backed, its environment should return a
+      // location from its own active frame instead of this.
+      throw new Error(
+          'Invalid dereference of unbacked proxy location for symbol |' +
+          this.proxyName_ + '|');
+    location.setValue(value);
+  } else {
+    this.value_ = value;
+  }
+};
+
+
+/**
+ * Indicates if this location is bound to a transformer. This (unlike getValue)
+ * is safe to call on proxy locations (which are never transformers).
+ *
+ * @return {boolean}
+ * @public
+ */
+ccc.base.Location.prototype.containsTransformer = function() {
+  return !goog.isDef(this.proxyName_) && this.value_.isTransformer();
+};
+
+
+
+/**
+ * A mapping from binding name to {@code ccc.base.Location}.
+ *
+ * @typedef {Object.<string, !ccc.base.Location>}
+ * @private
+ */
+ccc.base.BindingMap_;

@@ -31,6 +31,8 @@ ccc.syntax.LambdaTransformer_.prototype.toString = function() {
 /** @override */
 ccc.syntax.LambdaTransformer_.prototype.transform = function(
     environment, args) {
+  /** @type {!Object.<string, !ccc.base.Location>} */
+  var argLocations = {};
   if (!args.isPair() || args.cdr().isNil())
     return goog.Promise.reject(new Error('lambda: Invalid syntax'));
   var formals = args.car();
@@ -38,14 +40,18 @@ ccc.syntax.LambdaTransformer_.prototype.transform = function(
     return goog.Promise.reject(new Error('lambda: Invalid syntax'));
   var lexicalEnvironment = new ccc.base.Environment(environment);
   var formal = formals;
+  var formalName;
   while (formal.isPair()) {
     if (!formal.car().isSymbol())
       return goog.Promise.reject(new Error('lambda: Invalid syntax'));
-    lexicalEnvironment.reserve(formal.car().name());
+    formalName = formal.car().name();
+    argLocations[formalName] = lexicalEnvironment.allocateProxy(formalName);
     formal = formal.cdr();
   }
-  if (formal.isSymbol())
-    lexicalEnvironment.reserve(formal.name());
+  if (formal.isSymbol()) {
+    formalName = formal.name();
+    argLocations[formalName] = lexicalEnvironment.allocateProxy(formalName);
+  }
   var compileBody = function(body) {
     if (body.isNil())
       return goog.Promise.resolve(ccc.base.NIL);
@@ -59,7 +65,8 @@ ccc.syntax.LambdaTransformer_.prototype.transform = function(
   };
   return compileBody(args.cdr()).then(function(args) {
     var generatingProcedure = new ccc.base.NativeProcedure(goog.partial(
-        ccc.syntax.LambdaTransformer_.generateProcedure_, formals, args));
+        ccc.syntax.LambdaTransformer_.generateProcedure_, formals, args,
+        argLocations));
     return new ccc.base.Pair(generatingProcedure, ccc.base.NIL);
   });
 };
@@ -70,6 +77,7 @@ ccc.syntax.LambdaTransformer_.prototype.transform = function(
  *
  * @param {!ccc.base.Object} formals
  * @param {!ccc.base.Object} body
+ * @param {!Object.<string, !ccc.base.Location>} argLocations
  * @param {!ccc.base.Environment} environment
  * @param {!ccc.base.Object} args
  * @param {!ccc.base.Continuation} continuation
@@ -77,10 +85,15 @@ ccc.syntax.LambdaTransformer_.prototype.transform = function(
  * @private
  */
 ccc.syntax.LambdaTransformer_.generateProcedure_ = function(
-    formals, body, environment, args, continuation) {
+    formals, body, argLocations, environment, args, continuation) {
   goog.asserts.assert(args.isNil(),
       'Compiled procedure generator should never receive arguments.');
   var scope = new ccc.base.Environment(environment);
+  // Inject compiler-generated argument proxy locations into the evaluation
+  // environment for the procedure.
+  goog.object.forEach(argLocations, function(location, name) {
+    scope.bindLocation(name, location);
+  });
   return continuation(new ccc.base.Procedure(scope, formals, body));
 };
 

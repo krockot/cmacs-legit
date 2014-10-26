@@ -113,14 +113,12 @@ ccc.base.Pair.makeList = function(objects, opt_tail) {
 /** @override */
 ccc.base.Pair.prototype.compile = function(environment) {
   return this.car_.compile(environment).then(function(compiledHead) {
-    if (compiledHead.isSymbol()) {
-      var headValue = environment.get(compiledHead.name());
-      if (headValue instanceof ccc.base.Object && headValue.isTransformer()) {
-        return headValue.transform(environment, this.cdr_).then(
-            function(transformed) {
-          return transformed.compile(environment);
-        });
-      }
+    if (compiledHead.isLocation() && compiledHead.containsTransformer()) {
+      var headValue = compiledHead.getValue();
+      return headValue.transform(environment, this.cdr_).then(
+          function(transformed) {
+        return transformed.compile(environment);
+      });
     } else if (compiledHead.isTransformer()) {
       return compiledHead.transform(environment, this.cdr_).then(
           function(transformed) {

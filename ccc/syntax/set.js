@@ -60,9 +60,11 @@ ccc.syntax.SetTransformer_.updateBinding_ = function(
     symbol, environment, args, continuation) {
   goog.asserts.assert(args.isPair() && args.cdr().isNil(),
       'Compiled set! should always receive exactly one argument.');
-  if (!environment.update(symbol.name(), args.car()))
+  var location = environment.get(symbol.name());
+  if (goog.isNull(location))
     return continuation(null, new Error(
         'Cannot update binding for unbound symbol \'' + symbol.name()));
+  location.setValue(args.car());
   return continuation(ccc.base.UNSPECIFIED);
 };
 

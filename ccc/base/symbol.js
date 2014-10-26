@@ -51,11 +51,18 @@ ccc.base.Symbol.prototype.name = function() {
 
 
 /** @override */
+ccc.base.Symbol.prototype.compile = function(environment) {
+  var location = environment.get(this.name_);
+  if (goog.isNull(location))
+    return goog.Promise.reject(new Error(
+        'Reference to unbound symbol |' + this.name_ + '|'));
+  return goog.Promise.resolve(location);
+};
+
+
+/** @override */
 ccc.base.Symbol.prototype.eval = function(environment, continuation) {
-  var value = environment.get(this.name_);
-  if (!goog.isDef(value) || goog.isNull(value))
-    return continuation(null, new Error('Unbound symbol: ' + this.name_));
-  return continuation(value);
+  return continuation(this);
 };
 
 

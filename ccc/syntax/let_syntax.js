@@ -71,7 +71,7 @@ ccc.syntax.LetSyntaxTransformer_.prototype.transform = function(
     goog.array.forEach(transformers, function(transformer, index) {
       if (!transformer.isTransformer())
         return fail('Invalid binding rules for |' + name.toString() + '|');
-      innerEnvironment.set(bindingNames[index], transformer);
+      innerEnvironment.allocate(bindingNames[index]).setValue(transformer);
     });
     var lambdaArgs = new ccc.base.Pair(ccc.base.NIL, body);
     return ccc.syntax.LAMBDA.transform(innerEnvironment, lambdaArgs);

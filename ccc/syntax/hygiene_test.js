@@ -152,3 +152,51 @@ function testEmittedSymbolLiteralsEvaluateInCapturedEnvironment() {
       'outer'),
   ]);
 }
+
+function testTemplateBindingHygiene() {
+  var environment = new ccc.base.Environment();
+  // A little math.
+  environment.allocate('*').setValue(new ccc.base.NativeProcedure(function(
+      environment, args, continuation) {
+    return continuation(new ccc.base.Number(
+        args.car().value() * args.cdr().car().value()));
+  }));
+  environment.allocate('+').setValue(new ccc.base.NativeProcedure(function(
+      environment, args, continuation) {
+    return continuation(new ccc.base.Number(
+        args.car().value() + args.cdr().car().value()));
+  }));
+  RunTests([
+    /**
+     * A contrived example in wherein a template expansion should internally
+     * shadow an outer binding, while still resolving the outer binding properly
+     * when referenced in the transformer use.
+     *
+     * This really tests that bindings introduced by macro expansions are
+     * quietly rewritten to avoid collision with outer bindings.
+     *
+     * ((let ((foo 1))
+     *    (let-syntax
+     *      ((hax (syntax-rules ()
+     *         ((hax a)
+     *          (let ((foo 6))
+     *            (lambda () (* foo (+ foo a))))))))
+     *      (hax foo))))
+     *
+     * This whole form should ultimately expand to
+     *
+     * ((lambda () (* <inner-foo> (+ <inner-foo> <outer-foo>))))
+     *
+     * and evaluate to 42. It something is broken, we should instead see either
+     * 7 (values swapped), 2 (both bindings are 1), or 72 (both bindings are 6).
+     */
+     T([[LET, [['foo', 1]],
+          [LET_SYNTAX,
+            [['hax', [SYNTAX_RULES, [],
+              [['hax', 'a'],
+               [LET, [['foo', 6]],
+                  [LAMBDA, [], ['*', 'foo', ['+', 'foo', 'a']]]]]]]],
+            ['hax', 'foo']]]],
+       42, environment),
+  ]);
+}

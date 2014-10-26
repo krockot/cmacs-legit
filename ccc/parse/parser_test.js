@@ -71,6 +71,16 @@ var NUMERIC_LITERAL = function(value) {
   return new ccc.parse.Token(K.NUMERIC_LITERAL, value.toString(), 1, 1);
 };
 var DOT = function() { return new ccc.parse.Token(K.DOT, '.', 1, 1); };
+var SYNTAX = function() { return new ccc.parse.Token(K.SYNTAX, '#\'', 1, 1); };
+var QUASISYNTAX = function() {
+  return new ccc.parse.Token(K.QUASISYNTAX, '#`', 1, 1);
+};
+var UNSYNTAX = function() {
+  return new ccc.parse.Token(K.UNSYNTAX, '#,', 1, 1);
+};
+var UNSYNTAX_SPLICING = function() {
+  return new ccc.parse.Token(K.UNSYNTAX_SPLICING, '#,@', 1, 1);
+};
 
 // Test framework for the parser tests
 
@@ -544,4 +554,24 @@ function testEofCases() {
     S([UNSPECIFIED()], [E(undefined)]),
     S([OPEN_LIST('('), OPEN_LIST('['), SYMBOL('a')], [FAIL])
   ]);
+}
+
+function testSyntax() {
+  RunSingleTest(S([SYNTAX(), SYMBOL('a')],
+    [E(['syntax', 'a'])]));
+}
+
+function testQuasisyntax() {
+  RunSingleTest(S([QUASISYNTAX(), SYMBOL('a')],
+    [E(['quasisyntax', 'a'])]));
+}
+
+function testUnsyntax() {
+  RunSingleTest(S([UNSYNTAX(), SYMBOL('a')],
+    [E(['unsyntax', 'a'])]));
+}
+
+function testUnsyntaxSplicing() {
+  RunSingleTest(S([UNSYNTAX_SPLICING(), SYMBOL('a')],
+    [E(['unsyntax-splicing', 'a'])]));
 }

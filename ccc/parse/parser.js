@@ -335,6 +335,18 @@ ccc.parse.Parser.prototype.processToken_ = function(token) {
     case T.QUASIQUOTE:
       this.pushBuilder_(new WrapperBuilder_('quasiquote'));
       break;
+    case T.SYNTAX:
+      this.pushBuilder_(new WrapperBuilder_('syntax'));
+      break;
+    case T.QUASISYNTAX:
+      this.pushBuilder_(new WrapperBuilder_('quasisyntax'));
+      break;
+    case T.UNSYNTAX:
+      this.pushBuilder_(new WrapperBuilder_('unsyntax'));
+      break;
+    case T.UNSYNTAX_SPLICING:
+      this.pushBuilder_(new WrapperBuilder_('unsyntax-splicing'));
+      break;
     default:
       throw new Error('Invalid token: ' + token.text);
   }

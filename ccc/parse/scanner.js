@@ -128,7 +128,7 @@ var START_STATE_ = (function() {
 
   /** @type {!MatchFunction_} */
   var delimiter = (function() {
-    var special = any('|;"\',`');
+    var special = any('|;"\',`#');
     return function(x) {
       return eof(x) || space(x) || opener(x) || closer(x) || special(x);
     };

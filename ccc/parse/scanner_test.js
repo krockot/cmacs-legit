@@ -259,7 +259,9 @@ function testDelimiters() {
 function testComments() {
   RunTests([
     S('a#;b', [
-      E(T.SYMBOL, 'a#', 1, 1)]),
+      E(T.SYMBOL, 'a', 1, 1),
+      E(T.OMIT_DATUM, '#;', 1, 2),
+      E(T.SYMBOL, 'b', 1, 4)]),
     S('a #;b', [
       E(T.SYMBOL, 'a', 1, 1),
       E(T.OMIT_DATUM, '#;', 1, 3),

@@ -35,8 +35,18 @@ ccc.base.Environment = function(opt_parent) {
    * @private {ccc.base.Environment}
    */
   this.activeFrame_ = null;
+
+  /** @private {number} */
+  this.id_ = ++ccc.base.Environment.nextId_;
 };
 goog.inherits(ccc.base.Environment, ccc.base.Object);
+
+
+/**
+ * Used to attach a unique ID to every environment.
+ * @private {number}
+ */
+ccc.base.Environment.nextId_ = 0;
 
 
 /** @override */

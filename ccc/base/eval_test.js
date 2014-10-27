@@ -91,7 +91,6 @@ function testSelfEvaluators() {
   RunTests([
     E('Hello, world!', 'Hello, world!'),
     E(42, 42),
-    E(Symbol.for('bananas'), Symbol.for('bananas')),
     E(new ccc.Char(0x03bb), new ccc.Char(0x03bb)),
     E(true, true),
     E(false, false),
@@ -101,13 +100,13 @@ function testSelfEvaluators() {
   ]);
 }
 
-function DISABLED_testSymbolLookup() {
+function testSymbolLookup() {
   var environment = new ccc.Environment();
-  environment.allocate('answer').setValue(new ccc.Number(42));
+  environment.allocate('answer').setValue(42);
   environment.allocate('question').setValue(ccc.UNSPECIFIED);
   RunTests([
-    CE(new ccc.Symbol('answer'), new ccc.Number(42), environment),
-    CE(new ccc.Symbol('question'), ccc.UNSPECIFIED, environment)
+    E(Symbol.for('answer'), 42, environment),
+    E(Symbol.for('question'), ccc.UNSPECIFIED, environment)
   ]);
 }
 

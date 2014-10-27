@@ -4,6 +4,8 @@ goog.provide('ccc.parse.ParserTest');
 goog.setTestOnly('ccc.parse.ParserTest');
 
 goog.require('ccc.base');
+goog.require('ccc.base.build');
+goog.require('ccc.base.stringify');
 goog.require('ccc.parse.Parser');
 goog.require('ccc.parse.Token');
 goog.require('ccc.parse.TokenReader');
@@ -99,23 +101,23 @@ TestTokenReader.prototype.readToken = function() {
 // Expect a specific object to match under equality (Object.equal).
 var E = function(matchSpec) {
   return function(parser) {
-    return parser.readObject().then(function(object) {
-      assertNotNull('Ran out of parsed objects!', object);
+    return parser.read().then(function(data) {
+      assertNotNull('Ran out of parsed objects!', data);
       var match = ccc.base.build(matchSpec);
-      if (!object.equal(match)) {
+      if (!ccc.equal(data, match)) {
         fail('Object mismatch:\n' +
-             '  Expected: ' + match.toString() +
-             '\n  Actual: ' + object.toString() + '\n');
+             '  Expected: ' + ccc.base.stringify(match) +
+             '\n  Actual: ' + ccc.base.stringify(data) + '\n');
       }
       return true;
     });
   };
 };
 
-// Expect failure on readObject.
+// Expect failure on read.
 var FAIL = function(parser) {
   return new goog.Promise(function(resolve, reject) {
-    parser.readObject().then(
+    parser.read().then(
         reject.bind(null, 'Expected failure, got success.'),
         resolve.bind(null, false));
   });
@@ -129,8 +131,8 @@ var S = function(tokens, expectations) {
   return new goog.Promise(function(resolve, reject) {
     var checkExpectations = function(expectations) {
       if (expectations.length == 0) {
-        parser.readObject().then(function(object) {
-          assertNull(object);
+        parser.read().then(function(data) {
+          assertNull(data);
           resolve(null);
         }, reject);
       } else {

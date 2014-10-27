@@ -1,8 +1,10 @@
 // The Cmacs Project.
 
-goog.provide('ccc.base.Transformer');
+goog.provide('ccc.Transformer');
 
-goog.require('ccc.base.Object');
+goog.require('ccc.Environment');
+goog.require('ccc.Error');
+goog.require('ccc.Object');
 goog.require('goog.Promise');
 
 
@@ -11,29 +13,28 @@ goog.require('goog.Promise');
  * A Transformer is used to implemenent compile-time syntax transformations.
  *
  * @constructor
- * @extends {ccc.base.Object}
+ * @extends {ccc.Object}
  * @public
  */
-ccc.base.Transformer = function() {
+ccc.Transformer = function() {
 };
-goog.inherits(ccc.base.Transformer, ccc.base.Object);
+goog.inherits(ccc.Transformer, ccc.Object);
+
+
+/**
+ * Indicates if a given {@code ccc.Data} is a {@code ccc.Transformer}.
+ *
+ * @param {!ccc.Data} data
+ * @return {boolean}
+ */
+ccc.isTransformer = function(data) {
+  return data instanceof ccc.Transformer;
+};
 
 
 /** @override */
-ccc.base.Transformer.prototype.toString = function() {
+ccc.Transformer.prototype.toString = function() {
   return '#<transformer>';
-};
-
-
-/** @override */
-ccc.base.Transformer.prototype.isTransformer = function() {
-  return true;
-};
-
-
-/** @override */
-ccc.base.Transformer.prototype.eval = function(environment, continuation) {
-  return continuation(this);
 };
 
 
@@ -42,10 +43,10 @@ ccc.base.Transformer.prototype.eval = function(environment, continuation) {
  * {@code transform} is called on the remainder of the list. The entire list is
  * replaced by the result.
  *
- * @param {!ccc.base.Environment} environment
- * @param {!ccc.base.Object} args
+ * @param {!ccc.Environment} environment
+ * @param {!ccc.Object} args
  * @return {!goog.Promise}
  */
-ccc.base.Transformer.prototype.transform = function(environment, args) {
-  return goog.Promise.reject(new Error('Invalid Transformer'));
+ccc.Transformer.prototype.transform = function(environment, args) {
+  return goog.Promise.reject(new ccc.Error('Invalid Transformer'));
 };

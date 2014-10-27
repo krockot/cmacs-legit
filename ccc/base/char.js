@@ -1,8 +1,8 @@
 // The Cmacs Project.
 
-goog.provide('ccc.base.Char');
+goog.provide('ccc.Char');
 
-goog.require('ccc.base.Object');
+goog.require('ccc.Object');
 goog.require('goog.object');
 
 
@@ -12,31 +12,37 @@ goog.require('goog.object');
  *
  * @param {number} value
  * @constructor
- * @extends {ccc.base.Object}
+ * @extends {ccc.Object}
  * @public
  */
-ccc.base.Char = function(value) {
+ccc.Char = function(value) {
   /** @private {number} */
   this.value_ = value;
 };
-goog.inherits(ccc.base.Char, ccc.base.Object);
+goog.inherits(ccc.Char, ccc.Object);
 
 
-/** @override */
-ccc.base.Char.prototype.toString = function() {
-  return '#\\' + ccc.base.Char.getCharName_(this.value_);
+/**
+ * Indicates if a given {@code ccc.Data} is a {@code ccc.Char}.
+ *
+ * @param {!ccc.Data} data
+ * @return {boolean}
+ * @public
+ */
+ccc.isChar = function(data) {
+  return data instanceof ccc.Char;
 };
 
 
 /** @override */
-ccc.base.Char.prototype.eqv = function(other) {
-  return other.isChar() && this.value_ == other.value_;
+ccc.Char.prototype.toString = function() {
+  return '#\\' + ccc.Char.getCharName_(this.value_);
 };
 
 
 /** @override */
-ccc.base.Char.prototype.isChar = function() {
-  return true;
+ccc.Char.prototype.eqv = function(other) {
+  return ccc.isChar(other) && this.value_ == other.value_;
 };
 
 
@@ -44,8 +50,9 @@ ccc.base.Char.prototype.isChar = function() {
  * Returns the underlying character code value.
  *
  * @return {number}
+ * @public
  */
-ccc.base.Char.prototype.value = function() {
+ccc.Char.prototype.value = function() {
   return this.value_;
 };
 
@@ -54,14 +61,15 @@ ccc.base.Char.prototype.value = function() {
  * Returns the underlying character string value.
  *
  * @return {string}
+ * @public
  */
-ccc.base.Char.prototype.stringValue = function() {
+ccc.Char.prototype.stringValue = function() {
   return String.fromCharCode(this.value());
 };
 
 
 /** @override */
-ccc.base.Char.prototype.eval = function(environment, continuation) {
+ccc.Char.prototype.eval = function(environment, continuation) {
   return continuation(this);
 };
 
@@ -73,9 +81,10 @@ ccc.base.Char.prototype.eval = function(environment, continuation) {
  *
  * @param {number} value
  * @return {string}
+ * @private
  */
-ccc.base.Char.getCharName_ = function(value) {
-  var charName = goog.object.get(ccc.base.Char.CHAR_NAME_MAP_,
+ccc.Char.getCharName_ = function(value) {
+  var charName = goog.object.get(ccc.Char.CHAR_NAME_MAP_,
       value.toString());
   if (goog.isDef(charName)) {
     return charName;
@@ -91,12 +100,12 @@ ccc.base.Char.getCharName_ = function(value) {
 
 
 /**
- * Used by {@code ccc.base.Char.getCharName_} to map characters to special
+ * Used by {@code ccc.Char.getCharName_} to map characters to special
  * character literal forms.
  *
  * @private {!Object.<number, string>}
  */
-ccc.base.Char.CHAR_NAME_MAP_ = {
+ccc.Char.CHAR_NAME_MAP_ = {
   10: 'newline',
   32: 'space',
   0x85: 'x85',

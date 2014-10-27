@@ -3,7 +3,7 @@
 goog.provide('ccc.parse.Parser');
 
 goog.require('ccc.base');
-goog.require('ccc.parse.ObjectReader');
+goog.require('ccc.parse.DataReader');
 goog.require('ccc.parse.Token');
 goog.require('ccc.parse.TokenReader');
 goog.require('ccc.parse.TokenType');
@@ -22,19 +22,19 @@ var ObjectBuilder_ = function(bracketType) {
   /** @public {number} */
   this.bracketType = bracketType;
 
-  /** @protected {!ccc.base.Object} */
-  this.tail_ = ccc.base.NIL;
+  /** @protected {!ccc.Data} */
+  this.tail_ = ccc.NIL;
 
-  /** @protected {!Array.<!ccc.base.Object>} */
+  /** @protected {!Array.<!ccc.Data>} */
   this.elements_ = [];
 };
 
 
 /**
- * Produces a new {@code ccc.base.Object} upon closing the form associated with
+ * Produces a new {@code ccc.Data} upon closing the form associated with
  * this builder. If this returns {@code undefined}, no object is produced.
  *
- * @return {!ccc.base.Object|undefined}
+ * @return {!ccc.Data|undefined}
  */
 ObjectBuilder_.prototype.build = function() {
   throw new Error('You are making a mistake');
@@ -46,11 +46,11 @@ ObjectBuilder_.prototype.build = function() {
  * the builder should produce an object immediately after this addition.
  * Default implementation always returns {@code false}.
  *
- * @param {!ccc.base.Object} object
+ * @param {!ccc.Data} data
  * @return {boolean}
  */
-ObjectBuilder_.prototype.add = function(object) {
-  this.elements_.push(object);
+ObjectBuilder_.prototype.add = function(data) {
+  this.elements_.push(data);
   return false;
 };
 
@@ -69,11 +69,7 @@ goog.inherits(ListBuilder_, ObjectBuilder_);
 
 /** @override */
 ListBuilder_.prototype.build = function() {
-  var list = this.tail_;
-  for (var i = this.elements_.length - 1; i >= 0; --i) {
-    list = new ccc.base.Pair(this.elements_[i], list);
-  }
-  return list;
+  return ccc.Pair.makeList(this.elements_, this.tail_);
 };
 
 
@@ -91,9 +87,9 @@ goog.inherits(VectorBuilder_, ObjectBuilder_);
 
 /** @override */
 VectorBuilder_.prototype.build = function() {
-  goog.asserts.assert(this.tail_ === ccc.base.NIL,
+  goog.asserts.assert(this.tail_ === ccc.NIL,
       'Invalid vector builder. Y u do dis?');
-  return new ccc.base.Vector(this.elements_);
+  return this.elements_;
 };
 
 
@@ -168,9 +164,8 @@ goog.inherits(WrapperBuilder_, ObjectBuilder_);
 
 
 WrapperBuilder_.prototype.build = function() {
-  return new ccc.base.Pair(
-      new ccc.base.Symbol(this.symbolName_),
-      new ccc.base.Pair(this.elements_[0], ccc.base.NIL));
+  return new ccc.Pair(Symbol.for(this.symbolName_), new ccc.Pair(
+      this.elements_[0], ccc.NIL));
 };
 
 
@@ -182,12 +177,12 @@ WrapperBuilder_.prototype.add = function(object) {
 
 /**
  * Parser for ccc code. This reads tokens from a {@code ccc.parse.TokenReader}
- * and supplies top-level forms ({@code ccc.base.Object} instances) via its
- * {@code ccc.parse.ObjectReader} interface.
+ * and supplies top-level data ({@code ccc.Data} values) via its
+ * {@code ccc.parse.DataReader} interface.
  *
  * @param {!ccc.parse.TokenReader} tokenReader Food supply for the Parser.
  * @constructor
- * @implements {ccc.parse.ObjectReader}
+ * @implements {ccc.parse.DataReader}
  * @public
  */
 ccc.parse.Parser = function(tokenReader) {
@@ -217,7 +212,7 @@ ccc.parse.Parser = function(tokenReader) {
 
 
 /** @override */
-ccc.parse.Parser.prototype.readObject = function() {
+ccc.parse.Parser.prototype.read = function() {
   return this.tokenReader_.readToken().then(function(token) {
     try {
       var result = this.processToken_(token);
@@ -235,18 +230,18 @@ ccc.parse.Parser.prototype.readObject = function() {
       }
       return goog.Promise.reject(new Error(message));
     }
-    return this.readObject();
+    return this.read();
   }, null, this);
 };
 
 
 /**
- * Processes a single token. Returns a new {@code ccc.base.Object} if a complete
- * top-level object is parsed, {@code null} if the token stream is terminated,
+ * Processes a single token. Returns a {@code ccc.Data} value if a complete
+ * top-level data is parsed, {@code null} if the token stream is terminated,
  * and {@code undefined} otherwise.
  *
  * @param {ccc.parse.Token} token
- * @return {ccc.base.Object|undefined}
+ * @return {?ccc.Data|undefined}
  */
 ccc.parse.Parser.prototype.processToken_ = function(token) {
   var T = ccc.parse.TokenType;
@@ -257,36 +252,37 @@ ccc.parse.Parser.prototype.processToken_ = function(token) {
     return null;
   }
 
+  /** @type {?ccc.Data|undefined} */
   var production = null;
   switch (token.type) {
     case T.TRUE:
-      production = ccc.base.T;
+      production = true;
       break;
     case T.FALSE:
-      production = ccc.base.F;
+      production = false;
       break;
     case T.UNSPECIFIED:
-      production = ccc.base.UNSPECIFIED;
+      production = ccc.UNSPECIFIED;
       break;
     case T.SYMBOL:
       goog.asserts.assert(goog.isDef(token.data.name),
           'Invalid symbol literal.');
-      production = new ccc.base.Symbol(token.data.name);
+      production = Symbol.for(token.data.name);
       break;
     case T.CHAR_LITERAL:
       goog.asserts.assert(goog.isDef(token.data.value),
           'Invalid character literal.');
-      production = new ccc.base.Char(token.data.value);
+      production = new ccc.Char(token.data.value);
       break;
     case T.STRING_LITERAL:
       goog.asserts.assert(goog.isDef(token.data.value),
           'Invalid string literal.');
-      production = new ccc.base.String(token.data.value);
+      production = token.data.value;
       break;
     case T.NUMERIC_LITERAL:
       goog.asserts.assert(goog.isDef(token.data.value),
           'Invalid numeric literal.');
-      production = new ccc.base.Number(token.data.value);
+      production = token.data.value;
       break;
     case T.OPEN_LIST:
       goog.asserts.assert(goog.isDef(token.data.type),
@@ -309,7 +305,8 @@ ccc.parse.Parser.prototype.processToken_ = function(token) {
       if (this.builder_.bracketType != token.data.type) {
         throw new Error('Unbalanced "' + token.text + '"');
       }
-      goog.asserts.assert(this.builderStack_.length > 0);
+      goog.asserts.assert(this.builderStack_.length > 0,
+          'Misplaced form closer');
       production = this.builder_.build();
       this.builder_ = this.builderStack_.pop();
       break;

@@ -17,3 +17,4 @@ goog.require('ccc.Procedure');
 goog.require('ccc.Thunk');
 goog.require('ccc.Transformer');
 goog.require('ccc.Unspecified');
+goog.require('ccc.Vector');

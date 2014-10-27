@@ -21,9 +21,6 @@ ccc.base.stringify = function(data) {
     return '#t';
   if (data === false)
     return '#f';
-  if (ccc.isVector(data))
-    return '#(' + goog.array.map(/** @type {!Array.<!ccc.Data>} */ (data),
-        ccc.base.stringify).join(' ') + ')';
   // TODO(krockot): Symbol and string are pretty lazy right now. Should escape
   // unprintable/badly-printable characters and optionally |-quote symbols.
   if (ccc.isSymbol(data))

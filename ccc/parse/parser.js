@@ -89,7 +89,7 @@ goog.inherits(VectorBuilder_, ObjectBuilder_);
 VectorBuilder_.prototype.build = function() {
   goog.asserts.assert(this.tail_ === ccc.NIL,
       'Invalid vector builder. Y u do dis?');
-  return this.elements_;
+  return new ccc.Vector(this.elements_);
 };
 
 

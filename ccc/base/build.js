@@ -7,6 +7,7 @@ goog.require('ccc.Nil');
 goog.require('ccc.Object');
 goog.require('ccc.Pair');
 goog.require('ccc.Unspecified');
+goog.require('ccc.Vector');
 
 
 
@@ -65,7 +66,7 @@ ccc.base.build = function(spec) {
     if (goog.object.containsKey(spec, 'object'))
       return spec['object'];
     if (goog.object.containsKey(spec, 'vec'))
-      return goog.array.map(spec['vec'], ccc.base.build);
+      return new ccc.Vector(goog.array.map(spec['vec'], ccc.base.build));
     if (goog.object.containsKey(spec, 'str'))
       return spec['str'];
     if (goog.object.containsKey(spec, 'chr'))

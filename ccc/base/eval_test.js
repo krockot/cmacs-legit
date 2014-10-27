@@ -96,7 +96,7 @@ function testSelfEvaluators() {
     E(false, false),
     E(ccc.NIL, ccc.NIL),
     E(ccc.UNSPECIFIED, ccc.UNSPECIFIED),
-    E([true, false], [true, false]),
+    E(new ccc.Vector([true, false]), new ccc.Vector([true, false])),
   ]);
 }
 

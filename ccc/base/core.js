@@ -10,7 +10,6 @@ goog.provide('ccc.Object');
 goog.provide('ccc.Thunk');
 goog.provide('ccc.Unspecified');
 
-goog.require('goog.array');
 goog.require('goog.asserts');
 goog.require('goog.object');
 
@@ -21,8 +20,7 @@ goog.require('goog.object');
  * of {@code ccc.Object}. The only primitive values which are strictly not
  * allowed to behave as program data are {@code undefined} and {@code null}.
  *
- * @typedef {(!ccc.Object|string|symbol|number|boolean|!Object|
-              !Array.<!ccc.Data>)}
+ * @typedef {(!ccc.Object|string|symbol|number|boolean|!Object)}
  * @public
  */
 ccc.Data;
@@ -617,18 +615,6 @@ ccc.isUnspecified = function(data) {
 
 
 /**
- * Indicates if a given {@code ccc.Data} is a vector (Array).
- *
- * @param {!ccc.Data} data
- * @return {boolean}
- * @public
- */
-ccc.isVector = function(data) {
-  return data instanceof Array;
-};
-
-
-/**
  * Indicates if a given {@code ccc.Data} is a {@code ccc.Error}.
  *
  * @param {!ccc.Data} data
@@ -673,9 +659,6 @@ ccc.createEqualityTest_ = function(predicateName) {
       return one[predicateName](other);
     if (other instanceof ccc.Object)
       return false;
-    if (one instanceof Array)
-      return other instanceof Array && one.length == other.length &&
-          goog.array.every(one, function(e, i) { return test(e, other[i]); });
     return one === other;
   };
   return test;

@@ -44,7 +44,7 @@ cmacs.background.main = function() {
   }));
   environment.allocate('display').setValue(new ccc.NativeProcedure(
       function(environment, args, continuation) {
-    console.log(args.car().toString());
+    console.log(ccc.base.stringify(args.car()));
     return continuation(ccc.UNSPECIFIED);
   }));
   var evaluator = new ccc.Evaluator(environment);
@@ -55,13 +55,15 @@ cmacs.background.main = function() {
     var parser = new ccc.parse.Parser(scanner);
     /** @param {?ccc.Data} lastValue */
     var readData = function(lastValue) {
-      parser.read().then(function(data) {
+      return parser.read().then(function(data) {
         if (goog.isNull(data)) {
           if (!goog.isNull(lastValue))
             console.log(ccc.base.stringify(lastValue));
-          return;
+          return null;
         }
-        return evaluator.evalData(data);
+        return evaluator.evalData(data).then(readData, function(error) {
+          console.error('Error: ' + error);
+        });
       });
     };
     readData(null);

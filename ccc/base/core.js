@@ -121,7 +121,7 @@ ccc.Object.prototype.isApplicable = function() {
 
 
 /**
- * Apply this objec to combine a list of data. Should only be called if
+ * Apply this object to combine a list of data. Should only be called if
  * {@code isApplicable} returns {@code true}.
  *
  * @param {!ccc.Environment} environment The environment in which this

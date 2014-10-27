@@ -50,6 +50,7 @@ def _CompileJs(closure_library_root,
                debug):
   compilation_level = 'WHITESPACE_ONLY' if debug else 'ADVANCED'
   print 'Compiling %s...' % output_filename
+  extern_args = [('--externs', extern) for extern in externs]
   return not subprocess.call([
       'java', '-jar', closure_compiler_jar,
       '--closure_entry_point', entry_point,
@@ -83,8 +84,8 @@ def _CompileJs(closure_library_root,
       '--define=goog.DEBUG=%s' % ('true' if debug else 'false'),
       closure_library_root,
       '!%s' % os.path.join(closure_library_root, '**_test.js'),
-      '!%s' % os.path.join(closure_library_root, '**demo.js'),
-      '--externs'] + externs + src_paths +
+      '!%s' % os.path.join(closure_library_root, '**demo.js')] +
+      [arg for pair in extern_args for arg in pair] + src_paths +
         ['!%s' % os.path.join(path, '**_test.js') for path in src_paths])
 
 

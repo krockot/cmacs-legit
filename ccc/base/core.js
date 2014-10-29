@@ -119,20 +119,16 @@ ccc.Object.prototype.isApplicable = function() {
 
 
 /**
- * Apply this object to combine a list of data. Should only be called if
- * {@code isApplicable} returns {@code true}.
+ * Compile this object.
  *
- * @param {!ccc.Environment} environment The environment in which this
- *     object application is to be initiated.
- * @param {!ccc.Object} args The arguments to apply.
- * @param {!ccc.Continuation} continuation The continuation which should
- *     receive the result of this procedure application.
- * @return {ccc.Thunk}
+ * @param {!ccc.Environment} environment
+ * @param {!ccc.Continuation} continuation
+ * @return {!ccc.Thunk}
  * @public
  */
-ccc.Object.prototype.apply = function(environment, args, continuation) {
-  return continuation(null, new ccc.Error(
-      'Object ' + this.toString() + ' is not applicable.'));
+ccc.Object.prototype.compile = function(environment, continuation) {
+  // Objects compile to themselves by default.
+  return continuation(this);
 };
 
 
@@ -151,6 +147,23 @@ ccc.Object.prototype.eval = function(environment, continuation) {
   return continuation(this);
 };
 
+
+/**
+ * Apply this object to combine a list of data. Should only be called if
+ * {@code isApplicable} returns {@code true}.
+ *
+ * @param {!ccc.Environment} environment The environment in which this
+ *     object application is to be initiated.
+ * @param {!ccc.Object} args The arguments to apply.
+ * @param {!ccc.Continuation} continuation The continuation which should
+ *     receive the result of this procedure application.
+ * @return {ccc.Thunk}
+ * @public
+ */
+ccc.Object.prototype.apply = function(environment, args, continuation) {
+  return continuation(null, new ccc.Error(
+      'Object ' + this.toString() + ' is not applicable.'));
+};
 
 
 /**

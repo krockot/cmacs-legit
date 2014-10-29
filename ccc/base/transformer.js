@@ -2,7 +2,6 @@
 
 goog.provide('ccc.Transformer');
 
-goog.require('ccc.Environment');
 goog.require('ccc.Error');
 goog.require('ccc.Object');
 goog.require('goog.Promise');

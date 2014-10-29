@@ -2,13 +2,10 @@
 
 goog.provide('ccc.Procedure');
 
-goog.require('ccc.Continuation');
-goog.require('ccc.Data');
 goog.require('ccc.Environment');
 goog.require('ccc.Nil');
 goog.require('ccc.Object');
 goog.require('ccc.Pair');
-goog.require('ccc.Thunk');
 goog.require('goog.Promise');
 goog.require('goog.asserts');
 
@@ -60,8 +57,8 @@ ccc.Procedure.prototype.apply = function(environment, args, continuation) {
     if (args !== ccc.NIL)
       return continuation(new ccc.Error('Too many arguments'));
   } else if (ccc.isSymbol(this.formals_)) {
-    innerScope.allocate(Symbol.keyFor(/** @type {symbol} */ (
-        this.formals_))).setValue(args);
+    innerScope.set(Symbol.keyFor(/** @type {symbol} */ (
+        this.formals_)), args);
   } else {
     goog.asserts.assert(ccc.isPair(this.formals_) ||
         ccc.isNil(this.formals_));
@@ -70,7 +67,7 @@ ccc.Procedure.prototype.apply = function(environment, args, continuation) {
     while (ccc.isPair(formal) && ccc.isPair(arg)) {
       var symbol = formal.car();
       goog.asserts.assert(ccc.isSymbol(symbol), 'Invalid argument name');
-      innerScope.allocate(Symbol.keyFor(symbol)).setValue(arg.car());
+      innerScope.set(Symbol.keyFor(symbol), arg.car());
       formal = formal.cdr();
       arg = arg.cdr();
     }
@@ -81,7 +78,7 @@ ccc.Procedure.prototype.apply = function(environment, args, continuation) {
     goog.asserts.assert(ccc.isPair(arg) || ccc.isNil(arg),
         'Invalid argument list');
     if (ccc.isSymbol(formal))
-      innerScope.allocate(Symbol.keyFor(formal)).setValue(arg);
+      innerScope.set(Symbol.keyFor(formal), arg);
   }
 
   return goog.partial(ccc.Procedure.evalBodyContinuationImpl_,
@@ -103,7 +100,6 @@ ccc.Procedure.prototype.apply = function(environment, args, continuation) {
  */
 ccc.Procedure.evalBodyContinuationImpl_ = function(
     outerEnvironment, innerEnvironment, continuation, form, result) {
-  outerEnvironment.setActiveFrame(innerEnvironment);
   if (ccc.isError(result))
     return continuation(result);
   goog.asserts.assert(ccc.isPair(form));

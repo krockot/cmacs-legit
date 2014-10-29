@@ -2,12 +2,8 @@
 
 goog.provide('ccc.Pair');
 
-goog.require('ccc.Continuation');
-goog.require('ccc.Data');
-goog.require('ccc.Environment');
 goog.require('ccc.Nil');
 goog.require('ccc.Object');
-goog.require('ccc.Thunk');
 goog.require('ccc.core.stringify');
 goog.require('goog.Promise');
 goog.require('goog.array');

@@ -1,354 +1,57 @@
 // The Cmacs Project.
 
-goog.provide('ccc.Environment');
-goog.provide('ccc.Object');
 goog.provide('ccc.core');
 
-goog.require('ccc.Continuation');
-goog.require('ccc.Data');
+goog.require('ccc.Char');
 goog.require('ccc.Environment');
 goog.require('ccc.Error');
+goog.require('ccc.Evaluator');
+goog.require('ccc.Location');
+goog.require('ccc.NativeProcedure');
+goog.require('ccc.Nil');
 goog.require('ccc.Object');
-goog.require('ccc.Thunk');
+goog.require('ccc.Pair');
+goog.require('ccc.Procedure');
+goog.require('ccc.Transformer');
+goog.require('ccc.Unspecified');
+goog.require('ccc.Vector');
+goog.require('ccc.core.types');
 
 
 
 /**
- * Base ccc runtime object.
+ * An element of program data. This can be anytihng other than {@code undefined}
+ * or {@code null}. Instances of {@code ccc.Object} and its derivatives are
+ * often treated specially by functions which deal with {@code ccc.Data}.
  *
- * @constructor
+ * @typedef {(string|symbol|number|boolean|!Object)}
+ * @public
  */
-ccc.Object = function() {};
-
-
-/**
- * Indicates if a given {@code ccc.Data} is a {@code ccc.Object} of
- * any kind.
- *
- * @param {ccc.Data} data
- * @return {boolean}
- */
-ccc.isObject = function(data) {
-  return data instanceof ccc.Object;
-};
-
-
-/**
- * Indicates if a given {@code ccc.Data} is applicable.
- *
- * @param {ccc.Data} data
- * @return {boolean}
- */
-ccc.isApplicable = function(data) {
-  return ccc.isObject(data) && data.isApplicable();
-};
-
-
-/**
- * Returns a string representation of this object for logging and debugging
- * display. All derived object types should override this.
- *
- * @return {string}
- */
-ccc.Object.prototype.toString = function() {
-  return '#<object>';
-};
-
-
-/**
- * Default strict equality implementation: native object identity.
- *
- * @param {ccc.Data} other
- * @return {boolean}
- */
-ccc.Object.prototype.eq = function(other) {
-  return this === other;
-};
-
-
-/**
- * Default equivalence implementation: fallback to strict equality.
- *
- * @param {ccc.Data} other
- * @return {boolean}
- */
-ccc.Object.prototype.eqv = function(other) {
-  return this.eq(other);
-};
-
-
-/**
- * Default non-strict equality implementation: fallback to equivalence.
- *
- * @param {ccc.Data} other
- * @return {boolean}
- */
-ccc.Object.prototype.equal = function(other) {
-  return this.eqv(other);
-};
-
-
-/**
- * Indicates if this object is applicable (i.e. it implements {@code apply}).
- *
- * @return {boolean}
- */
-ccc.Object.prototype.isApplicable = function() {
-  return false;
-};
-
-
-/**
- * Expand this object.
- *
- * @param {ccc.Continuation} continuation
- * @return {!ccc.Thunk}
- */
-ccc.Object.prototype.expand = function(continuation) {
-  return continuation(this);
-};
-
-
-/**
- * Compile this object.
- *
- * @param {!ccc.Environment} environment
- * @param {ccc.Continuation} continuation
- * @return {!ccc.Thunk}
- */
-ccc.Object.prototype.compile = function(environment, continuation) {
-  // Objects compile to themselves by default.
-  return continuation(this);
-};
-
-
-/**
- * Evaluate this object.
- *
- * @param {!ccc.Environment} environment The environment in which this
- *     object should be evaluated.
- * @param {ccc.Continuation} continuation The continuation which
- *     should receive the result of this evaluation.
- * @return {ccc.Thunk}
- */
-ccc.Object.prototype.eval = function(environment, continuation) {
-  // All {@code ccc.Object} types are self-evaluating by default.
-  return continuation(this);
-};
-
-
-/**
- * Apply this object to combine a list of data. Should only be called if
- * {@code isApplicable} returns {@code true}.
- *
- * @param {!ccc.Environment} environment The environment in which this
- *     object application is to be initiated.
- * @param {!ccc.Object} args The arguments to apply.
- * @param {ccc.Continuation} continuation The continuation which should
- *     receive the result of this procedure application.
- * @return {ccc.Thunk}
- */
-ccc.Object.prototype.apply = function(environment, args, continuation) {
-  return continuation(new ccc.Error('Object ' + this.toString() +
-      ' is not applicable.'));
-};
+ccc.Data;
 
 
 
 /**
- * An Environment provides the evaluation context for an expression. It consists
- * of an innermost set of bindings and an optional link to a parent environment.
+ * A Thunk is a closure that returns another closure. This may be used to
+ * implement arbitrarily long (and indeed infinitely long) chains of abstract
+ * operations in sequence, and is the basis for the continuation-passing
+ * execution model throughout ccc core.
  *
- * @param {!ccc.Environment=} opt_parent The parent environment.
- * @constructor
- * @extends {ccc.Object}
+ * @typedef {function():ccc.Thunk}
  */
-ccc.Environment = function(opt_parent) {
-  /** @private {ccc.Environment} */
-  this.parent_ = goog.isDef(opt_parent) ? opt_parent : null;
-
-  /**
-   * The set of active bindings local to this environment.
-   * @private {!ccc.BindingMap_}
-   */
-  this.bindings_ = {};
-
-  /** @private {number} */
-  this.id_ = ++ccc.Environment.nextId_;
-};
-goog.inherits(ccc.Environment, ccc.Object);
-
-
-/**
- * Indicates if a given {@code ccc.Data} is a {@code ccc.Environment}.
- *
- * @param {ccc.Data} data
- * @return {boolean}
- */
-ccc.isEnvironment = function(data) {
-  return data instanceof ccc.Environment;
-};
-
-
-/**
- * Used to attach a unique ID to every new environment.
- *
- * @private {number}
- */
-ccc.Environment.nextId_ = 0;
-
-
-/** @override */
-ccc.Environment.prototype.toString = function() {
-  return '#<environment>';
-};
-
-
-/**
- * Sets the {@code ccc.Data} associated with a name within this environment.
- *
- * @param {string} name
- * @param {ccc.Data} data
- */
-ccc.Environment.prototype.set = function(name, data) {
-  goog.object.set(this.bindings_, name, data);
-};
-
-
-/**
- * Gets the {@code ccc.Data} to which a name is bound. If the binding does not
- * exist in the immediate environment, the ancestor environments are search
- * recursively.
- *
- * Returns {@code null} if the binding does not exist.
- *
- * @param {string} name
- * @return {?ccc.Data}
- */
-ccc.Environment.prototype.get = function(name) {
-  var data = /** @type {?ccc.Data} */ (
-      goog.object.get(this.bindings_, name, null));
-  if (goog.isNull(data) && !goog.isNull(this.parent_))
-    return this.parent_.get(name);
-  return data;
-};
-
-
-/**
- * Indicates if the environment has a direct binding for the given name.
- *
- * @param {string} name
- * @return {boolean}
- */
-ccc.Environment.prototype.hasBinding = function(name) {
-  return goog.object.containsKey(this.bindings_, name);
-};
-
-
-/**
- * Indicates if this is a top-level environment.
- *
- * @return {boolean}
- */
-ccc.Environment.prototype.isToplevel = function() {
-  return goog.isNull(this.parent_);
-};
+ccc.Thunk;
 
 
 
 /**
- * A mapping from binding name to {@code ccc.Data}.
+ * A Continuation is any function which takes a single {@code ccc.Data} returns
+ * a {@code ccc.Thunk}.
  *
- * @typedef {Object.<string, ccc.Data>}
- * @private
+ * @typedef {function(ccc.Data):ccc.Thunk}
+ * @public
  */
-ccc.BindingMap_;
+ccc.Continuation;
 
-
-/**
- * Indicates if a given {@code ccc.Data} is a symbol.
- *
- * @param {ccc.Data} data
- * @return {boolean}
- */
-ccc.isSymbol = function(data) {
-  // This is an evil hack to keep Closure Compiler from complaining that
-  // 'symbol' is an unknown type.
-  return typeof data === ('sym'+'bol');
-};
-
-
-/**
- * Indicates if a given {@code ccc.Data} is a string.
- *
- * @param {ccc.Data} data
- * @return {boolean}
- */
-ccc.isString = function(data) {
-  return typeof data === 'string';
-};
-
-
-/**
- * Indicates if a given {@code ccc.Data} is a number.
- *
- * @param {ccc.Data} data
- * @return {boolean}
- */
-ccc.isNumber = function(data) {
-  return typeof data === 'number';
-};
-
-
-/**
- * Indicates if two {@code ccc.Data} objects are strictly equal. The meaning
- * of this predicate depends on the underlying data types.
- *
- * @param {ccc.Data} one
- * @param {ccc.Data} other
- * @return {boolean}
- */
-ccc.eq = function(one, other) {
-  if (one instanceof ccc.Object)
-    return one.eq(other);
-  if (other instanceof ccc.Object)
-    return false;
-  return one === other;
-};
-
-
-/**
- * Indicates if two {@code ccc.Data} objects are equivalent. The meaning
- * of this predicate depends on the underlying data types.
- *
- * @param {ccc.Data} one
- * @param {ccc.Data} other
- * @return {boolean}
- */
-ccc.eqv = function(one, other) {
-  if (one instanceof ccc.Object)
-    return one.eqv(other);
-  if (other instanceof ccc.Object)
-    return false;
-  return one === other;
-};
-
-
-/**
- * Indicates if two {@code ccc.Data} objects are recursively equal. The meaning
- * of this predicate depends on the underlying data types.
- *
- * @param {ccc.Data} one
- * @param {ccc.Data} other
- * @return {boolean}
- */
-ccc.equal = function(one, other) {
-  if (one instanceof ccc.Object)
-    return one.equal(other);
-  if (other instanceof ccc.Object)
-    return false;
-  return one === other;
-};
 
 
 /**

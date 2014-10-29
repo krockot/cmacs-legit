@@ -2,10 +2,7 @@
 
 goog.provide('ccc.NativeProcedure');
 
-goog.require('ccc.Continuation');
-goog.require('ccc.Environment');
 goog.require('ccc.Object');
-goog.require('ccc.Thunk');
 
 
 

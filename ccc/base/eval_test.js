@@ -3,8 +3,6 @@
 goog.provide('ccc.EvalTest');
 goog.setTestOnly('ccc.EvalTest');
 
-goog.require('ccc.Evaluator');
-goog.require('ccc.Transformer');
 goog.require('ccc.core');
 goog.require('ccc.core.stringify');
 goog.require('goog.Promise');

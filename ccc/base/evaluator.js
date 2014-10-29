@@ -2,11 +2,7 @@
 
 goog.provide('ccc.Evaluator');
 
-goog.require('ccc.Continuation');
-goog.require('ccc.Data');
-goog.require('ccc.Environment');
 goog.require('ccc.Error');
-goog.require('ccc.Thunk');
 goog.require('goog.Promise');
 goog.require('goog.promise.Resolver');
 goog.require('goog.Timer');

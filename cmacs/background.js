@@ -2,9 +2,6 @@
 
 goog.provide('cmacs.background.main');
 
-goog.require('ccc.Evaluator');
-goog.require('ccc.NativeProcedure');
-goog.require('ccc.Unspecified');
 goog.require('ccc.core');
 goog.require('ccc.core.stringify');
 //goog.require('ccc.syntax');

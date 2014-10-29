@@ -2,7 +2,6 @@
 
 goog.provide('ccc.Location');
 
-goog.require('ccc.Data');
 goog.require('ccc.Object');
 
 
@@ -12,10 +11,6 @@ goog.require('ccc.Object');
  * allocated dynamically during compilation or evaluation. Symbol names may in
  * turn be bound to locations within an environment.
  *
- * @param {!ccc.Environment} environment The environment which owns this
- *     Location's binding.
- * @param {string=} opt_proxyName The symbol name which this Location proxies,
- *     if any.
  * @constructor
  * @extends {ccc.Object}
  */
@@ -27,7 +22,7 @@ ccc.Location = function() {
    */
   this.value_ = null;
 };
-goog.inherts(ccc.Location, ccc.Object);
+goog.inherits(ccc.Location, ccc.Object);
 
 
 /**

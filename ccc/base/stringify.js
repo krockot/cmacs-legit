@@ -2,9 +2,7 @@
 
 goog.provide('ccc.core.stringify');
 
-goog.require('ccc.Data');
-goog.require('ccc.Object');
-goog.require('ccc.core');
+goog.require('ccc.core.types');
 
 
 /**

@@ -2,12 +2,7 @@
 
 goog.provide('ccc.parse.Parser');
 
-goog.require('ccc.Char');
-goog.require('ccc.Data');
-goog.require('ccc.Nil');
-goog.require('ccc.Pair');
-goog.require('ccc.Unspecified');
-goog.require('ccc.Vector');
+goog.require('ccc.core');
 goog.require('ccc.parse.DataReader');
 goog.require('ccc.parse.Token');
 goog.require('ccc.parse.TokenReader');

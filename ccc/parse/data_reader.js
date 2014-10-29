@@ -2,7 +2,6 @@
 
 goog.provide('ccc.parse.DataReader');
 
-goog.require('ccc.Data');
 goog.require('goog.Promise');
 
 

@@ -1,13 +1,8 @@
 // The Cmacs Project.
 
-goog.provide('ccc.base.build');
+goog.provide('ccc.core.build');
 
-goog.require('ccc.Data')
-goog.require('ccc.Nil');
-goog.require('ccc.Object');
-goog.require('ccc.Pair');
-goog.require('ccc.Unspecified');
-goog.require('ccc.Vector');
+goog.require('ccc.core');
 
 
 

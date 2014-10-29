@@ -34,8 +34,8 @@ function E(input, expectedOutput, opt_environment) {
   var environment = (goog.isDef(opt_environment)
       ? opt_environment
       : new ccc.Environment(opt_environment));
-  var evaluator = new ccc.Evaluator(environment);
-  return evaluator.evalData(input).then(function(result) {
+  var thread = new ccc.Thread(ccc.eval(input, environment));
+  return thread.run().then(function(result) {
     if (!ccc.equal(expectedOutput, result))
       return goog.Promise.reject(new Error('Object mismatch.\n' +
           'Expected: ' + ccc.base.stringify(expectedOutput) +

@@ -156,8 +156,8 @@ ccc.Pair.prototype.compile = function(environment) {
 
 /** @override */
 ccc.Pair.prototype.eval = function(environment, continuation) {
-  return ccc.eval(this.car_, environment, goog.bind(
-      this.onHeadEval_, this, environment, continuation));
+  return ccc.eval(this.car_, environment)(goog.bind(this.onHeadEval_, this,
+      environment, continuation));
 };
 
 
@@ -225,7 +225,7 @@ ccc.Pair.evalArgContinuationImpl_ = function(
   if (ccc.isError(values))
     return continuation(values);
   goog.asserts.assert(ccc.isPair(values) || ccc.isNil(values));
-  return ccc.eval(arg, environment, goog.partial(ccc.Pair.collectArg_, values,
+  return ccc.eval(arg, environment)(goog.partial(ccc.Pair.collectArg_, values,
       innerContinuation));
 };
 

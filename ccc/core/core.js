@@ -5,13 +5,13 @@ goog.provide('ccc.core');
 goog.require('ccc.Char');
 goog.require('ccc.Environment');
 goog.require('ccc.Error');
-goog.require('ccc.Evaluator');
 goog.require('ccc.Location');
 goog.require('ccc.NativeProcedure');
 goog.require('ccc.Nil');
 goog.require('ccc.Object');
 goog.require('ccc.Pair');
 goog.require('ccc.Procedure');
+goog.require('ccc.Thread');
 goog.require('ccc.Transformer');
 goog.require('ccc.Unspecified');
 goog.require('ccc.Vector');
@@ -55,29 +55,27 @@ ccc.Continuation;
 
 
 /**
- * Begins evaluation of a {@code ccc.Data}, returning a {@code ccc.Thunk} which
- * steps evaluation when called.
- *
- * When evaluation is complete the provided continuation will be called with the
- * result or an error.
+ * Returns a new {@code ccc.ThreadEntryPoint} which can be used to construct
+ * a new {@code ccc.Thread}. The thread, when run, will evaluate {@code data}
+ * within {@code environment}.
  *
  * @param {ccc.Data} data The data to evaluate.
  * @param {!ccc.Environment} environment The environment in which to
  *     perform evaluation.
- * @param {ccc.Continuation} continuation The continuation which should
- *     eventually receive the evaluation result or exception.
- * @return {!ccc.Thunk}
+ * @return {ccc.ThreadEntryPoint}
  */
-ccc.eval = function(data, environment, continuation) {
-  if (ccc.isObject(data))
-    return data.eval(environment, continuation);
-  if (ccc.isSymbol(data)) {
-    var name = Symbol.keyFor(/** @type {symbol} */ (data));
-    var value = environment.get(name);
-    if (goog.isNull(value))
-      return continuation(new ccc.Error('Unbound symbol |' + name + '|'));
-    return continuation(value);
-  }
-  // Default to self-evaluation for everything else.
-  return continuation(data);
+ccc.eval = function(data, environment) {
+  return function(continuation) {
+    if (ccc.isObject(data))
+      return data.eval(environment, continuation);
+    if (ccc.isSymbol(data)) {
+      var name = Symbol.keyFor(/** @type {symbol} */ (data));
+      var value = environment.get(name);
+      if (goog.isNull(value))
+        return continuation(new ccc.Error('Unbound symbol |' + name + '|'));
+      return continuation(value);
+    }
+    // Default to self-evaluation for everything else.
+    return continuation(data);
+  };
 };

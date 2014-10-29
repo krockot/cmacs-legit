@@ -47,7 +47,6 @@ cmacs.background.main = function() {
     console.log(ccc.core.stringify(args.car()));
     return continuation(ccc.UNSPECIFIED);
   }));
-  var evaluator = new ccc.Evaluator(environment);
   goog.global['evalCcc'] = function(code) {
     var scanner = new ccc.parse.Scanner();
     scanner.feed(code);
@@ -61,8 +60,9 @@ cmacs.background.main = function() {
             console.log(ccc.core.stringify(lastValue));
           return null;
         }
-        return evaluator.evalData(data).then(readData, function(error) {
-          console.error('Error: ' + error);
+        var thread = new ccc.Thread(ccc.eval(data, environment));
+        thread.run().then(readData, function(error) {
+          console.error('Error: ' + error.toString());
         });
       });
     };

@@ -3,7 +3,7 @@
 goog.provide('ccc.Vector');
 
 goog.require('ccc.Object');
-goog.require('ccc.base.stringify');
+goog.require('ccc.core.stringify');
 goog.require('goog.array');
 
 
@@ -11,13 +11,13 @@ goog.require('goog.array');
 /**
  * Primitive Vector type.
  *
- * @param {!Array.<!ccc.Data>} elements
+ * @param {!Array.<ccc.Data>} elements
  * @constructor
  * @extends {ccc.Object}
  * @public
  */
 ccc.Vector = function(elements) {
-  /** @private {!Array.<!ccc.Data>} */
+  /** @private {!Array.<ccc.Data>} */
   this.elements_ = elements.slice();
 };
 goog.inherits(ccc.Vector, ccc.Object);
@@ -26,7 +26,7 @@ goog.inherits(ccc.Vector, ccc.Object);
 /**
  * Indicates if a {@code ccc.Data} object is a {@code ccc.Vector}.
  *
- * @param {!ccc.Data} data
+ * @param {ccc.Data} data
  * @return {boolean}
  * @public
  */
@@ -37,7 +37,7 @@ ccc.isVector = function(data) {
 
 /** @override */
 ccc.Vector.prototype.toString = function() {
-  return '#(' + goog.array.map(this.elements_, ccc.base.stringify).join(' ') +
+  return '#(' + goog.array.map(this.elements_, ccc.core.stringify).join(' ') +
       ')';
 };
 
@@ -73,5 +73,5 @@ ccc.Vector.prototype.get = function(index) {
   if (index < 0 || index >= this.elements_.length)
     return null;
   return this.elements_[index];
-}; 
+};
 

@@ -19,7 +19,7 @@ goog.require('goog.asserts');
  *
  * @param {!ccc.Environment} scope The innermost environment at the point
  *     of this Procedure's construction.
- * @param {!ccc.Data} formals The argument specification.
+ * @param {ccc.Data} formals The argument specification.
  * @param {!ccc.Pair} body A proper list of one or more compiled objects.
  * @constructor
  * @extends {ccc.Object}
@@ -32,7 +32,7 @@ ccc.Procedure = function(scope, formals, body) {
   /** @private {!ccc.Environment} */
   this.scope_ = scope;
 
-  /** @private {!ccc.Data} */
+  /** @private {ccc.Data} */
   this.formals_ = formals;
 
   /** @private {!ccc.Pair} */
@@ -58,7 +58,7 @@ ccc.Procedure.prototype.apply = function(environment, args, continuation) {
   var innerScope = new ccc.Environment(this.scope_);
   if (ccc.isNil(this.formals_)) {
     if (args !== ccc.NIL)
-      return continuation(null, new ccc.Error('Too many arguments'));
+      return continuation(new ccc.Error('Too many arguments'));
   } else if (ccc.isSymbol(this.formals_)) {
     innerScope.allocate(Symbol.keyFor(/** @type {symbol} */ (
         this.formals_))).setValue(args);
@@ -75,9 +75,9 @@ ccc.Procedure.prototype.apply = function(environment, args, continuation) {
       arg = arg.cdr();
     }
     if (ccc.isNil(formal) && !ccc.isNil(arg))
-      return continuation(null, new ccc.Error('Too many arguments'));
+      return continuation(new ccc.Error('Too many arguments'));
     if (ccc.isNil(arg) && ccc.isPair(formal))
-      return continuation(null, new ccc.Error('Not enough arguments'));
+      return continuation(new ccc.Error('Not enough arguments'));
     goog.asserts.assert(ccc.isPair(arg) || ccc.isNil(arg),
         'Invalid argument list');
     if (ccc.isSymbol(formal))
@@ -96,17 +96,16 @@ ccc.Procedure.prototype.apply = function(environment, args, continuation) {
  * @param {!ccc.Environment} outerEnvironment
  * @param {!ccc.Environment} innerEnvironment
  * @param {!ccc.Continuation} continuation
- * @param {!ccc.Data} form
- * @param {?ccc.Data} result
- * @param {!ccc.Error=} opt_error
+ * @param {ccc.Data} form
+ * @param {ccc.Data} result
  * @return {ccc.Thunk}
  * @private
  */
 ccc.Procedure.evalBodyContinuationImpl_ = function(
-    outerEnvironment, innerEnvironment, continuation, form, result, opt_error) {
+    outerEnvironment, innerEnvironment, continuation, form, result) {
   outerEnvironment.setActiveFrame(innerEnvironment);
-  if (goog.isNull(result))
-    return continuation(null, opt_error);
+  if (ccc.isError(result))
+    return continuation(result);
   goog.asserts.assert(ccc.isPair(form));
   if (ccc.isNil(form.cdr()))
     return form.car().eval(innerEnvironment, continuation)

@@ -39,8 +39,8 @@ ccc.Evaluator.THUNKS_PER_SLICE_ = 1000;
 /**
  * Evaluates a data object.
  *
- * @param {!ccc.Data} data
- * @return {!goog.Promise.<!ccc.Data, !ccc.Error>}
+ * @param {ccc.Data} data
+ * @return {!goog.Promise.<ccc.Data, !ccc.Error>}
  * @public
  */
 ccc.Evaluator.prototype.evalData = function(data) {
@@ -66,19 +66,16 @@ ccc.Evaluator.terminate_ = function() {
 /**
  * Unbound toplevel continuation for a single {@code evalData} call.
  *
- * @param {!goog.promise.Resolver.<!ccc.Data>} resolver
- * @param {?ccc.Data} data
- * @param {!ccc.Error=} opt_error
+ * @param {!goog.promise.Resolver.<ccc.Data>} resolver
+ * @param {ccc.Data} result
  * @return {ccc.Thunk}
  * @private
  */
-ccc.Evaluator.evalDataContinuationImpl_ = function(resolver, data, opt_error) {
-  if (goog.isNull(data)) {
-    goog.asserts.assert(goog.isDef(opt_error));
-    goog.asserts.assert(ccc.isError(opt_error));
-    resolver.reject(opt_error);
+ccc.Evaluator.evalDataContinuationImpl_ = function(resolver, result) {
+  if (ccc.isError(result)) {
+    resolver.reject(result);
   } else {
-    resolver.resolve(data)
+    resolver.resolve(result)
   }
   return ccc.Evaluator.terminate_;
 };

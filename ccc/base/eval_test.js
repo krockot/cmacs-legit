@@ -3,8 +3,10 @@
 goog.provide('ccc.EvalTest');
 goog.setTestOnly('ccc.EvalTest');
 
-goog.require('ccc.base');
-goog.require('ccc.base.stringify');
+goog.require('ccc.Evaluator');
+goog.require('ccc.Transformer');
+goog.require('ccc.core');
+goog.require('ccc.core.stringify');
 goog.require('goog.Promise');
 goog.require('goog.testing.AsyncTestCase');
 goog.require('goog.testing.jsunit');
@@ -75,15 +77,15 @@ function RunTests(tests) {
 function testEnvironment() {
   var outer = new ccc.Environment();
   var inner = new ccc.Environment(outer);
-  outer.allocate('x').setValue(ccc.T);
-  outer.allocate('y').setValue(ccc.T);
-  inner.allocate('x').setValue(ccc.F);
-  inner.allocate('z').setValue(ccc.NIL);
-  assertEquals(ccc.T, outer.get('x').getValue());
-  assertEquals(ccc.F, inner.get('x').getValue());
-  assertEquals(ccc.T, outer.get('y').getValue());
-  assertEquals(ccc.T, inner.get('y').getValue());
-  assertEquals(ccc.NIL, inner.get('z').getValue());
+  outer.set('x', ccc.T);
+  outer.set('y', ccc.T);
+  inner.set('x', ccc.F);
+  inner.set('z', ccc.NIL);
+  assertEquals(ccc.T, outer.get('x'));
+  assertEquals(ccc.F, inner.get('x'));
+  assertEquals(ccc.T, outer.get('y'));
+  assertEquals(ccc.T, inner.get('y'));
+  assertEquals(ccc.NIL, inner.get('z'));
   assertNull(outer.get('z'));
 }
 
@@ -102,8 +104,8 @@ function testSelfEvaluators() {
 
 function testSymbolLookup() {
   var environment = new ccc.Environment();
-  environment.allocate('answer').setValue(42);
-  environment.allocate('question').setValue(ccc.UNSPECIFIED);
+  environment.set('answer', 42);
+  environment.set('question', ccc.UNSPECIFIED);
   RunTests([
     E(Symbol.for('answer'), 42, environment),
     E(Symbol.for('question'), ccc.UNSPECIFIED, environment)

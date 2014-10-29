@@ -1,20 +1,21 @@
 // The Cmacs Project.
 
-goog.provide('ccc.base.stringify');
+goog.provide('ccc.core.stringify');
 
 goog.require('ccc.Data');
 goog.require('ccc.Object');
+goog.require('ccc.core');
 
 
 /**
  * Stringify a {@code ccc.Data} in a Schemish sort of way.
  *
- * @param {!ccc.Data} data
+ * @param {ccc.Data} data
  * @return {string}
  * @public
  */
-ccc.base.stringify = function(data) {
-  if (ccc.isCccObject(data))
+ccc.core.stringify = function(data) {
+  if (ccc.isObject(data))
     return data.toString();
 
   if (data === true)

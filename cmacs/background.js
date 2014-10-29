@@ -2,8 +2,11 @@
 
 goog.provide('cmacs.background.main');
 
-goog.require('ccc.base');
-goog.require('ccc.base.stringify');
+goog.require('ccc.Evaluator');
+goog.require('ccc.NativeProcedure');
+goog.require('ccc.Unspecified');
+goog.require('ccc.core');
+goog.require('ccc.core.stringify');
 //goog.require('ccc.syntax');
 goog.require('ccc.parse.Parser');
 goog.require('ccc.parse.Scanner');
@@ -30,21 +33,21 @@ cmacs.background.main = function() {
   environment.allocate('syntax-rules').setValue(ccc.syntax.SYNTAX_RULES);
 */
   // Add some test library functions to play with.
-  environment.allocate('-').setValue(new ccc.NativeProcedure(function(
+  environment.set('-', new ccc.NativeProcedure(function(
       environment, args, continuation) {
     return continuation(args.car() - args.cdr().car());
   }));
-  environment.allocate('+').setValue(new ccc.NativeProcedure(function(
+  environment.set('+', new ccc.NativeProcedure(function(
       environment, args, continuation) {
     return continuation(args.car() + args.cdr().car());
   }));
-  environment.allocate('zero?').setValue(new ccc.NativeProcedure(function(
+  environment.set('zero?', new ccc.NativeProcedure(function(
       environment, args, continuation) {
     return continuation(args.car() === 0);
   }));
-  environment.allocate('display').setValue(new ccc.NativeProcedure(
+  environment.set('display', new ccc.NativeProcedure(
       function(environment, args, continuation) {
-    console.log(ccc.base.stringify(args.car()));
+    console.log(ccc.core.stringify(args.car()));
     return continuation(ccc.UNSPECIFIED);
   }));
   var evaluator = new ccc.Evaluator(environment);
@@ -58,7 +61,7 @@ cmacs.background.main = function() {
       return parser.read().then(function(data) {
         if (goog.isNull(data)) {
           if (!goog.isNull(lastValue))
-            console.log(ccc.base.stringify(lastValue));
+            console.log(ccc.core.stringify(lastValue));
           return null;
         }
         return evaluator.evalData(data).then(readData, function(error) {

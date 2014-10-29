@@ -25,7 +25,7 @@ goog.inherits(ccc.Char, ccc.Object);
 /**
  * Indicates if a given {@code ccc.Data} is a {@code ccc.Char}.
  *
- * @param {!ccc.Data} data
+ * @param {ccc.Data} data
  * @return {boolean}
  * @public
  */

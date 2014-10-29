@@ -31,7 +31,7 @@ goog.inherits(ccc.NativeProcedure, ccc.Object);
  *
  * @typedef {function(!ccc.Environment,
  *                    !ccc.Object,
- *                    !ccc.Continuation):ccc.Thunk}
+ *                    ccc.Continuation):ccc.Thunk}
  * @public
  */
 ccc.NativeProcedure.FunctionType;

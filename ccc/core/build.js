@@ -40,7 +40,6 @@ goog.require('ccc.core');
  *
  * @param {*} spec
  * @return {!ccc.Data}
- * @public
  */
 ccc.base.build = function(spec) {
   if (spec instanceof Array)

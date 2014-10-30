@@ -13,7 +13,6 @@ goog.require('ccc.Object');
  * @param {ccc.NativeProcedure.FunctionType} nativeFunction
  * @constructor
  * @extends {ccc.Object}
- * @public
  */
 ccc.NativeProcedure = function(nativeFunction) {
   /** @private {ccc.NativeProcedure.FunctionType} */
@@ -29,7 +28,6 @@ goog.inherits(ccc.NativeProcedure, ccc.Object);
  * @typedef {function(!ccc.Environment,
  *                    !ccc.Object,
  *                    ccc.Continuation):ccc.Thunk}
- * @public
  */
 ccc.NativeProcedure.FunctionType;
 

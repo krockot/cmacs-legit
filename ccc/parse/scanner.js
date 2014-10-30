@@ -485,7 +485,6 @@ var START_STATE_ = (function() {
  *
  * @constructor
  * @implements {ccc.parse.TokenReader}
- * @public
  */
 ccc.parse.Scanner = function() {
   /** @private {string} */
@@ -559,7 +558,6 @@ ccc.parse.Scanner = function() {
  * Sets EOF on the scanner. Once EOF is set, it cannot be unset and no new
  * data can be fed to the scanner.
  *
- * @public
  */
 ccc.parse.Scanner.prototype.setEof = function() {
   this.eof_ = true;
@@ -571,7 +569,6 @@ ccc.parse.Scanner.prototype.setEof = function() {
  * Appends new data to the Scanner's input. This will throw if EOF has been set.
  *
  * @param {string} input
- * @public
  */
 ccc.parse.Scanner.prototype.feed = function(input) {
   if (this.eof_)

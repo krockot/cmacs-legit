@@ -10,7 +10,6 @@ goog.require('ccc.core.types');
  *
  * @param {ccc.Data} data
  * @return {string}
- * @public
  */
 ccc.core.stringify = function(data) {
   if (ccc.isObject(data))

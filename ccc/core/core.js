@@ -11,6 +11,7 @@ goog.require('ccc.Nil');
 goog.require('ccc.Object');
 goog.require('ccc.Pair');
 goog.require('ccc.Procedure');
+goog.require('ccc.Syntax');
 goog.require('ccc.Thread');
 goog.require('ccc.Transformer');
 goog.require('ccc.Unspecified');
@@ -25,7 +26,6 @@ goog.require('ccc.core.types');
  * often treated specially by functions which deal with {@code ccc.Data}.
  *
  * @typedef {(string|symbol|number|boolean|!Object)}
- * @public
  */
 ccc.Data;
 
@@ -48,7 +48,6 @@ ccc.Thunk;
  * a {@code ccc.Thunk}.
  *
  * @typedef {function(ccc.Data):ccc.Thunk}
- * @public
  */
 ccc.Continuation;
 

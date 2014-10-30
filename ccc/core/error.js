@@ -10,7 +10,6 @@ goog.provide('ccc.Error');
  *
  * @constructor
  * @param {string} message
- * @public
  */
 ccc.Error = function(message) {
   /** @private {string} */
@@ -39,7 +38,6 @@ ccc.isError = function(data) {
 
 /**
  * @return {string}
- * @public
  */
 ccc.Error.prototype.toString = function() {
   return this.message_ + '\n' + this.stack_;

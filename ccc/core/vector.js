@@ -14,7 +14,6 @@ goog.require('goog.array');
  * @param {!Array.<ccc.Data>} elements
  * @constructor
  * @extends {ccc.Object}
- * @public
  */
 ccc.Vector = function(elements) {
   /** @private {!Array.<ccc.Data>} */
@@ -28,7 +27,6 @@ goog.inherits(ccc.Vector, ccc.Object);
  *
  * @param {ccc.Data} data
  * @return {boolean}
- * @public
  */
 ccc.isVector = function(data) {
   return data instanceof ccc.Vector;
@@ -55,7 +53,6 @@ ccc.Vector.prototype.equal = function(other) {
  * Retrieves the number of elements in the vector.
  *
  * @return {number}
- * @public
  */
 ccc.Vector.prototype.size = function() {
   return this.elements_.length;
@@ -67,7 +64,6 @@ ccc.Vector.prototype.size = function() {
  *
  * @param {number} index
  * @return {?ccc.Data}
- * @public
  */
 ccc.Vector.prototype.get = function(index) {
   if (index < 0 || index >= this.elements_.length)

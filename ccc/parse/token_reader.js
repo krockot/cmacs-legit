@@ -16,13 +16,11 @@ goog.require('goog.Promise');
  * {@code null}.
  *
  * @interface
- * @public
  */
 ccc.parse.TokenReader = function() {};
 
 
 /**
  * @type {function():!goog.Promise.<ccc.parse.Token>}
- * @public
  */
 ccc.parse.TokenReader.prototype.readToken;

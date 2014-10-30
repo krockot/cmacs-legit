@@ -18,7 +18,6 @@ goog.require('goog.asserts');
  * @param {ccc.Data} cdr
  * @constructor
  * @extends {ccc.Object}
- * @public
  */
 ccc.Pair = function(car, cdr) {
   /** @private {ccc.Data} */

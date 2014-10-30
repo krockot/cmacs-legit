@@ -10,7 +10,6 @@ goog.require('goog.object');
  * Token type.
  *
  * @enum {number}
- * @public
  */
 ccc.parse.TokenType = {
   OPEN_LIST: 0,
@@ -45,7 +44,6 @@ ccc.parse.TokenType = {
  * @param {number} column The column number at which this token begins.
  * @struct
  * @constructor
- * @public
  */
 ccc.parse.Token = function(type, text, line, column) {
   /** @public {ccc.parse.TokenType} */

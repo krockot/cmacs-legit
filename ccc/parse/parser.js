@@ -183,7 +183,6 @@ WrapperBuilder_.prototype.add = function(object) {
  * @param {!ccc.parse.TokenReader} tokenReader Food supply for the Parser.
  * @constructor
  * @implements {ccc.parse.DataReader}
- * @public
  */
 ccc.parse.Parser = function(tokenReader) {
   /** @private {!ccc.parse.TokenReader} */

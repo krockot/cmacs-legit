@@ -13,7 +13,6 @@ goog.require('goog.Promise');
  *
  * @constructor
  * @extends {ccc.Object}
- * @public
  */
 ccc.Transformer = function() {
 };

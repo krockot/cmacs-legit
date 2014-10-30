@@ -20,7 +20,6 @@ goog.require('goog.asserts');
  * @param {!ccc.Pair} body A proper list of one or more compiled objects.
  * @constructor
  * @extends {ccc.Object}
- * @public
  */
 ccc.Procedure = function(scope, formals, body) {
   goog.asserts.assert(ccc.isSymbol(formals) || ccc.isNil(formals) ||

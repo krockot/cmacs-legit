@@ -13,7 +13,6 @@ goog.require('goog.object');
  * @param {number} value
  * @constructor
  * @extends {ccc.Object}
- * @public
  */
 ccc.Char = function(value) {
   /** @private {number} */
@@ -27,7 +26,6 @@ goog.inherits(ccc.Char, ccc.Object);
  *
  * @param {ccc.Data} data
  * @return {boolean}
- * @public
  */
 ccc.isChar = function(data) {
   return data instanceof ccc.Char;
@@ -50,7 +48,6 @@ ccc.Char.prototype.eqv = function(other) {
  * Returns the underlying character code value.
  *
  * @return {number}
- * @public
  */
 ccc.Char.prototype.value = function() {
   return this.value_;
@@ -61,7 +58,6 @@ ccc.Char.prototype.value = function() {
  * Returns the underlying character string value.
  *
  * @return {string}
- * @public
  */
 ccc.Char.prototype.stringValue = function() {
   return String.fromCharCode(this.value());

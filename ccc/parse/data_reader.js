@@ -14,13 +14,11 @@ goog.require('goog.Promise');
  * {@code read} returns {@code null}.
  *
  * @interface
- * @public
  */
 ccc.parse.DataReader = function() {};
 
 
 /**
  * @type {function():!goog.Promise.<!ccc.Data>}
- * @public
  */
 ccc.parse.DataReader.prototype.read;

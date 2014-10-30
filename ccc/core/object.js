@@ -71,10 +71,11 @@ ccc.Object.prototype.isApplicable = function() {
 /**
  * Expand this object.
  *
+ * @param {!ccc.Environment} environment
  * @param {ccc.Continuation} continuation
  * @return {ccc.Thunk}
  */
-ccc.Object.prototype.expand = function(continuation) {
+ccc.Object.prototype.expand = function(environment, continuation) {
   return continuation(this);
 };
 
@@ -87,7 +88,6 @@ ccc.Object.prototype.expand = function(continuation) {
  * @return {ccc.Thunk}
  */
 ccc.Object.prototype.compile = function(environment, continuation) {
-  // Objects compile to themselves by default.
   return continuation(this);
 };
 
@@ -102,7 +102,6 @@ ccc.Object.prototype.compile = function(environment, continuation) {
  * @return {ccc.Thunk}
  */
 ccc.Object.prototype.eval = function(environment, continuation) {
-  // All {@code ccc.Object} types are self-evaluating by default.
   return continuation(this);
 };
 

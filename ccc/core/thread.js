@@ -1,3 +1,5 @@
+// The Cmacs Project.
+
 goog.provide('ccc.Thread');
 
 goog.require('ccc.Error');

@@ -55,19 +55,56 @@ ccc.Continuation;
 
 
 /**
- * Returns a new {@code ccc.ThreadEntryPoint} which can be used to construct
- * a new {@code ccc.Thread}. The thread, when run, will evaluate {@code data}
- * within {@code environment}.
+ * Returns a new {@code ccc.ThreadEntryPoint} at the start of the expansion
+ * process for an input {@ccc.Data}.
+ *
+ * @param {ccc.Data} data The data to expand.
+ * @param {!ccc.Environment} environment The environment in which to
+ *     perform the expansion.
+ * @return {ccc.ThreadEntryPoint}
+ */
+ccc.expand = function(data, environment) {
+  return function(continuation) {
+    if (ccc.isObject(data))
+      return data.expand(environment, continuation);
+    return continuation(data);
+  };
+};
+
+
+/**
+ * Returns a new {@code ccc.ThreadEntryPoint} at the start of the compilation
+ * process for an input {@ccc.Data}. The data should already be fully expanded.
+ *
+ * @param {ccc.Data} data The data to compile.
+ * @param {!ccc.Environment} environment The environment in which to perform
+ *     the compilation.
+ * @return {ccc.ThreadEntryPoint}
+ */
+ccc.compile = function(data, environment) {
+  return function(continuation) {
+    if (ccc.isObject(data))
+      return data.compile(environment);
+    return continuation(data);
+  };
+};
+
+
+/**
+ * Returns a new {@code ccc.ThreadEntryPoint} at the start of the evaluation
+ * process for an input {@ccc.Data}. The data should already be expanded and
+ * compiled.
  *
  * @param {ccc.Data} data The data to evaluate.
  * @param {!ccc.Environment} environment The environment in which to
- *     perform evaluation.
+ *     perform the evaluation.
  * @return {ccc.ThreadEntryPoint}
  */
 ccc.eval = function(data, environment) {
   return function(continuation) {
     if (ccc.isObject(data))
       return data.eval(environment, continuation);
+    // TODO(krockot): Remove this hack. Symbols should be compiled out.
     if (ccc.isSymbol(data)) {
       var name = Symbol.keyFor(/** @type {symbol} */ (data));
       var value = environment.get(name);
@@ -75,7 +112,6 @@ ccc.eval = function(data, environment) {
         return continuation(new ccc.Error('Unbound symbol |' + name + '|'));
       return continuation(value);
     }
-    // Default to self-evaluation for everything else.
     return continuation(data);
   };
 };

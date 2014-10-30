@@ -149,23 +149,22 @@ CommentBuilder_.prototype.add = function(object) { return true; };
  * Transforms the next datum in the token stream by wrapping it in a list
  * with a given head symbol.
  *
- * @param {string} symbolName
+ * @param {ccc.Data} head
  * @extends {ObjectBuilder_}
  * @constructor
  * @private
  */
-var WrapperBuilder_ = function(symbolName) {
+var WrapperBuilder_ = function(head) {
   ObjectBuilder_.call(this, -1);
 
   /** @private {string} */
-  this.symbolName_ = symbolName;
+  this.head_ = head;
 };
 goog.inherits(WrapperBuilder_, ObjectBuilder_);
 
 
 WrapperBuilder_.prototype.build = function() {
-  return new ccc.Pair(Symbol.for(this.symbolName_), new ccc.Pair(
-      this.elements_[0], ccc.NIL));
+  return new ccc.Pair(this.head_, new ccc.Pair(this.elements_[0], ccc.NIL));
 };
 
 
@@ -210,11 +209,17 @@ ccc.parse.Parser = function(tokenReader) {
 };
 
 
-/** @override */
-ccc.parse.Parser.prototype.read = function() {
+/**
+ * Reads data with optional recursive syntax wrapping.
+ *
+ * @param {boolean} withSyntax
+ * @return {!goog.Promise.<ccc.Data, !ccc.Error>}
+ * @private
+ */
+ccc.parse.Parser.prototype.doRead_ = function(withSyntax) {
   return this.tokenReader_.readToken().then(function(token) {
     try {
-      var result = this.processToken_(token);
+      var result = this.processToken_(token, withSyntax);
       this.lastToken_ = token;
       if (goog.isDef(result)) {
         return result;
@@ -229,8 +234,22 @@ ccc.parse.Parser.prototype.read = function() {
       }
       return goog.Promise.reject(new Error(message));
     }
-    return this.read();
+    return this.doRead_(withSyntax);
   }, null, this);
+};
+
+
+/** @override */
+ccc.parse.Parser.prototype.read = function() {
+  return /** @type {!goog.Promise.<ccc.Data, !ccc.Error>} */ (
+      this.doRead_(false /** withSyntax */));
+};
+
+
+/** @override */
+ccc.parse.Parser.prototype.readSyntax = function() {
+  return /** @type {!goog.Promise.<!ccc.Syntax, !ccc.Error>} */ (
+      this.doRead_(true /** withSyntax */));
 };
 
 
@@ -240,9 +259,11 @@ ccc.parse.Parser.prototype.read = function() {
  * and {@code undefined} otherwise.
  *
  * @param {ccc.parse.Token} token
+ * @param {boolean} withSyntax
  * @return {?ccc.Data|undefined}
+ * @private
  */
-ccc.parse.Parser.prototype.processToken_ = function(token) {
+ccc.parse.Parser.prototype.processToken_ = function(token, withSyntax) {
   var T = ccc.parse.TokenType;
 
   if (goog.isNull(token)) {
@@ -250,6 +271,10 @@ ccc.parse.Parser.prototype.processToken_ = function(token) {
       throw new Error('Unexpected end of input');
     return null;
   }
+
+  var wrap = function(data) { return data; };
+  if (withSyntax)
+    wrap = function(data) { return new ccc.Syntax(data); };
 
   /** @type {?ccc.Data|undefined} */
   var production = null;
@@ -320,28 +345,30 @@ ccc.parse.Parser.prototype.processToken_ = function(token) {
       this.pushBuilder_(new CommentBuilder_());
       break;
     case T.QUOTE:
-      this.pushBuilder_(new WrapperBuilder_('quote'));
+      this.pushBuilder_(new WrapperBuilder_(wrap(Symbol.for('quote'))));
       break;
     case T.UNQUOTE:
-      this.pushBuilder_(new WrapperBuilder_('unquote'));
+      this.pushBuilder_(new WrapperBuilder_(wrap(Symbol.for('unquote'))));
       break;
     case T.UNQUOTE_SPLICING:
-      this.pushBuilder_(new WrapperBuilder_('unquote-splicing'));
+      this.pushBuilder_(new WrapperBuilder_(wrap(Symbol.for(
+          'unquote-splicing'))));
       break;
     case T.QUASIQUOTE:
-      this.pushBuilder_(new WrapperBuilder_('quasiquote'));
+      this.pushBuilder_(new WrapperBuilder_(wrap(Symbol.for('quasiquote'))));
       break;
     case T.SYNTAX:
-      this.pushBuilder_(new WrapperBuilder_('syntax'));
+      this.pushBuilder_(new WrapperBuilder_(wrap(Symbol.for('syntax'))));
       break;
     case T.QUASISYNTAX:
-      this.pushBuilder_(new WrapperBuilder_('quasisyntax'));
+      this.pushBuilder_(new WrapperBuilder_(wrap(Symbol.for('quasisyntax'))));
       break;
     case T.UNSYNTAX:
-      this.pushBuilder_(new WrapperBuilder_('unsyntax'));
+      this.pushBuilder_(new WrapperBuilder_(wrap(Symbol.for('unsyntax'))));
       break;
     case T.UNSYNTAX_SPLICING:
-      this.pushBuilder_(new WrapperBuilder_('unsyntax-splicing'));
+      this.pushBuilder_(new WrapperBuilder_(wrap(Symbol.for(
+          'unsyntax-splicing'))));
       break;
     default:
       throw new Error('Invalid token: ' + token.text);
@@ -352,17 +379,17 @@ ccc.parse.Parser.prototype.processToken_ = function(token) {
   }
 
   if (goog.isNull(this.builder_)) {
-    return production;
+    return wrap(production);
   }
 
-  while (this.builder_.add(production)) {
+  while (this.builder_.add(wrap(production))) {
     production = this.builder_.build();
     this.builder_ = this.builderStack_.pop();
     if (!goog.isDef(production)) {
       return;
     }
     if (goog.isNull(this.builder_)) {
-      return production;
+      return wrap(production);
     }
   }
 };

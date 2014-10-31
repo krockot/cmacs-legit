@@ -157,7 +157,7 @@ CommentBuilder_.prototype.add = function(object) { return true; };
 var WrapperBuilder_ = function(head) {
   ObjectBuilder_.call(this, -1);
 
-  /** @private {string} */
+  /** @private {ccc.Data} */
   this.head_ = head;
 };
 goog.inherits(WrapperBuilder_, ObjectBuilder_);

@@ -19,6 +19,7 @@ ccc.Syntax = function(data) {
   /** @private {ccc.Data} */
   this.data_ = data;
 };
+goog.inherits(ccc.Syntax, ccc.Object);
 
 
 /** @override */

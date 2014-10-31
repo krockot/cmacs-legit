@@ -38,15 +38,15 @@ function E(input, expectedOutput, opt_environment) {
   return thread.run().then(function(result) {
     if (!ccc.equal(expectedOutput, result))
       return goog.Promise.reject(new Error('Object mismatch.\n' +
-          'Expected: ' + ccc.base.stringify(expectedOutput) +
-          '\nActual: ' + ccc.base.stringify(result) + '\n'));
+          'Expected: ' + ccc.core.stringify(expectedOutput) +
+          '\nActual: ' + ccc.core.stringify(result) + '\n'));
   });
 }
 
 
 /**
  * @param {function(!ccc.Environment, !ccc.Object):
- *     !goog.Promise.<!ccc.Object>} transform
+ *                  !goog.Promise.<!ccc.Object>} transform
  * @constructor
  * @extends {ccc.Transformer}
  */

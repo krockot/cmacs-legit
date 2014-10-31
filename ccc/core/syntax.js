@@ -3,6 +3,7 @@
 goog.provide('ccc.Syntax');
 
 goog.require('ccc.Object');
+goog.require('ccc.core.stringify');
 
 
 
@@ -24,5 +25,11 @@ goog.inherits(ccc.Syntax, ccc.Object);
 
 /** @override */
 ccc.Syntax.prototype.toString = function() {
-  return '(syntax ' + this.data_.toString() + ')';
+  return '(syntax ' + ccc.core.stringify(this.data_) + ')';
+};
+
+
+/** @override */
+ccc.Syntax.prototype.expand = function(environment, continuation) {
+  return continuation(this.data_);
 };

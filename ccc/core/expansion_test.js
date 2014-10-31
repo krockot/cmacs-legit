@@ -7,17 +7,22 @@ goog.require('ccc.core');
 goog.require('ccc.core.build');
 goog.require('ccc.core.stringify');
 goog.require('goog.Promise');
+goog.require('goog.debug.Console');
+goog.require('goog.log.Logger');
+goog.require('goog.string.format');
 goog.require('goog.testing.AsyncTestCase');
 goog.require('goog.testing.jsunit');
 
 
 var asyncTestCase = goog.testing.AsyncTestCase.createAndInstall(document.title);
+var logger = goog.log.getLogger('ccc.ExpansionTest');
 var X = function(data) { return new ccc.Syntax(ccc.core.build(data)); };
 
 function setUpPage() {
   asyncTestCase.stepTimeout = 50;
   asyncTestCase.timeToSleepAfterFailure = 50;
   goog.Promise.setUnhandledRejectionHandler(justFail);
+  new goog.debug.Console().setCapturing(true);
 }
 
 function continueTesting() {
@@ -38,6 +43,8 @@ function E(input, expectedOutputSpec, opt_environment) {
   var thread = new ccc.Thread(ccc.expand(ccc.core.build(input), environment));
   return thread.run().then(function(result) {
     var expectedOutput = ccc.core.build(expectedOutputSpec);
+    logger.log(goog.log.Logger.Level.INFO, goog.string.format(
+        'Expansion completed in %s thunks.', thread.thunkCounter_));
     if (!ccc.equal(expectedOutput, result))
       return goog.Promise.reject(new Error('Object mismatch.\n' +
           'Expected: ' + ccc.core.stringify(expectedOutput) +

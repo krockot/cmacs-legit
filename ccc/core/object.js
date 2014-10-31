@@ -76,7 +76,7 @@ ccc.Object.prototype.isApplicable = function() {
  * @return {ccc.Thunk}
  */
 ccc.Object.prototype.expand = function(environment, continuation) {
-  return continuation(this);
+  return goog.partial(continuation, this);
 };
 
 

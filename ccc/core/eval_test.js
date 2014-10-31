@@ -43,18 +43,6 @@ function E(input, expectedOutput, opt_environment) {
   });
 }
 
-
-var TestTransformer = function(transform) {
-  this.transform_ = transform;
-};
-goog.inherits(TestTransformer, ccc.Transformer);
-
-/** @override */
-TestTransformer.prototype.transform = function(
-    environment, args, continuation) {
-  return this.transform_(environment, args, continuation);
-};
-
 function RunTest(test) {
   asyncTestCase.waitForAsync();
   test.then(continueTesting, justFail);
@@ -117,62 +105,4 @@ function testNativeProcedure() {
   });
   var combination = List([proc, 42, 'monkey']);
   RunTest(E(combination, true));
-}
-
-function DISABLED_testSimpleTransformer() {
-  var adder = new ccc.NativeProcedure(function(
-      environment, args, continuation) {
-    return continuation(new ccc.Number(
-        args.car().value() + args.cdr().car().value()));
-  });
-  var transformer = new TestTransformer(function(environment, args) {
-    // Throw away the first argument, return (<adder> arg2 arg3).
-    return goog.Promise.resolve(List([adder], args.cdr()));
-  });
-  var environment = new ccc.Environment();
-  environment.allocate('the-machine').setValue(transformer);
-
-  // Construct (the-machine #t 26 16). We expect this to compile down to
-  // (<adder> 26 16) according to the transformer definition above.
-  var form = List([new ccc.Symbol('the-machine'), ccc.T,
-      new ccc.Number(26), new ccc.Number(16)]);
-  RunTests([
-    C(form, List([adder], form.cdr().cdr()), environment),
-    CE(form, new ccc.Number(42), environment)
-  ]);
-}
-
-function DISABLED_testNestedTransformers() {
-  var adder = new ccc.NativeProcedure(function(
-      environment, args, continuation) {
-    return continuation(new ccc.Number(
-        args.car().value() + args.cdr().car().value()));
-  });
-  var transformer = new TestTransformer(function(environment, args) {
-    // Throw away the first argument, return (<adder> arg2 arg3).
-    return goog.Promise.resolve(List([adder], args.cdr()));
-  });
-  var environment = new ccc.Environment();
-  environment.allocate('the-machine').setValue(transformer);
-
-  var oneSix = new TestTransformer(function(environment, args) {
-    // Transformer which always generates the number 16.
-    return goog.Promise.resolve(new ccc.Number(16));
-  });
-  environment.allocate('dieciséis').setValue(oneSix);
-
-  var needMoreLayers = new TestTransformer(function(environment, args) {
-    // Transformer which always generates (the-machine #t 26 (dieciséis))
-    return goog.Promise.resolve(List([new ccc.Symbol('the-machine'),
-        ccc.T, new ccc.Number(26),
-        List([new ccc.Symbol('dieciséis')])]));
-  });
-  environment.allocate('meta-machine').setValue(needMoreLayers);
-
-  var form = List([new ccc.Symbol('meta-machine')]);
-  var numbers = List([new ccc.Number(26), new ccc.Number(16)]);
-  RunTests([
-    C(form, List([adder], numbers), environment),
-    CE(form, new ccc.Number(42), environment)
-  ]);
 }

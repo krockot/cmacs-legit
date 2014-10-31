@@ -65,8 +65,13 @@ ccc.Continuation;
 ccc.expand = function(data, environment) {
   return function(continuation) {
     if (ccc.isObject(data))
-      return data.expand(environment, continuation);
-    return continuation(data);
+      return goog.bind(data.expand, data, environment, continuation);
+    if (ccc.isSymbol(data)) {
+      var value = environment.get(Symbol.keyFor(/** @type {symbol} */ (data)));
+      if (ccc.isTransformer(value))
+        return goog.partial(continuation, value);
+    }
+    return goog.partial(continuation, data);
   };
 };
 

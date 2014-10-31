@@ -21,7 +21,7 @@ goog.inherits(ccc.Transformer, ccc.Object);
 /**
  * Indicates if a given {@code ccc.Data} is a {@code ccc.Transformer}.
  *
- * @param {ccc.Data} data
+ * @param {?ccc.Data} data
  * @return {boolean}
  */
 ccc.isTransformer = function(data) {

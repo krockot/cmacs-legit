@@ -69,9 +69,9 @@ ccc.expand = function(data, environment) {
     if (ccc.isSymbol(data)) {
       var value = environment.get(Symbol.keyFor(/** @type {symbol} */ (data)));
       if (ccc.isTransformer(value))
-        return goog.partial(continuation, value);
+        return continuation(value);
     }
-    return goog.partial(continuation, data);
+    return continuation(data);
   };
 };
 

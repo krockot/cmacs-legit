@@ -118,6 +118,98 @@ ccc.Pair.makeList = function(objects, opt_tail) {
 };
 
 
+/** @override */
+ccc.Pair.prototype.expand = function(environment, continuation) {
+  return goog.partial(ccc.expand(this.car_, environment),
+      goog.bind(this.onHeadExpanded_, this, environment, continuation));
+};
+
+
+/**
+ * Continuation to use after head expansion.
+ *
+ * @param {!ccc.Environment} environment
+ * @param {ccc.Continuation} continuation
+ * @param {ccc.Data} head
+ * @return {ccc.Thunk}
+ * @private
+ */
+ccc.Pair.prototype.onHeadExpanded_ = function(environment, continuation, head) {
+  if (ccc.isError(head))
+    return continuation(head);
+  if (head !== this.car_)
+    return goog.partial(ccc.expand(new ccc.Pair(head, this.cdr_), environment),
+        continuation);
+  if (ccc.isTransformer(head))
+    return goog.bind(head.transform, head, environment, this.cdr_,
+        goog.partial(ccc.Pair.onTransformed_, environment, continuation));
+  return goog.partial(ccc.Pair.expandTail_, ccc.NIL, head, this.cdr_,
+      environment, continuation);
+};
+
+
+/**
+ * Continuation to use after transformation.
+ *
+ * @param {!ccc.Environment} environment
+ * @param {ccc.Continuation} continuation
+ * @param {ccc.Data} transformedData
+ * @return {ccc.Thunk}
+ * @private
+ */
+ccc.Pair.onTransformed_ = function(
+    environment, continuation, transformedData) {
+  if (ccc.isError(transformedData))
+    return continuation(transformedData);
+  return goog.partial(ccc.expand(transformedData, environment), continuation);
+};
+
+
+/**
+ * Unbound thunk to expand a non-head element.
+ *
+ * @param {(!ccc.Pair|!ccc.Nil)} newList
+ * @param {ccc.Data} head
+ * @param {ccc.Data} tail
+ * @param {!ccc.Environment} environment
+ * @param {ccc.Continuation} continuation
+ * @return {ccc.Thunk}
+ * @private
+ */
+ccc.Pair.expandTail_ = function(
+    newList, head, tail, environment, continuation) {
+  if (ccc.isNil(tail))
+    return continuation(new ccc.Pair(head, newList));
+  if (!ccc.isPair(tail))
+    return continuation(new ccc.Error('Unable to expand improper list'));
+  return goog.partial(ccc.expand(tail.car_, environment), goog.partial(
+      ccc.Pair.onTailExpanded_, newList, head, tail, environment,
+      continuation));
+};
+
+
+/**
+ * Continuation to handle non-head element expansion.
+ *
+ * @param {(!ccc.Pair|!ccc.Nil)} newList
+ * @param {ccc.Data} head
+ * @param {ccc.Data} tail
+ * @param {!ccc.Environment} environment
+ * @param {ccc.Continuation} continuation
+ * @param {ccc.Data} expandedElement
+ * @return {ccc.Thunk}
+ * @private
+ */
+ccc.Pair.onTailExpanded_ = function(
+    newList, head, tail, environment, continuation, expandedElement) {
+  if (ccc.isError(expandedElement))
+    return continuation(expandedElement);
+  return goog.partial(ccc.Pair.expandTail_,
+      new ccc.Pair(expandedElement, newList), head, tail.cdr_, environment,
+      continuation);
+};
+
+
 /** override */
 /** DISABLED
 ccc.Pair.prototype.compile = function(environment) {

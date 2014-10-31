@@ -4,7 +4,6 @@ goog.provide('ccc.Transformer');
 
 goog.require('ccc.Error');
 goog.require('ccc.Object');
-goog.require('goog.Promise');
 
 
 
@@ -37,14 +36,14 @@ ccc.Transformer.prototype.toString = function() {
 
 
 /**
- * If a Transformer occurs at the head of a list at compile time, its
- * {@code transform} is called on the remainder of the list. The entire list is
- * replaced by the result.
+ * Performs transformation of syntax.
  *
  * @param {!ccc.Environment} environment
- * @param {!ccc.Object} args
- * @return {!goog.Promise}
+ * @param {(!ccc.Pair|!ccc.Nil)} args
+ * @param {ccc.Continuation} continuation
+ * @return {ccc.Thunk}
  */
-ccc.Transformer.prototype.transform = function(environment, args) {
-  return goog.Promise.reject(new ccc.Error('Invalid Transformer'));
+ccc.Transformer.prototype.transform = function(
+    environment, args, continuation) {
+  return continuation(new ccc.Error('Invalid Transformer'));
 };

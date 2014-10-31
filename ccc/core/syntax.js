@@ -31,5 +31,5 @@ ccc.Syntax.prototype.toString = function() {
 
 /** @override */
 ccc.Syntax.prototype.expand = function(environment, continuation) {
-  return continuation(this.data_);
+  return goog.partial(ccc.expand(this.data_, environment), continuation);
 };

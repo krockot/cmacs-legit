@@ -44,20 +44,15 @@ function E(input, expectedOutput, opt_environment) {
 }
 
 
-/**
- * @param {function(!ccc.Environment, !ccc.Object):
- *                  !goog.Promise.<!ccc.Object>} transform
- * @constructor
- * @extends {ccc.Transformer}
- */
 var TestTransformer = function(transform) {
   this.transform_ = transform;
 };
 goog.inherits(TestTransformer, ccc.Transformer);
 
 /** @override */
-TestTransformer.prototype.transform = function(environment, args) {
-  return this.transform_(environment, args);
+TestTransformer.prototype.transform = function(
+    environment, args, continuation) {
+  return this.transform_(environment, args, continuation);
 };
 
 function RunTest(test) {

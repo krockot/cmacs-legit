@@ -43,6 +43,9 @@ ccc.Thread = function(entryPoint, opt_options) {
 
   /** @private {!goog.promise.Resolver.<ccc.Data, !ccc.Error>} */
   this.resolver_ = goog.Promise.withResolver();
+
+  /** @private {number} */
+  this.thunkCounter_ = 0;
 }
 
 
@@ -126,8 +129,10 @@ ccc.Thread.prototype.runContinuation_ = function(result) {
  */
 ccc.Thread.prototype.runSlice_ = function(thunk) {
   var thunksRemaining = this.options_.thunksPerSlice;
-  while (thunksRemaining-- && thunk !== ccc.Thread.HALTING_THUNK_)
+  while (thunksRemaining-- && thunk !== ccc.Thread.HALTING_THUNK_) {
     thunk = thunk();
+    this.thunkCounter_++;
+  }
   if (thunk !== ccc.Thread.HALTING_THUNK_) {
     goog.Timer.callOnce(goog.bind(this.runSlice_, this, thunk),
         this.options_.sliceDelay);

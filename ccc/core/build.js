@@ -35,15 +35,15 @@ goog.require('ccc.core');
  *
  * Note that Arrays build lists (instead of vectors) and strings build symbols
  * (instead of, well, strings) primarily because these types occur much more
- * frequently in common cases, and the purpose of {@code ccc.base.build} is to
+ * frequently in common cases, and the purpose of {@code ccc.core.build} is to
  * provide convenience.
  *
  * @param {*} spec
  * @return {!ccc.Data}
  */
-ccc.base.build = function(spec) {
+ccc.core.build = function(spec) {
   if (spec instanceof Array)
-    return ccc.Pair.makeList(goog.array.map(spec, ccc.base.build));
+    return ccc.Pair.makeList(goog.array.map(spec, ccc.core.build));
   if (typeof spec == 'string')
     return Symbol.for(spec);
   if (typeof spec == 'number')
@@ -60,20 +60,20 @@ ccc.base.build = function(spec) {
     if (goog.object.containsKey(spec, 'object'))
       return spec['object'];
     if (goog.object.containsKey(spec, 'vec'))
-      return new ccc.Vector(goog.array.map(spec['vec'], ccc.base.build));
+      return new ccc.Vector(goog.array.map(spec['vec'], ccc.core.build));
     if (goog.object.containsKey(spec, 'str'))
       return spec['str'];
     if (goog.object.containsKey(spec, 'chr'))
       return new ccc.Char(spec['chr']);
     if (goog.object.containsKey(spec, 'pair'))
-      return new ccc.Pair(ccc.base.build(spec['pair'][0]),
-          ccc.base.build(spec['pair'][1]));
+      return new ccc.Pair(ccc.core.build(spec['pair'][0]),
+          ccc.core.build(spec['pair'][1]));
     if (goog.object.containsKey(spec, 'list')) {
       var tail = (goog.object.containsKey(spec, 'tail')
-          ? ccc.base.build(spec['tail'])
+          ? ccc.core.build(spec['tail'])
           : ccc.NIL);
       return ccc.Pair.makeList(goog.array.map(spec['list'],
-          ccc.base.build), tail);
+          ccc.core.build), tail);
     }
   }
   throw new Error('buildObject: Invalid object spec');

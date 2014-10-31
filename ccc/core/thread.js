@@ -46,6 +46,12 @@ ccc.Thread = function(entryPoint, opt_options) {
 
   /** @private {number} */
   this.thunkCounter_ = 0;
+
+  /** @private {number} */
+  this.startTime_ = 0;
+
+  /** @private {number} */
+  this.age_ = 0;
 }
 
 
@@ -60,6 +66,7 @@ ccc.Thread.prototype.run = function() {
   if (!goog.isNull(this.result_))
     throw new Error('Thread can only be run once');
   this.running_ = true;
+  this.startTime_ = Date.now();
   this.runSlice_(this.entryPoint_(goog.bind(this.runContinuation_, this)));
   return this.resolver_.promise;
 };
@@ -113,6 +120,7 @@ ccc.Thread.prototype.result = function() {
 ccc.Thread.prototype.runContinuation_ = function(result) {
   this.running_ = false;
   this.result_ = result;
+  this.age_ = Date.now() - this.startTime_;
   if (ccc.isError(result))
     this.resolver_.reject(result);
   else

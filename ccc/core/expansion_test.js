@@ -44,7 +44,8 @@ function E(input, expectedOutputSpec, opt_environment) {
   return thread.run().then(function(result) {
     var expectedOutput = ccc.core.build(expectedOutputSpec);
     logger.log(goog.log.Logger.Level.INFO, goog.string.format(
-        'Expansion completed in %s thunks.', thread.thunkCounter_));
+        'Expansion completed in %s thunks in %s ms.', thread.thunkCounter_,
+        thread.age_));
     if (!ccc.equal(expectedOutput, result))
       return goog.Promise.reject(new Error('Object mismatch.\n' +
           'Expected: ' + ccc.core.stringify(expectedOutput) +

@@ -82,7 +82,7 @@ function testEnvironment() {
 
 function testSelfEvaluators() {
   RunTests([
-    E({ 'str': 'Hello, world!' }, { 'str': 'Hello, world!' }),
+    E('"Hello, world!"', '"Hello, world!"'),
     E(42, 42),
     E(new ccc.Char(0x03bb), new ccc.Char(0x03bb)),
     E(true, true),
@@ -113,9 +113,7 @@ function testNativeProcedure() {
     assert(ccc.isNil(args.cdr().cdr()));
     return continuation(new ccc.Pair(args.cdr().car(), args.car()));
   });
-  var environment = new ccc.Environment();
-  environment.set('monkey', 7);
-  RunTest(E([proc, 42, 'monkey'], new ccc.Pair(7, 42), environment));
+  RunTest(E([proc, 42, '"monkey"'], new ccc.Pair('monkey', 42)));
 }
 
 function testNestedNativeProcedure() {
@@ -130,7 +128,6 @@ function testNestedNativeProcedure() {
       environment, args, continuation) {
     return continuation(proc);
   });
-  var environment = new ccc.Environment();
-  environment.set('monkey', 7);
-  RunTest(E([[procGenerator], 42, 'monkey'], new ccc.Pair(7, 42), environment));
+
+  RunTest(E([[procGenerator], 42, '"monkey"'], new ccc.Pair('monkey', 42)));
 }

@@ -43,7 +43,7 @@ function E(input, expectedOutputSpec, opt_environment) {
   var thread = new ccc.Thread(ccc.eval(ccc.core.build(input), environment));
   return thread.run().then(function(result) {
     logger.log(goog.log.Logger.Level.INFO, goog.string.format(
-        'Expansion completed in %s thunks in %s ms.', thread.thunkCounter_,
+        'Evaluation completed in %s thunks in %s ms.', thread.thunkCounter_,
         thread.age_));
     var expectedOutput = ccc.core.build(expectedOutputSpec);
     if (!ccc.equal(expectedOutput, result))

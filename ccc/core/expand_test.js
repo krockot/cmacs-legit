@@ -1,7 +1,7 @@
 // The Cmacs Project.
 
-goog.provide('ccc.ExpansionTest');
-goog.setTestOnly('ccc.ExpansionTEst');
+goog.provide('ccc.ExpandTest');
+goog.setTestOnly('ccc.ExpandTest');
 
 goog.require('ccc.core');
 goog.require('ccc.core.build');
@@ -15,7 +15,7 @@ goog.require('goog.testing.jsunit');
 
 
 var asyncTestCase = goog.testing.AsyncTestCase.createAndInstall(document.title);
-var logger = goog.log.getLogger('ccc.ExpansionTest');
+var logger = goog.log.getLogger('ccc.ExpandTest');
 var X = function(data) { return new ccc.Syntax(ccc.core.build(data)); };
 
 function setUpPage() {

@@ -4,19 +4,25 @@ goog.provide('ccc.EvalTest');
 goog.setTestOnly('ccc.EvalTest');
 
 goog.require('ccc.core');
+goog.require('ccc.core.build');
 goog.require('ccc.core.stringify');
 goog.require('goog.Promise');
+goog.require('goog.debug.Console');
+goog.require('goog.log.Logger');
+goog.require('goog.string.format');
 goog.require('goog.testing.AsyncTestCase');
 goog.require('goog.testing.jsunit');
 
 
 var asyncTestCase = goog.testing.AsyncTestCase.createAndInstall(document.title);
+var logger = goog.log.getLogger('ccc.ExpansionTest');
 var List = ccc.Pair.makeList;
 
 function setUpPage() {
   asyncTestCase.stepTimeout = 50;
   asyncTestCase.timeToSleepAfterFailure = 50;
   goog.Promise.setUnhandledRejectionHandler(justFail);
+  new goog.debug.Console().setCapturing(true);
 }
 
 function continueTesting() {
@@ -30,12 +36,16 @@ function justFail(reason) {
 }
 
 // Single eval test. Takes an input object and an expected output object.
-function E(input, expectedOutput, opt_environment) {
+function E(input, expectedOutputSpec, opt_environment) {
   var environment = (goog.isDef(opt_environment)
       ? opt_environment
       : new ccc.Environment(opt_environment));
-  var thread = new ccc.Thread(ccc.eval(input, environment));
+  var thread = new ccc.Thread(ccc.eval(ccc.core.build(input), environment));
   return thread.run().then(function(result) {
+    logger.log(goog.log.Logger.Level.INFO, goog.string.format(
+        'Expansion completed in %s thunks in %s ms.', thread.thunkCounter_,
+        thread.age_));
+    var expectedOutput = ccc.core.build(expectedOutputSpec);
     if (!ccc.equal(expectedOutput, result))
       return goog.Promise.reject(new Error('Object mismatch.\n' +
           'Expected: ' + ccc.core.stringify(expectedOutput) +
@@ -72,7 +82,7 @@ function testEnvironment() {
 
 function testSelfEvaluators() {
   RunTests([
-    E('Hello, world!', 'Hello, world!'),
+    E({ 'str': 'Hello, world!' }, { 'str': 'Hello, world!' }),
     E(42, 42),
     E(new ccc.Char(0x03bb), new ccc.Char(0x03bb)),
     E(true, true),
@@ -87,9 +97,11 @@ function testSymbolLookup() {
   var environment = new ccc.Environment();
   environment.set('answer', 42);
   environment.set('question', ccc.UNSPECIFIED);
+  // TODO(krockot): Remove this test. It's testing hack behavior. Symbol lookup
+  // should not happen during evaluation.
   RunTests([
-    E(new ccc.Symbol('answer'), 42, environment),
-    E(new ccc.Symbol('question'), ccc.UNSPECIFIED, environment)
+    E('answer', 42, environment),
+    E('question', ccc.UNSPECIFIED, environment)
   ]);
 }
 
@@ -99,10 +111,26 @@ function testNativeProcedure() {
     assert(ccc.isPair(args));
     assert(ccc.isPair(args.cdr()));
     assert(ccc.isNil(args.cdr().cdr()));
-    assert(ccc.equal(args.car(), 42));
-    assert(ccc.equal(args.cdr().car(), 'monkey'));
-    return continuation(true);
+    return continuation(new ccc.Pair(args.cdr().car(), args.car()));
   });
-  var combination = List([proc, 42, 'monkey']);
-  RunTest(E(combination, true));
+  var environment = new ccc.Environment();
+  environment.set('monkey', 7);
+  RunTest(E([proc, 42, 'monkey'], new ccc.Pair(7, 42), environment));
+}
+
+function testNestedNativeProcedure() {
+  var proc = new ccc.NativeProcedure(function(environment, args, continuation) {
+    assertNotNull(args);
+    assert(ccc.isPair(args));
+    assert(ccc.isPair(args.cdr()));
+    assert(ccc.isNil(args.cdr().cdr()));
+    return continuation(new ccc.Pair(args.cdr().car(), args.car()));
+  });
+  var procGenerator = new ccc.NativeProcedure(function(
+      environment, args, continuation) {
+    return continuation(proc);
+  });
+  var environment = new ccc.Environment();
+  environment.set('monkey', 7);
+  RunTest(E([[procGenerator], 42, 'monkey'], new ccc.Pair(7, 42), environment));
 }

@@ -291,7 +291,7 @@ ccc.parse.Parser.prototype.processToken_ = function(token, withSyntax) {
     case T.SYMBOL:
       goog.asserts.assert(goog.isDef(token.data.name),
           'Invalid symbol literal.');
-      production = Symbol.for(token.data.name);
+      production = new ccc.Symbol(token.data.name);
       break;
     case T.CHAR_LITERAL:
       goog.asserts.assert(goog.isDef(token.data.value),
@@ -345,29 +345,31 @@ ccc.parse.Parser.prototype.processToken_ = function(token, withSyntax) {
       this.pushBuilder_(new CommentBuilder_());
       break;
     case T.QUOTE:
-      this.pushBuilder_(new WrapperBuilder_(wrap(Symbol.for('quote'))));
+      this.pushBuilder_(new WrapperBuilder_(wrap(new ccc.Symbol('quote'))));
       break;
     case T.UNQUOTE:
-      this.pushBuilder_(new WrapperBuilder_(wrap(Symbol.for('unquote'))));
+      this.pushBuilder_(new WrapperBuilder_(wrap(new ccc.Symbol('unquote'))));
       break;
     case T.UNQUOTE_SPLICING:
-      this.pushBuilder_(new WrapperBuilder_(wrap(Symbol.for(
+      this.pushBuilder_(new WrapperBuilder_(wrap(new ccc.Symbol(
           'unquote-splicing'))));
       break;
     case T.QUASIQUOTE:
-      this.pushBuilder_(new WrapperBuilder_(wrap(Symbol.for('quasiquote'))));
+      this.pushBuilder_(new WrapperBuilder_(wrap(new ccc.Symbol(
+          'quasiquote'))));
       break;
     case T.SYNTAX:
-      this.pushBuilder_(new WrapperBuilder_(wrap(Symbol.for('syntax'))));
+      this.pushBuilder_(new WrapperBuilder_(wrap(new ccc.Symbol('syntax'))));
       break;
     case T.QUASISYNTAX:
-      this.pushBuilder_(new WrapperBuilder_(wrap(Symbol.for('quasisyntax'))));
+      this.pushBuilder_(new WrapperBuilder_(wrap(new ccc.Symbol(
+          'quasisyntax'))));
       break;
     case T.UNSYNTAX:
-      this.pushBuilder_(new WrapperBuilder_(wrap(Symbol.for('unsyntax'))));
+      this.pushBuilder_(new WrapperBuilder_(wrap(new ccc.Symbol('unsyntax'))));
       break;
     case T.UNSYNTAX_SPLICING:
-      this.pushBuilder_(new WrapperBuilder_(wrap(Symbol.for(
+      this.pushBuilder_(new WrapperBuilder_(wrap(new ccc.Symbol(
           'unsyntax-splicing'))));
       break;
     default:

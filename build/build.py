@@ -26,7 +26,7 @@ _OUTPUT_ZIP_FILENAME = 'cmacs.zip'
 _MANIFEST_FILENAME = 'manifest.json'
 
 
-_EXTERNS = ['chrome_apis.js', 'es6.js']
+_EXTERNS = ['chrome_apis.js']
 
 
 def _PrintError(*args):

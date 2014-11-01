@@ -19,10 +19,7 @@ ccc.core.stringify = function(data) {
     return '#t';
   if (data === false)
     return '#f';
-  // TODO(krockot): Symbol and string are pretty lazy right now. Should escape
-  // unprintable/badly-printable characters and optionally |-quote symbols.
-  if (ccc.isSymbol(data))
-    return Symbol.keyFor(/** @type {symbol} */ (data));
+  // TODO(krockot): Clean up string stringification. Need escapes.
   if (ccc.isString(data))
     return '"' + data + '"';
   if (ccc.isNumber(data))

@@ -11,6 +11,7 @@ goog.require('ccc.Nil');
 goog.require('ccc.Object');
 goog.require('ccc.Pair');
 goog.require('ccc.Procedure');
+goog.require('ccc.Symbol');
 goog.require('ccc.Syntax');
 goog.require('ccc.Thread');
 goog.require('ccc.Transformer');
@@ -25,7 +26,7 @@ goog.require('ccc.core.types');
  * or {@code null}. Instances of {@code ccc.Object} and its derivatives are
  * often treated specially by functions which deal with {@code ccc.Data}.
  *
- * @typedef {(string|symbol|number|boolean|!Object)}
+ * @typedef {(string|number|boolean|!Object)}
  */
 ccc.Data;
 
@@ -66,11 +67,6 @@ ccc.expand = function(data, environment) {
   return function(continuation) {
     if (ccc.isObject(data))
       return goog.bind(data.expand, data, environment, continuation);
-    if (ccc.isSymbol(data)) {
-      var value = environment.get(Symbol.keyFor(/** @type {symbol} */ (data)));
-      if (ccc.isTransformer(value))
-        return continuation(value);
-    }
     return continuation(data);
   };
 };
@@ -108,14 +104,6 @@ ccc.eval = function(data, environment) {
   return function(continuation) {
     if (ccc.isObject(data))
       return data.eval(environment, continuation);
-    // TODO(krockot): Remove this hack. Symbols should be compiled out.
-    if (ccc.isSymbol(data)) {
-      var name = Symbol.keyFor(/** @type {symbol} */ (data));
-      var value = environment.get(name);
-      if (goog.isNull(value))
-        return continuation(new ccc.Error('Unbound symbol |' + name + '|'));
-      return continuation(value);
-    }
     return continuation(data);
   };
 };

@@ -88,8 +88,8 @@ function testSymbolLookup() {
   environment.set('answer', 42);
   environment.set('question', ccc.UNSPECIFIED);
   RunTests([
-    E(Symbol.for('answer'), 42, environment),
-    E(Symbol.for('question'), ccc.UNSPECIFIED, environment)
+    E(new ccc.Symbol('answer'), 42, environment),
+    E(new ccc.Symbol('question'), ccc.UNSPECIFIED, environment)
   ]);
 }
 

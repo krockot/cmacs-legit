@@ -7,19 +7,6 @@ goog.require('ccc.Object');
 
 
 /**
- * Indicates if a given {@code ccc.Data} is a symbol.
- *
- * @param {ccc.Data} data
- * @return {boolean}
- */
-ccc.isSymbol = function(data) {
-  // This is an evil hack to keep Closure Compiler from complaining that
-  // 'symbol' is an unknown type.
-  return typeof data === ('sym'+'bol');
-};
-
-
-/**
  * Indicates if a given {@code ccc.Data} is a string.
  *
  * @param {ccc.Data} data

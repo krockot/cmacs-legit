@@ -45,7 +45,7 @@ ccc.core.build = function(spec) {
   if (spec instanceof Array)
     return ccc.Pair.makeList(goog.array.map(spec, ccc.core.build));
   if (typeof spec == 'string')
-    return Symbol.for(spec);
+    return new ccc.Symbol(spec);
   if (typeof spec == 'number')
     return spec;
   if (typeof spec == 'boolean')

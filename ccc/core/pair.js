@@ -220,39 +220,46 @@ ccc.Pair.join_ = function(continuation, head, tail) {
 };
 
 
-/** override */
-/** DISABLED
-ccc.Pair.prototype.compile = function(environment) {
-  return this.car_.compile(environment).then(function(compiledHead) {
-    if (compiledHead.isLocation() && compiledHead.containsTransformer()) {
-      var headValue = compiledHead.getValue();
-      return headValue.transform(environment, this.cdr_).then(
-          function(transformed) {
-        return transformed.compile(environment);
-      });
-    } else if (compiledHead.isTransformer()) {
-      return compiledHead.transform(environment, this.cdr_).then(
-          function(transformed) {
-        return transformed.compile(environment);
-      });
-    }
-    var compileArgs = function(args) {
-      if (args.isNil())
-        return goog.Promise.resolve(ccc.NIL);
-      if (!args.isPair())
-        return goog.Promise.reject(new Error('Invalid list expression'));
-      return compileArgs(args.cdr_).then(function(cdr) {
-        return args.car_.compile(environment).then(function(car) {
-          return new ccc.Pair(car, cdr);
-        });
-      });
-    };
-    return compileArgs(this.cdr_).then(function(compiledArgs) {
-      return new ccc.Pair(compiledHead, compiledArgs);
-    });
-  }, null, this);
+/** @override */
+ccc.Pair.prototype.compile = function(environment, continuation) {
+  return ccc.Pair.compileList_(this, environment, continuation);
 };
-*/
+
+
+/**
+ * Compiles a list recursively.
+ *
+ * @param {(!ccc.Pair|!ccc.Nil)} list
+ * @param {!ccc.Environment} environment
+ * @param {ccc.Continuation} continuation
+ * @return {ccc.Thunk}
+ * @private
+ */
+ccc.Pair.compileList_ = function(list, environment, continuation) {
+  if (ccc.isError(list))
+    return continuation(list);
+  if (ccc.isNil(list))
+    return continuation(ccc.NIL);
+  return goog.partial(ccc.compile(list.car_, environment), goog.partial(
+      ccc.Pair.onListCompiled_, list, environment, continuation));
+};
+
+
+/**
+ * Continues recursive list comilation.
+ *
+ * @param {!ccc.Pair} list
+ * @param {!ccc.Environment} environment
+ * @param {ccc.Continuation} continuation
+ * @param {ccc.Data} compiledData
+ * @return {ccc.Thunk}
+ * @private
+ */
+ccc.Pair.onListCompiled_ = function(
+    list, environment, continuation, compiledData) {
+  return goog.partial(ccc.Pair.compileList_, list.cdr_, environment,
+      goog.partial(ccc.Pair.join_, continuation, compiledData));
+};
 
 
 /** @override */

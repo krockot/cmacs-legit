@@ -84,7 +84,7 @@ ccc.expand = function(data, environment) {
 ccc.compile = function(data, environment) {
   return function(continuation) {
     if (ccc.isObject(data))
-      return data.compile(environment);
+      return goog.bind(data.compile, data, environment, continuation);
     return continuation(data);
   };
 };

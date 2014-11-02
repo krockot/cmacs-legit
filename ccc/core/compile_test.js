@@ -73,5 +73,6 @@ function testSimpleCompilation() {
     E(X(ccc.NIL), ccc.NIL),
     E(X(42), 42),
     E(X('"Ello"'), '"Ello"'),
+    E(X('Ello'), 'Ello')
   ]);
 }

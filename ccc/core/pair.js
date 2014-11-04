@@ -264,92 +264,63 @@ ccc.Pair.onListCompiled_ = function(
 
 /** @override */
 ccc.Pair.prototype.eval = function(environment, continuation) {
-  return ccc.eval(this.car_, environment)(goog.bind(this.onHeadEval_, this,
-      environment, continuation));
+  return ccc.Pair.evalList_(this, environment, goog.partial(
+      ccc.Pair.combineList_, environment, continuation));
 };
 
 
 /**
- * Continuation to handle head element evaluation, which is the first step in
- * evaluating a list.
+ * Evaluates a list recursively.
  *
- * @param {!ccc.Environment} environment
- * @param {ccc.Continuation} continuation The outer continuation which
- *     will ultimately receive the result of the list evaluation.
- * @param {ccc.Data} head The evaluated list head. Must be applicable.
- * @return {ccc.Thunk}
- * @private
- */
-ccc.Pair.prototype.onHeadEval_ = function(environment, continuation, head) {
-  if (ccc.isError(head))
-    return continuation(head);
-  var arg = this.cdr_;
-  var argContinuation = goog.partial(ccc.Pair.applyContinuationImpl_,
-      environment, continuation, head);
-  while (ccc.isPair(arg)) {
-    argContinuation = goog.partial(ccc.Pair.evalArgContinuationImpl_,
-      environment, continuation, arg.car_, argContinuation);
-    arg = arg.cdr_;
-  }
-  goog.asserts.assert(ccc.isNil(arg));
-  return argContinuation(ccc.NIL);
-};
-
-
-/**
- * Unbound implementation of the continuation which applies the evaluated
- * head of a list to its evaluated args.
- *
+ * @param {(!ccc.Pair|!ccc.Nil)} list
  * @param {!ccc.Environment} environment
  * @param {ccc.Continuation} continuation
- * @param {ccc.Data} head
- * @param {ccc.Data} args
  * @return {ccc.Thunk}
  * @private
  */
-ccc.Pair.applyContinuationImpl_ = function(
-    environment, continuation, head, args) {
-  if (ccc.isError(args))
-    return continuation(args);
-  goog.asserts.assert(ccc.isPair(args) || ccc.isNil(args));
-  return head.apply(environment, args, continuation);
+ccc.Pair.evalList_ = function(list, environment, continuation) {
+  if (ccc.isError(list))
+    return continuation(list);
+  if (ccc.isNil(list))
+    return continuation(ccc.NIL);
+  return goog.partial(ccc.eval(list.car_, environment), goog.partial(
+      ccc.Pair.onListEvaluated_, list, environment, continuation));
 };
 
 
 /**
- * Unbound implementation of the continuation which performs a single
- * argument evaluation leading up to list combination.
+ * Continues recursive list evaluation.
+ *
+ * @param {!ccc.Pair} list
+ * @param {!ccc.Environment} environment
+ * @param {ccc.Continuation} continuation
+ * @param {ccc.Data} result
+ * @return {ccc.Thunk}
+ * @private
+ */
+ccc.Pair.onListEvaluated_ = function(list, environment, continuation, result) {
+  return goog.partial(ccc.Pair.evalList_, list.cdr_, environment,
+      goog.partial(ccc.Pair.join_, continuation, result));
+};
+
+
+/**
+ * Combines a list by applying its head to its tail.
  *
  * @param {!ccc.Environment} environment
  * @param {ccc.Continuation} continuation
- * @param {ccc.Data} arg
- * @param {ccc.Continuation} innerContinuation
- * @param {ccc.Data} values
+ * @param {ccc.Data} data
  * @return {ccc.Thunk}
  * @private
  */
-ccc.Pair.evalArgContinuationImpl_ = function(
-    environment, continuation, arg, innerContinuation, values) {
-  if (ccc.isError(values))
-    return continuation(values);
-  goog.asserts.assert(ccc.isPair(values) || ccc.isNil(values));
-  return ccc.eval(arg, environment)(goog.partial(ccc.Pair.collectArg_, values,
-      innerContinuation));
-};
-
-
-/**
- * Unbound continuation which joins an evaluated argument with the tail of its
- * evaluated successors.
- *
- * @param {!ccc.Pair|!ccc.Nil} values
- * @param {ccc.Continuation} continuation
- * @param {ccc.Data} value
- * @return {ccc.Thunk}
- * @private
- */
-ccc.Pair.collectArg_ = function(values, continuation, value) {
-  if (ccc.isError(value))
-    return continuation(value);
-  return continuation(new ccc.Pair(value, values));
+ccc.Pair.combineList_ = function(environment, continuation, data) {
+  if (ccc.isError(data))
+    return continuation(data);
+  goog.asserts.assert(ccc.isPair(data));
+  var list = /** @type {!ccc.Pair} */ (data);
+  var head = list.car_;
+  if (!ccc.isApplicable(head))
+    return continuation(new ccc.Error('Object ' + head.toString() +
+        ' is not applicable.'));
+  return goog.bind(head.apply, head, environment, list.cdr_, continuation);
 };

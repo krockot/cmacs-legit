@@ -15,7 +15,7 @@ goog.require('goog.testing.jsunit');
 
 
 var asyncTestCase = goog.testing.AsyncTestCase.createAndInstall(document.title);
-var logger = goog.log.getLogger('ccc.ExpansionTest');
+var logger = goog.log.getLogger('ccc.EvalTest');
 var List = ccc.Pair.makeList;
 
 function setUpPage() {
@@ -128,6 +128,11 @@ function testNestedNativeProcedure() {
       environment, args, continuation) {
     return continuation(proc);
   });
+  var multiply = new ccc.NativeProcedure(function(
+      environment, args, continuation) {
+    return continuation(args.car() * args.cdr().car());
+  });
 
-  RunTest(E([[procGenerator], 42, '"monkey"'], new ccc.Pair('monkey', 42)));
+  RunTest(E([[procGenerator], [multiply, 6, 7], '"monkey"'],
+            new ccc.Pair('monkey', 42)));
 }

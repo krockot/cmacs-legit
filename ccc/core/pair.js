@@ -136,7 +136,7 @@ ccc.Pair.prototype.expand = function(environment, continuation) {
  */
 ccc.Pair.prototype.onHeadExpanded_ = function(environment, continuation, head) {
   if (ccc.isError(head))
-    return continuation(head);
+    return continuation(head.pass());
   if (head !== this.car_)
     return goog.partial(ccc.expand(new ccc.Pair(head, this.cdr_), environment),
         continuation);
@@ -160,7 +160,7 @@ ccc.Pair.prototype.onHeadExpanded_ = function(environment, continuation, head) {
 ccc.Pair.onTransformed_ = function(
     environment, continuation, transformedData) {
   if (ccc.isError(transformedData))
-    return continuation(transformedData);
+    return continuation(transformedData.pass());
   return goog.partial(ccc.expand(transformedData, environment), continuation);
 };
 
@@ -198,7 +198,7 @@ ccc.Pair.expandTail_ = function(tail, environment, continuation) {
 ccc.Pair.onTailExpanded_ = function(
     tail, environment, continuation, expandedTail) {
   if (ccc.isError(expandedTail))
-    return goog.partial(continuation, expandedTail);
+    return continuation(expandedTail.pass());
   return goog.partial(ccc.Pair.expandTail_, tail.cdr_, environment,
       goog.partial(ccc.Pair.join_, continuation, expandedTail));
 };
@@ -215,7 +215,7 @@ ccc.Pair.onTailExpanded_ = function(
  */
 ccc.Pair.join_ = function(continuation, head, tail) {
   if (ccc.isError(tail))
-    return goog.partial(continuation, tail);
+    return continuation(tail.pass());
   return goog.partial(continuation, new ccc.Pair(head, tail));
 };
 
@@ -229,7 +229,7 @@ ccc.Pair.prototype.compile = function(environment, continuation) {
 /**
  * Compiles a list recursively.
  *
- * @param {(!ccc.Pair|!ccc.Nil)} list
+ * @param {(!ccc.Pair|!ccc.Nil|!ccc.Error)} list
  * @param {!ccc.Environment} environment
  * @param {ccc.Continuation} continuation
  * @return {ccc.Thunk}
@@ -237,7 +237,7 @@ ccc.Pair.prototype.compile = function(environment, continuation) {
  */
 ccc.Pair.compileList_ = function(list, environment, continuation) {
   if (ccc.isError(list))
-    return continuation(list);
+    return continuation(list.pass());
   if (ccc.isNil(list))
     return continuation(ccc.NIL);
   return goog.partial(ccc.compile(list.car_, environment), goog.partial(
@@ -257,6 +257,8 @@ ccc.Pair.compileList_ = function(list, environment, continuation) {
  */
 ccc.Pair.onListCompiled_ = function(
     list, environment, continuation, compiledData) {
+  if (ccc.isError(compiledData))
+    return continuation(compiledData.pass());
   return goog.partial(ccc.Pair.compileList_, list.cdr_, environment,
       goog.partial(ccc.Pair.join_, continuation, compiledData));
 };
@@ -272,7 +274,7 @@ ccc.Pair.prototype.eval = function(environment, continuation) {
 /**
  * Evaluates a list recursively.
  *
- * @param {(!ccc.Pair|!ccc.Nil)} list
+ * @param {(!ccc.Pair|!ccc.Nil|!ccc.Error)} list
  * @param {!ccc.Environment} environment
  * @param {ccc.Continuation} continuation
  * @return {ccc.Thunk}
@@ -280,7 +282,7 @@ ccc.Pair.prototype.eval = function(environment, continuation) {
  */
 ccc.Pair.evalList_ = function(list, environment, continuation) {
   if (ccc.isError(list))
-    return continuation(list);
+    return continuation(list.pass());
   if (ccc.isNil(list))
     return continuation(ccc.NIL);
   return goog.partial(ccc.eval(list.car_, environment), goog.partial(
@@ -299,6 +301,8 @@ ccc.Pair.evalList_ = function(list, environment, continuation) {
  * @private
  */
 ccc.Pair.onListEvaluated_ = function(list, environment, continuation, result) {
+  if (ccc.isError(result))
+    return continuation(result);
   return goog.partial(ccc.Pair.evalList_, list.cdr_, environment,
       goog.partial(ccc.Pair.join_, continuation, result));
 };
@@ -315,7 +319,7 @@ ccc.Pair.onListEvaluated_ = function(list, environment, continuation, result) {
  */
 ccc.Pair.combineList_ = function(environment, continuation, data) {
   if (ccc.isError(data))
-    return continuation(data);
+    return continuation(data.pass());
   goog.asserts.assert(ccc.isPair(data));
   var list = /** @type {!ccc.Pair} */ (data);
   var head = list.car_;

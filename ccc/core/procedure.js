@@ -100,7 +100,7 @@ ccc.Procedure.prototype.apply = function(environment, args, continuation) {
 ccc.Procedure.evalBodyContinuationImpl_ = function(
     outerEnvironment, innerEnvironment, continuation, form, result) {
   if (ccc.isError(result))
-    return continuation(result);
+    return continuation(result.pass());
   goog.asserts.assert(ccc.isPair(form));
   if (ccc.isNil(form.cdr()))
     return form.car().eval(innerEnvironment, continuation)

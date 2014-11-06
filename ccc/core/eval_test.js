@@ -133,6 +133,6 @@ function testNestedNativeProcedure() {
     return continuation(args.car() * args.cdr().car());
   });
 
-  RunTest(E([[procGenerator], [9, multiply, 6, 7], '"monkey"'],
+  RunTest(E([[procGenerator], [multiply, 6, 7], '"monkey"'],
             new ccc.Pair('monkey', 42)));
 }

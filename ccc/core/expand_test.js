@@ -17,6 +17,7 @@ goog.require('goog.testing.jsunit');
 var asyncTestCase = goog.testing.AsyncTestCase.createAndInstall(document.title);
 var logger = goog.log.getLogger('ccc.ExpandTest');
 var X = function(data) { return new ccc.Syntax(ccc.core.build(data)); };
+var ID = function(name) { return new ccc.Identifier(name); };
 
 function setUpPage() {
   asyncTestCase.stepTimeout = 50;
@@ -83,8 +84,14 @@ function testSimpleExpansion() {
     E(X(false), false),
     E(X(ccc.NIL), ccc.NIL),
     E(X(42), 42),
-    E(X('Ello'), 'Ello'),
+    E(X('Ello'), ID('Ello')),
     E(X('"Ello"'), '"Ello"'),
+  ]);
+}
+
+function testNonTransformerListExpansion() {
+  RunTests([
+    E(X([X('not-a-transformer'), X(1), X(2)]), [ID('not-a-transformer'), 1, 2]),
   ]);
 }
 
@@ -102,7 +109,9 @@ function testSimpleTransformer() {
   environment.set('the-machine', transformer);
 
   RunTests([
-    E(['the-machine', true, 26, 16], [adder, 26, 16], environment),
+    E(X([X('the-machine'), X(true), X(26), X(16)]),
+      [adder, 26, 16],
+      environment),
   ]);
 }
 
@@ -129,12 +138,12 @@ function testNestedTransformers() {
   var needMoreLayers = new TestTransformer(function(
       environment, args, continuation) {
     // Transformer which always generates (the-machine #t 26 (dieciséis))
-    return goog.partial(continuation, ccc.core.build([
-        'the-machine', true, 26, ['dieciséis']]));
+    return goog.partial(continuation, ccc.core.build(X([
+        X('the-machine'), X(true), X(26), X([X('dieciséis')])])));
   });
   environment.set('meta-machine', needMoreLayers);
 
   RunTests([
-    E(['meta-machine'], [adder, 26, 16], environment),
+    E(X([X('meta-machine')]), [adder, 26, 16], environment),
   ]);
 }

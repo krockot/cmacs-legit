@@ -44,3 +44,10 @@ ccc.Identifier.prototype.toString = function() {
 ccc.Identifier.prototype.eq = function(other) {
   return ccc.isIdentifier(other) && other.name_ == this.name_;
 };
+
+
+/** @override */
+ccc.Identifier.prototype.compile = function(environment, continuation) {
+  // TODO(rockot): lolwut
+  return continuation(new ccc.Location());
+};

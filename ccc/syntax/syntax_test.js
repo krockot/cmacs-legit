@@ -1,18 +1,22 @@
 // The Cmacs Project.
 
-goog.provide('ccc.syntax.SyntaxTests');
-goog.setTestOnly('ccc.syntax.SyntaxTests');
+goog.provide('ccc.syntax.SyntaxTest');
+goog.setTestOnly('ccc.syntax.SyntaxTest');
 
 goog.require('ccc.core');
 goog.require('ccc.core.build');
 goog.require('ccc.core.stringify');
 goog.require('ccc.syntax');
 goog.require('goog.Promise');
+goog.require('goog.debug.Console');
+goog.require('goog.log.Logger');
+goog.require('goog.string.format');
 goog.require('goog.testing.AsyncTestCase');
 goog.require('goog.testing.jsunit');
 
 
 var asyncTestCase = goog.testing.AsyncTestCase.createAndInstall(document.title);
+var logger = goog.log.getLogger('ccc.syntax.SyntaxTest');
 
 var BEGIN = ccc.syntax.BEGIN;
 var DEFINE = ccc.syntax.DEFINE;
@@ -24,7 +28,9 @@ var SET = ccc.syntax.SET;
 
 function setUpPage() {
   asyncTestCase.stepTimeout = 50;
-  asyncTestCase.timeToSleepAfterFailure = 100;
+  asyncTestCase.timeToSleepAfterFailure = 50;
+  goog.Promise.setUnhandledRejectionHandler(justFail);
+  new goog.debug.Console().setCapturing(true);
 }
 
 function continueTesting() {
@@ -32,7 +38,6 @@ function continueTesting() {
 }
 
 function justFail(reason) {
-  console.error(reason);
   console.error(goog.isDef(reason) && goog.isDef(reason.stack)
       ? reason.stack : reason);
   setTimeout(goog.partial(fail, reason), 0);
@@ -49,6 +54,9 @@ var T = function(
   var thread = new ccc.Thread(transformer.transform(environment, args));
   return thread.run().then(function(transformed) {
     assertNotNull(transformed);
+    logger.log(goog.log.Logger.Level.INFO, goog.string.format(
+        'Transformation completed in %s thunks in %s ms.', thread.thunkCounter_,
+        thread.age_));
     if (goog.isDef(opt_expectedOutputSpec)) {
       var expectedOutput = ccc.core.build(opt_expectedOutputSpec);
       if (!ccc.equal(transformed, expectedOutput))
@@ -76,6 +84,9 @@ var TE = function(
   var form = new ccc.Pair(transformer, ccc.core.build(argsSpec));
   var thread = new ccc.Thread(ccc.evalSource(form, environment));
   return thread.run().then(function(result) {
+    logger.log(goog.log.Logger.Level.INFO, goog.string.format(
+        'Evaluation completed in %s thunks in %s ms.', thread.thunkCounter_,
+        thread.age_));
     if (goog.isDef(opt_expectedOutputSpec)) {
       var expectedOutput = ccc.core.build(opt_expectedOutputSpec);
       if (!ccc.equal(result, expectedOutput))
@@ -103,6 +114,9 @@ var TL = function(
   var callForm = new ccc.Pair(lambdaForm, ccc.core.build(argsSpec));
   var thread = new ccc.Thread(ccc.evalSource(callForm, environment));
   return thread.run().then(function(result) {
+    logger.log(goog.log.Logger.Level.INFO, goog.string.format(
+        'Evaluation completed in %s thunks in %s ms.', thread.thunkCounter_,
+        thread.age_));
     if (goog.isDef(opt_expectedOutputSpec)) {
       var expectedOutput = ccc.core.build(opt_expectedOutputSpec);
       if (!ccc.equal(result, expectedOutput))
@@ -167,6 +181,15 @@ function testSet() {
       });
     });
   }).then(continueTesting, justFail);
+}
+
+function testInnerSet() {
+  asyncTestCase.waitForAsync();
+  var environment = new ccc.Environment();
+  environment.set('x', 41);
+  RunTests([
+    TL([[], [SET, 'x', 42], 'x'], [], 42, environment)
+  ]).then(continueTesting, justFail);
 }
 
 function testBadSetSyntax() {

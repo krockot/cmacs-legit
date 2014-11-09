@@ -51,7 +51,7 @@ cmacs.background.main = function() {
             console.log(ccc.core.stringify(lastValue));
           return null;
         }
-        var thread = new ccc.Thread(ccc.eval(data, environment));
+        var thread = new ccc.Thread(ccc.evalSource(data, environment));
         thread.run().then(readData, function(error) {
           console.error('Error: ' + error.toString());
         });

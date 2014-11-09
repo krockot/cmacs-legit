@@ -151,7 +151,6 @@ function testBadDefineSyntax() {
 function testSet() {
   asyncTestCase.waitForAsync();
   var environment = new ccc.Environment();
-  console.log('the fuck');
   // First try to set unbound symbol 'foo and expect it to fail.
   TE(SET, ['foo', 42], undefined, environment).then(justFail).thenCatch(
       function() {

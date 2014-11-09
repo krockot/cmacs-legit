@@ -4,6 +4,8 @@ goog.provide('ccc.parse.Token');
 goog.provide('ccc.parse.TokenType');
 
 goog.require('goog.object');
+goog.require('goog.asserts');
+
 
 
 /**

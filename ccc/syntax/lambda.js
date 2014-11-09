@@ -2,24 +2,24 @@
 
 goog.provide('ccc.syntax.LAMBDA');
 
-goog.require('ccc.base');
-goog.require('goog.Promise');
+goog.require('ccc.ProcedureGenerator');
+goog.require('ccc.core');
 goog.require('goog.asserts');
 
 
 
 /**
- * The LAMBDA transformer produces a native generator which itself evaluates to
- * new procedure objects when applied. Any generated procedure will execute in
- * the context of the environment in which the generator was applied.
+ * The LAMBDA transformer produces a procedure generator which yields new
+ * procedure objects when applied. Any generated procedure will execute in the
+ * context of the environment in which the generator was applied.
  *
  * @constructor
- * @extends {ccc.base.Transformer}
+ * @extends {ccc.Transformer}
  * @private
  */
 ccc.syntax.LambdaTransformer_ = function() {
 };
-goog.inherits(ccc.syntax.LambdaTransformer_, ccc.base.Transformer);
+goog.inherits(ccc.syntax.LambdaTransformer_, ccc.Transformer);
 
 
 /** @override */
@@ -31,75 +31,106 @@ ccc.syntax.LambdaTransformer_.prototype.toString = function() {
 /** @override */
 ccc.syntax.LambdaTransformer_.prototype.transform = function(
     environment, args) {
-  /** @type {!Object.<string, !ccc.base.Location>} */
-  var argLocations = {};
-  if (!args.isPair() || args.cdr().isNil())
-    return goog.Promise.reject(new Error('lambda: Invalid syntax'));
-  var formals = args.car();
-  if (!formals.isSymbol() && !formals.isPair() && !formals.isNil())
-    return goog.Promise.reject(new Error('lambda: Invalid syntax'));
-  var lexicalEnvironment = new ccc.base.Environment(environment);
-  var formal = formals;
-  var formalName;
-  while (formal.isPair()) {
-    if (!formal.car().isSymbol())
-      return goog.Promise.reject(new Error('lambda: Invalid syntax'));
-    formalName = formal.car().name();
-    argLocations[formalName] = lexicalEnvironment.allocateProxy(formalName);
-    formal = formal.cdr();
-  }
-  if (formal.isSymbol()) {
-    formalName = formal.name();
-    argLocations[formalName] = lexicalEnvironment.allocateProxy(formalName);
-  }
-  var compileBody = function(body) {
-    if (body.isNil())
-      return goog.Promise.resolve(ccc.base.NIL);
-    if (!body.isPair())
-      return goog.Promise.reject(new Error('lambda: Invalid syntax'));
-    return compileBody(body.cdr()).then(function(cdr) {
-      return body.car().compile(lexicalEnvironment).then(function(car) {
-        return new ccc.base.Pair(car, cdr);
-      });
-    });
+  return function (continuation) {
+    if (!ccc.isPair(args) || ccc.isNil(args.cdr()))
+      return continuation(new ccc.Error('lambda: Invalid syntax'));
+    var formals = args.car();
+    if (!ccc.isSymbol(formals) && !ccc.isPair(formals) && !ccc.isNil(formals))
+      return continuation(new ccc.Error('lambda: Invalid syntax'));
+    var formalNames = [];
+    var formalTail = null;
+    var formal = formals;
+    while (ccc.isPair(formal)) {
+      if (!ccc.isSymbol(formal.car()))
+        return continuation(new ccc.Error('lambda: Invalid syntax'));
+      formalNames.push(formal.car().name());
+      formal = formal.cdr();
+    }
+    if (ccc.isSymbol(formal))
+      formalTail = formal.name();
+    var body = args.cdr();
+    if (!ccc.isPair(body))
+      return continuation(new ccc.Error('lambda: Invalid syntax'));
+    return ccc.syntax.LambdaTransformer_.expandBody_(
+        /** @type {!ccc.Pair} */ (body), environment,
+        goog.partial(ccc.syntax.LambdaTransformer_.onBodyExpanded_,
+            formalNames, formalTail, environment, continuation));
   };
-  return compileBody(args.cdr()).then(function(args) {
-    var generatingProcedure = new ccc.base.NativeProcedure(goog.partial(
-        ccc.syntax.LambdaTransformer_.generateProcedure_, formals, args,
-        argLocations));
-    return new ccc.base.Pair(generatingProcedure, ccc.base.NIL);
-  });
 };
 
 
 /**
- * Generate a new {@code ccc.base.Procedure} for a lambda form.
- *
- * @param {!ccc.base.Object} formals
- * @param {!ccc.base.Object} body
- * @param {!Object.<string, !ccc.base.Location>} argLocations
- * @param {!ccc.base.Environment} environment
- * @param {!ccc.base.Object} args
- * @param {!ccc.base.Continuation} continuation
- * @return {ccc.base.Thunk}
+ * @param {(!ccc.Pair|!ccc.Nil)} body
+ * @param {!ccc.Environment} environment
+ * @param {ccc.Continuation} continuation
+ * @return {ccc.Thunk}
  * @private
  */
-ccc.syntax.LambdaTransformer_.generateProcedure_ = function(
-    formals, body, argLocations, environment, args, continuation) {
-  goog.asserts.assert(args.isNil(),
-      'Compiled procedure generator should never receive arguments.');
-  var scope = new ccc.base.Environment(environment);
-  // Inject compiler-generated argument proxy locations into the evaluation
-  // environment for the procedure.
-  goog.object.forEach(argLocations, function(location, name) {
-    scope.bindLocation(name, location);
-  });
-  return continuation(new ccc.base.Procedure(scope, formals, body));
+ccc.syntax.LambdaTransformer_.expandBody_ = function(
+    body, environment, continuation) {
+  if (ccc.isNil(body))
+    return continuation(ccc.NIL);
+  return goog.partial(ccc.syntax.LambdaTransformer_.expandBody_, body.cdr(),
+      environment, goog.partial(
+          ccc.syntax.LambdaTransformer_.onBodyTailExpanded_, body.car(),
+          environment, continuation));
 };
 
 
 /**
- * @public {!ccc.base.Transformer}
+ * @param {ccc.Data} bodyHead
+ * @param {!ccc.Environment} environment
+ * @param {ccc.Continuation} continuation
+ * @param {ccc.Data} expandedBodyTail
+ * @return {ccc.Thunk}
+ * @private
+ */
+ccc.syntax.LambdaTransformer_.onBodyTailExpanded_ = function(
+    bodyHead, environment, continuation, expandedBodyTail) {
+  return ccc.expand(bodyHead, environment)(goog.partial(
+      ccc.syntax.LambdaTransformer_.onBodyHeadExpanded_, expandedBodyTail,
+      environment, continuation));
+};
+
+
+/**
+ * @param {ccc.Data} expandedBodyTail
+ * @param {!ccc.Environment} environment
+ * @param {ccc.Continuation} continuation
+ * @param {ccc.Data} expandedBodyHead
+ * @return {ccc.Thunk}
+ * @private
+ */
+ccc.syntax.LambdaTransformer_.onBodyHeadExpanded_ = function(
+    expandedBodyTail, environment, continuation, expandedBodyHead) {
+  if (ccc.isError(expandedBodyHead))
+    return continuation(expandedBodyHead.pass());
+  return continuation(new ccc.Pair(expandedBodyHead, expandedBodyTail));
+};
+
+
+/**
+ * @param {!Array.<string>} formalNames
+ * @param {?string} formalTail
+ * @param {!ccc.Environment} environment
+ * @param {ccc.Continuation} continuation
+ * @param {ccc.Data} expandedBody
+ * @return {ccc.Thunk}
+ * @private
+ */
+ccc.syntax.LambdaTransformer_.onBodyExpanded_ = function(
+    formalNames, formalTail, environment, continuation, expandedBody) {
+  if (ccc.isError(expandedBody))
+    return continuation(expandedBody.pass());
+  goog.asserts.assert(ccc.isPair(expandedBody));
+  return continuation(new ccc.Pair(
+      new ccc.ProcedureGenerator(formalNames, formalTail,
+      /** @type {!ccc.Pair} */ (expandedBody)), ccc.NIL));
+};
+
+
+/**
+ * @public {!ccc.Transformer}
  * @const
  */
 ccc.syntax.LAMBDA = new ccc.syntax.LambdaTransformer_();

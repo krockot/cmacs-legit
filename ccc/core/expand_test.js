@@ -68,9 +68,8 @@ var TestTransformer = function(transform) {
 goog.inherits(TestTransformer, ccc.Transformer);
 
 /** @override */
-TestTransformer.prototype.transform = function(
-    environment, args, continuation) {
-  return goog.bind(this.transform_, this, environment, args, continuation);
+TestTransformer.prototype.transform = function(environment, args) {
+  return this.transform_(environment, args);
 };
 
 // Tests below this line
@@ -89,7 +88,7 @@ function testSimpleExpansion() {
 
 function testNonTransformerListExpansion() {
   RunTests([
-    E(['not-a-transformer', 1, 2]), ['not-a-transformer', 1, 2]),
+    E(['not-a-transformer', 1, 2], ['not-a-transformer', 1, 2]),
   ]);
 }
 
@@ -98,16 +97,17 @@ function testSimpleTransformer() {
       environment, args, continuation) {
     return goog.partial(continuation, args.car() + args.cdr().car());
   });
-  var transformer = new TestTransformer(function(
-      environment, args, continuation) {
-    // Throw away the first argument, return (<adder> arg2 arg3).
-    return goog.partial(continuation, ccc.Pair.makeList([adder], args.cdr()));
+  var transformer = new TestTransformer(function(environment, args) {
+    return function(continuation) {
+      // Throw away the first argument, return (<adder> arg2 arg3).
+      return goog.partial(continuation, ccc.Pair.makeList([adder], args.cdr()));
+    };
   });
   var environment = new ccc.Environment();
   environment.set('the-machine', transformer);
 
   RunTests([
-    E(['the-machine', true, 26, 16]), [adder, 26, 16], environment),
+    E(['the-machine', true, 26, 16], [adder, 26, 16], environment),
   ]);
 }
 
@@ -116,26 +116,29 @@ function testNestedTransformers() {
       environment, args, continuation) {
     return goog.partial(continuation, args.car() + args.cdr().car());
   });
-  var transformer = new TestTransformer(function(
-      environment, args, continuation) {
-    // Throw away the first argument, return (<adder> arg2 arg3).
-    return goog.partial(continuation, ccc.Pair.makeList([adder], args.cdr()));
+  var transformer = new TestTransformer(function(environment, args) {
+    return function(continuation) {
+      // Throw away the first argument, return (<adder> arg2 arg3).
+      return goog.partial(continuation, ccc.Pair.makeList([adder], args.cdr()));
+    };
   });
   var environment = new ccc.Environment();
   environment.set('the-machine', transformer);
 
-  var oneSix = new TestTransformer(function(
-      environment, args, continuation) {
-    // Transformer which always generates the number 16.
-    return goog.partial(continuation, 16);
+  var oneSix = new TestTransformer(function(environment, args) {
+    return function(continuation) {
+      // Transformer which always generates the number 16.
+      return goog.partial(continuation, 16);
+    };
   });
   environment.set('dieciséis', oneSix);
 
-  var needMoreLayers = new TestTransformer(function(
-      environment, args, continuation) {
-    // Transformer which always generates (the-machine #t 26 (dieciséis))
-    return goog.partial(continuation, ccc.core.build(
-        ['the-machine', true, 26, ['dieciséis']]));
+  var needMoreLayers = new TestTransformer(function(environment, args) {
+    return function(continuation) {
+      // Transformer which always generates (the-machine #t 26 (dieciséis))
+      return goog.partial(continuation, ccc.core.build(
+          ['the-machine', true, 26, ['dieciséis']]));
+    };
   });
   environment.set('meta-machine', needMoreLayers);
 

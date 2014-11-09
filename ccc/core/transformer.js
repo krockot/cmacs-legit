@@ -40,10 +40,10 @@ ccc.Transformer.prototype.toString = function() {
  *
  * @param {!ccc.Environment} environment
  * @param {(!ccc.Pair|!ccc.Nil)} args
- * @param {ccc.Continuation} continuation
- * @return {ccc.Thunk}
+ * @return {ccc.ThreadEntryPoint}
  */
-ccc.Transformer.prototype.transform = function(
-    environment, args, continuation) {
-  return continuation(new ccc.Error('Invalid Transformer'));
+ccc.Transformer.prototype.transform = function(environment, args) {
+  return function(continuation) {
+    return continuation(new ccc.Error('Invalid Transformer'));
+  };
 };

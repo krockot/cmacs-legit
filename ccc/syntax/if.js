@@ -2,23 +2,23 @@
 
 goog.provide('ccc.syntax.IF')
 
-goog.require('ccc.base');
-goog.require('goog.Promise');
+goog.require('ccc.Branch');
+goog.require('ccc.core');
 
 
 
 /**
  * The IF transformer produces a native conditional procedure which evaluates
- * a test express and then either the consequent or the alternate, but never
+ * a test expression and then either the consequent or the alternate, but never
  * both.
  *
  * @constructor
- * @extends {ccc.base.Transformer}
+ * @extends {ccc.Transformer}
  * @private
  */
 ccc.syntax.IfTransformer_ = function() {
 };
-goog.inherits(ccc.syntax.IfTransformer_, ccc.base.Transformer);
+goog.inherits(ccc.syntax.IfTransformer_, ccc.Transformer);
 
 
 /** @override */
@@ -29,53 +29,69 @@ ccc.syntax.IfTransformer_.prototype.toString = function() {
 
 /** @override */
 ccc.syntax.IfTransformer_.prototype.transform = function(environment, args) {
-  if (!args.isPair() || !args.cdr().isPair())
-    return goog.Promise.reject(new Error('if: Not enough arguments'));
-  var condition = args.car();
-  var consequent = args.cdr().car();
-  var alternate = args.cdr().cdr();
-  if (alternate.isNil()) {
-    alternate = ccc.base.UNSPECIFIED;
-  } else if (alternate.isPair()) {
-    if (!alternate.cdr().isNil())
-      return goog.Promise.reject(new Error('if: Too many arguments'));
-    alternate = alternate.car();
-  } else {
-    return goog.Promise.reject(new Error('if: Invalid syntax'));
-  }
-  return alternate.compile(environment).then(function(alternate) {
-    return consequent.compile(environment).then(function(consequent) {
-      var branchProcedure = new ccc.base.NativeProcedure(goog.partial(
-          ccc.syntax.IfTransformer_.nativeImpl_, consequent, alternate));
-      return ccc.base.Pair.makeList([branchProcedure, condition]);
-    });
-  })
+  return function(continuation) {
+    if (!ccc.isPair(args) || !ccc.isPair(args.cdr()))
+      return continuation(new ccc.Error('if: Not enough arguments'));
+    var condition = args.car();
+    var consequent = args.cdr().car();
+    var alternate = args.cdr().cdr();
+    if (ccc.isNil(alternate)) {
+      alternate = ccc.UNSPECIFIED;
+    } else if (ccc.isPair(alternate)) {
+      if (!ccc.isNil(alternate.cdr()))
+        return continuation(new ccc.Error('if: Too many arguments'));
+      alternate = alternate.car();
+    } else {
+      return continuation(new ccc.Error('if: Invalid syntax'));
+    }
+    return ccc.expand(consequent, environment)(goog.partial(
+        ccc.syntax.IfTransformer_.onConsequentExpanded_, alternate, condition,
+        environment, continuation));
+  };
 };
 
 
 /**
- * Tests the argument value and forwards the evaluation of the alternate if
- * the argument value was #f or the evaluation of the consequent otherwise.
- *
- * @param {!ccc.base.Object} consequent
- * @param {!ccc.base.Object} alternate
- * @param {!ccc.base.Environment} environment
- * @param {!ccc.base.Object} args
- * @param {!ccc.base.Continuation} continuation
- * @return {ccc.base.Thunk}
+ * @param {ccc.Data} alternate
+ * @param {ccc.Data} condition
+ * @param {!ccc.Environment} environment
+ * @param {ccc.Continuation} continuation
+ * @param {ccc.Data} expandedConsequent
+ * @return {ccc.Thunk}
  * @private
  */
-ccc.syntax.IfTransformer_.nativeImpl_ = function(
-    consequent, alternate, environment, args, continuation) {
-  if (args.car().isFalse()) {
-    return alternate.eval(environment, continuation);
-  }
-  return consequent.eval(environment, continuation);
+ccc.syntax.IfTransformer_.onConsequentExpanded_ = function(
+    alternate, condition, environment, continuation, expandedConsequent) {
+  if (ccc.isError(expandedConsequent))
+    return continuation(expandedConsequent.pass());
+  return ccc.expand(alternate, environment)(goog.partial(
+      ccc.syntax.IfTransformer_.onAlternateExpanded_, environment, continuation,
+      condition, expandedConsequent));
 };
 
 
 /**
- * @public {!ccc.base.Transformer}
+ * @param {!ccc.Environment} environment
+ * @param {ccc.Continuation} continuation
+ * @param {ccc.Data} condition
+ * @param {ccc.Data} expandedConsequent
+ * @param {ccc.Data} expandedAlternate
+ * @return {ccc.Thunk}
+ * @private
+ */
+ccc.syntax.IfTransformer_.onAlternateExpanded_ = function(
+    environment, continuation, condition, expandedConsequent,
+    expandedAlternate) {
+  if (ccc.isError(expandedAlternate))
+    return continuation(expandedAlternate.pass());
+  return continuation(new ccc.Pair(
+      new ccc.Branch(expandedConsequent, expandedAlternate),
+      new ccc.Pair(condition, ccc.NIL)));
+};
+
+
+/**
+ * @public {!ccc.Transformer}
  * @const
  */
 ccc.syntax.IF = new ccc.syntax.IfTransformer_();

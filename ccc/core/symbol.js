@@ -47,6 +47,9 @@ ccc.Symbol.prototype.eq = function(other) {
 
 /** @override */
 ccc.Symbol.prototype.expand = function(environment, continuation) {
+  var value = environment.get(this.name_);
+  if (ccc.isTransformer(value))
+    return continuation(/** @type {!ccc.Transformer} */ (value));
   return continuation(this);
 };
 

@@ -2,8 +2,8 @@
 
 goog.provide('ccc.syntax.QUOTE');
 
-goog.require('ccc.base');
-goog.require('goog.Promise');
+goog.require('ccc.core');
+goog.require('goog.asserts');
 
 
 
@@ -11,12 +11,12 @@ goog.require('goog.Promise');
  * QUOTE transformer.
  *
  * @constructor
- * @extends {ccc.base.Transformer}
+ * @extends {ccc.Transformer}
  * @private
  */
 ccc.syntax.QuoteTransformer_ = function() {
 };
-goog.inherits(ccc.syntax.QuoteTransformer_, ccc.base.Transformer);
+goog.inherits(ccc.syntax.QuoteTransformer_, ccc.Transformer);
 
 
 /** @override */
@@ -27,11 +27,13 @@ ccc.syntax.QuoteTransformer_.prototype.toString = function() {
 
 /** @override */
 ccc.syntax.QuoteTransformer_.prototype.transform = function(environment, args) {
-  if (!args.isPair() || !args.cdr().isNil())
-    return goog.Promise.reject(new Error('quote: Invalid syntax'));
-  var quoteProcedure = new ccc.base.NativeProcedure(goog.partial(
-      ccc.syntax.QuoteTransformer_.nativeImpl_, args.car()));
-  return goog.Promise.resolve(new ccc.base.Pair(quoteProcedure, ccc.base.NIL));
+  return function(continuation) {
+    if (!ccc.isPair(args) || !ccc.isNil(args.cdr()))
+      return continuation(new ccc.Error('quote: Invalid syntax'));
+    var quoteProcedure = new ccc.NativeProcedure(goog.partial(
+        ccc.syntax.QuoteTransformer_.nativeImpl_, args.car()));
+    return continuation(new ccc.Pair(quoteProcedure, ccc.NIL));
+  };
 };
 
 
@@ -39,23 +41,23 @@ ccc.syntax.QuoteTransformer_.prototype.transform = function(environment, args) {
  * This just returns its first argument, which should be captured and bound
  * during transformation.
  *
- * @param {!ccc.base.Object} object
- * @param {!ccc.base.Environment} environment
- * @param {!ccc.base.Object} args
- * @param {!ccc.base.Continuation} continuation
- * @return {ccc.base.Thunk}
+ * @param {ccc.Data} data
+ * @param {!ccc.Environment} environment
+ * @param {(!ccc.Pair|!ccc.Nil)} args
+ * @param {ccc.Continuation} continuation
+ * @return {ccc.Thunk}
  * @private
  */
 ccc.syntax.QuoteTransformer_.nativeImpl_ = function(
-    object, environment, args, continuation) {
-  goog.asserts.assert(args.isNil(),
-      'Compiled quote should never received arguments');
-  return continuation(object);
+    data, environment, args, continuation) {
+  goog.asserts.assert(ccc.isNil(args),
+      'Expanded QUOTE procedure should never received arguments');
+  return continuation(data);
 };
 
 
 /**
- * @public {!ccc.base.Transformer}
+ * @public {!ccc.Transformer}
  * @const
  */
 ccc.syntax.QUOTE = new ccc.syntax.QuoteTransformer_();

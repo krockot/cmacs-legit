@@ -155,11 +155,11 @@ ccc.Pair.prototype.map = function(transform) {
 ccc.Pair.prototype.onHeadExpanded_ = function(environment, continuation, head) {
   if (ccc.isError(head))
     return continuation(head.pass());
-  if (head !== this.car_)
+  if (!ccc.equal(head, this.car_))
     return goog.partial(ccc.expand(new ccc.Pair(head, this.cdr_), environment),
         continuation);
   if (ccc.isTransformer(head))
-    return goog.bind(head.transform, head, environment, this.cdr_,
+    return goog.partial(head.transform(environment, this.cdr_),
         goog.partial(ccc.Pair.onTransformed_, environment, continuation));
   return goog.partial(ccc.Pair.expandTail_, this.cdr_, environment,
       goog.partial(ccc.Pair.join_, continuation, head));

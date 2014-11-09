@@ -16,7 +16,6 @@ goog.require('goog.testing.jsunit');
 
 var asyncTestCase = goog.testing.AsyncTestCase.createAndInstall(document.title);
 var logger = goog.log.getLogger('ccc.CompileTest');
-var X = function(data) { return new ccc.Syntax(ccc.core.build(data)); };
 
 function setUpPage() {
   asyncTestCase.stepTimeout = 50;
@@ -67,12 +66,12 @@ function RunTests(tests) {
 
 function testSimpleCompilation() {
   RunTests([
-    E(X([X(1), X(2), X(3)]), [1, 2, 3]),
-    E(X(true), true),
-    E(X(false), false),
-    E(X(ccc.NIL), ccc.NIL),
-    E(X(42), 42),
-    E(X('"Ello"'), '"Ello"'),
-    E(X('Ello'), 'Ello')
+    E([1, 2, 3], [1, 2, 3]),
+    E(true, true),
+    E(false, false),
+    E(ccc.NIL, ccc.NIL),
+    E(42, 42),
+    E(new String('Ello'), new String('Ello')),
+    E('Ello', 'Ello')
   ]);
 }

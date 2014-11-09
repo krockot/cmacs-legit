@@ -4,7 +4,7 @@ goog.provide('cmacs.background.main');
 
 goog.require('ccc.core');
 goog.require('ccc.core.stringify');
-//goog.require('ccc.syntax');
+goog.require('ccc.syntax');
 goog.require('ccc.parse.Parser');
 goog.require('ccc.parse.Scanner');
 goog.require('goog.Promise');
@@ -13,13 +13,13 @@ goog.require('goog.Promise');
 
 cmacs.background.main = function() {
   var environment = new ccc.Environment();
-  environment.allocate('begin').setValue(ccc.syntax.BEGIN);
-  environment.allocate('define').setValue(ccc.syntax.DEFINE);
-  environment.allocate('if').setValue(ccc.syntax.IF);
-  environment.allocate('lambda').setValue(ccc.syntax.LAMBDA);
-  environment.allocate('\u03bb').setValue(ccc.syntax.LAMBDA);
-  environment.allocate('quote').setValue(ccc.syntax.QUOTE);
-  environment.allocate('set!').setValue(ccc.syntax.SET);
+  environment.set('begin', ccc.syntax.BEGIN);
+  environment.set('define', ccc.syntax.DEFINE);
+  environment.set('if', ccc.syntax.IF);
+  environment.set('lambda', ccc.syntax.LAMBDA);
+  environment.set('\u03bb', ccc.syntax.LAMBDA);
+  environment.set('quote', ccc.syntax.QUOTE);
+  environment.set('set!', ccc.syntax.SET);
   // Add some test library functions to play with.
   environment.set('-', new ccc.NativeProcedure(function(
       environment, args, continuation) {

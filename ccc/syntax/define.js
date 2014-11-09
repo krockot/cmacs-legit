@@ -2,8 +2,7 @@
 
 goog.provide('ccc.syntax.DEFINE');
 
-goog.require('ccc.base');
-goog.require('goog.Promise');
+goog.require('ccc.core');
 
 
 
@@ -12,12 +11,12 @@ goog.require('goog.Promise');
  * environment.
  *
  * @constructor
- * @extends {ccc.base.Transformer}
+ * @extends {ccc.Transformer}
  * @private
  */
 ccc.syntax.DefineTransformer_ = function() {
 };
-goog.inherits(ccc.syntax.DefineTransformer_, ccc.base.Transformer);
+goog.inherits(ccc.syntax.DefineTransformer_, ccc.Transformer);
 
 
 /** @override */
@@ -29,20 +28,22 @@ ccc.syntax.DefineTransformer_.prototype.toString = function() {
 /** @override */
 ccc.syntax.DefineTransformer_.prototype.transform = function(
     environment, args) {
-  if (!args.isPair())
-    return goog.Promise.reject(new Error('define: Invalid argument list'));
-  if (!args.car().isSymbol())
-    return goog.Promise.reject(new Error(
-        'define: Symbol expected in first argument'));
-  if (args.cdr().isNil())
-    return goog.Promise.reject(new Error('define: Missing binding value'));
-  if (!args.cdr().isPair())
-    return goog.Promise.reject(new Error('define: Invalid syntax'));
-  if (!args.cdr().cdr().isNil())
-    return goog.Promise.reject(new Error('define: Too many arguments'));
-  var bindProcedure = new ccc.base.NativeProcedure(goog.partial(
-      ccc.syntax.DefineTransformer_.bindSymbol_, args.car()));
-  return goog.Promise.resolve(new ccc.base.Pair(bindProcedure, args.cdr()));
+  return function(continuation) {
+    if (!ccc.isPair(args))
+      return continuation(new ccc.Error('define: Invalid argument list'));
+    if (!ccc.isSymbol(args.car()))
+      return continuation(new ccc.Error(
+          'define: Symbol expected in first argument'));
+    if (ccc.isNil(args.cdr()))
+      return continuation(new ccc.Error('define: Missing binding value'));
+    if (!ccc.isPair(args.cdr()))
+      return continuation(new ccc.Error('define: Invalid syntax'));
+    if (!ccc.isNil(args.cdr().cdr()))
+      return continuation(new ccc.Error('define: Too many arguments'));
+    var bindProcedure = new ccc.NativeProcedure(goog.partial(
+        ccc.syntax.DefineTransformer_.bindSymbol_, args.car()));
+    return continuation(new ccc.Pair(bindProcedure, args.cdr()));
+  };
 };
 
 
@@ -50,27 +51,24 @@ ccc.syntax.DefineTransformer_.prototype.transform = function(
  * Binds the value of the second argument to the symbol named by the first
  * argument within the given environment.
  *
- * @param {!ccc.base.Symbol} symbol
- * @param {!ccc.base.Environment} environment
- * @param {!ccc.base.Object} args
- * @param {!ccc.base.Continuation} continuation
- * @return {ccc.base.Thunk}
+ * @param {!ccc.Symbol} symbol
+ * @param {!ccc.Environment} environment
+ * @param {(!ccc.Pair|!ccc.Nil)} args
+ * @param {ccc.Continuation} continuation
+ * @return {ccc.Thunk}
  * @private
  */
 ccc.syntax.DefineTransformer_.bindSymbol_ = function(
     symbol, environment, args, continuation) {
-  goog.asserts.assert(args.isPair() && args.cdr().isNil(),
-      'Compiled define should always receive exactly one argument.');
-  var location = environment.get(symbol.name());
-  if (goog.isNull(location))
-    location = environment.allocate(symbol.name());
-  location.setValue(args.car());
-  return continuation(ccc.base.UNSPECIFIED);
+  goog.asserts.assert(ccc.isPair(args) && ccc.isNil(args.cdr()),
+      'Expanded DEFINE procedure should always receive exactly one argument.');
+  environment.set(symbol.name(), args.car());
+  return continuation(ccc.UNSPECIFIED);
 };
 
 
 /**
- * @public {!ccc.base.Transformer}
+ * @public {!ccc.Transformer}
  * @const
  */
 ccc.syntax.DEFINE = new ccc.syntax.DefineTransformer_();

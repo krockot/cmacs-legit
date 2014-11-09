@@ -55,7 +55,7 @@ ccc.Continuation;
 
 /**
  * Returns a new {@code ccc.ThreadEntryPoint} at the start of the expansion
- * process for an input {@ccc.Data}.
+ * process for an input {@code ccc.Data}.
  *
  * @param {ccc.Data} data The data to expand.
  * @param {!ccc.Environment} environment The environment in which to
@@ -73,7 +73,8 @@ ccc.expand = function(data, environment) {
 
 /**
  * Returns a new {@code ccc.ThreadEntryPoint} at the start of the compilation
- * process for an input {@ccc.Data}. The data should already be fully expanded.
+ * process for an input {@code ccc.Data}. The data should already be fully
+ * expanded.
  *
  * @param {ccc.Data} data The data to compile.
  * @param {!ccc.Environment} environment The environment in which to perform
@@ -91,8 +92,8 @@ ccc.compile = function(data, environment) {
 
 /**
  * Returns a new {@code ccc.ThreadEntryPoint} at the start of the evaluation
- * process for an input {@ccc.Data}. The data should already be expanded and
- * compiled.
+ * process for an input {@code ccc.Data}. The data should already be expanded
+ * and compiled.
  *
  * @param {ccc.Data} data The data to evaluate.
  * @param {!ccc.Environment} environment The environment in which to
@@ -104,5 +105,29 @@ ccc.eval = function(data, environment) {
     if (ccc.isObject(data))
       return data.eval(environment, continuation);
     return continuation(data);
+  };
+};
+
+
+/**
+ * Returns a new {@code ccc.ThreadEntryPoint} at the start of a complete
+ * end-to-end process of expansion, compilation, and evaluation of an input
+ * {@code ccc.Data}.
+ *
+ * @param {ccc.Data} data The data to expand, compile, and evaluate.
+ * @param {!ccc.Environment} environment
+ * @return {ccc.ThreadEntryPoint}
+ */
+ccc.evalSource = function(data, environment) {
+  return function(continuation) {
+    return ccc.expand(data, environment)(function(expandedData) {
+      if (ccc.isError(expandedData))
+        return continuation(expandedData.pass());
+      return ccc.compile(expandedData, environment)(function(compiledData) {
+        if (ccc.isError(compiledData))
+          return continuation(compiledData.pass());
+        return ccc.eval(compiledData, environment)(continuation);
+      });
+    });
   };
 };

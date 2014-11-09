@@ -7,7 +7,6 @@ goog.require('ccc.Nil');
 goog.require('ccc.Object');
 goog.require('ccc.Pair');
 goog.require('ccc.Symbol');
-goog.require('goog.Promise');
 goog.require('goog.asserts');
 
 
@@ -17,20 +16,21 @@ goog.require('goog.asserts');
  *
  * @param {!ccc.Environment} scope The innermost environment at the point
  *     of this Procedure's construction.
- * @param {ccc.Data} formals The argument specification.
+ * @param {!Array.<string>} formalNames
+ * @param {?string} formalTail
  * @param {!ccc.Pair} body A proper list of one or more compiled objects.
  * @constructor
  * @extends {ccc.Object}
  */
-ccc.Procedure = function(scope, formals, body) {
-  goog.asserts.assert(ccc.isSymbol(formals) || ccc.isNil(formals) ||
-      ccc.isPair(formals), 'Invalid Procedure argument specification.');
-
+ccc.Procedure = function(scope, formalNames, formalTail, body) {
   /** @private {!ccc.Environment} */
   this.scope_ = scope;
 
-  /** @private {ccc.Data} */
-  this.formals_ = formals;
+  /** @private {!Array.<string>} */
+  this.formalNames_ = formalNames;
+
+  /** @private {?string} */
+  this.formalTail_ = formalTail;
 
   /** @private {!ccc.Pair} */
   this.body_ = body;
@@ -53,33 +53,17 @@ ccc.Procedure.prototype.isApplicable = function() {
 /** @override */
 ccc.Procedure.prototype.apply = function(environment, args, continuation) {
   var innerScope = new ccc.Environment(this.scope_);
-  if (ccc.isNil(this.formals_)) {
-    if (args !== ccc.NIL)
-      return continuation(new ccc.Error('Too many arguments'));
-  } else if (ccc.isSymbol(this.formals_)) {
-    innerScope.set(this.formals_.name(), args);
-  } else {
-    goog.asserts.assert(ccc.isPair(this.formals_) ||
-        ccc.isNil(this.formals_));
-    var formal = this.formals_;
-    var arg = args;
-    while (ccc.isPair(formal) && ccc.isPair(arg)) {
-      var symbol = formal.car();
-      goog.asserts.assert(ccc.isSymbol(symbol), 'Invalid argument name');
-      innerScope.set(symbol.name(), arg.car());
-      formal = formal.cdr();
-      arg = arg.cdr();
-    }
-    if (ccc.isNil(formal) && !ccc.isNil(arg))
-      return continuation(new ccc.Error('Too many arguments'));
-    if (ccc.isNil(arg) && ccc.isPair(formal))
+  var arg = args;
+  for (var i = 0; i < this.formalNames_.length; ++i) {
+    if (!ccc.isPair(arg))
       return continuation(new ccc.Error('Not enough arguments'));
-    goog.asserts.assert(ccc.isPair(arg) || ccc.isNil(arg),
-        'Invalid argument list');
-    if (ccc.isSymbol(formal))
-      innerScope.set(formal.name(), arg);
+    innerScope.set(this.formalNames_[i], arg.car());
+    arg = arg.cdr();
   }
-
+  if (!ccc.isNil(arg) && goog.isNull(this.formalTail_))
+    return continuation(new ccc.Error('Too many arguments'));
+  if (!goog.isNull(this.formalTail_))
+    innerScope.set(this.formalTail_, arg);
   return goog.partial(ccc.Procedure.evalBodyContinuationImpl_,
       this.scope_, innerScope, continuation, this.body_, ccc.NIL);
 };
@@ -103,8 +87,8 @@ ccc.Procedure.evalBodyContinuationImpl_ = function(
     return continuation(result.pass());
   goog.asserts.assert(ccc.isPair(form));
   if (ccc.isNil(form.cdr()))
-    return form.car().eval(innerEnvironment, continuation)
-  return form.car().eval(innerEnvironment, goog.partial(
+    return goog.partial(ccc.eval(form.car(), innerEnvironment), continuation);
+  return goog.partial(ccc.eval(form.car(), innerEnvironment), goog.partial(
       ccc.Procedure.evalBodyContinuationImpl_,
       outerEnvironment, innerEnvironment, continuation, form.cdr()));
 };

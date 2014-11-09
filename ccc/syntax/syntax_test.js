@@ -14,16 +14,10 @@ var asyncTestCase = goog.testing.AsyncTestCase.createAndInstall(document.title);
 
 var BEGIN = ccc.syntax.BEGIN;
 var DEFINE = ccc.syntax.DEFINE;
-var DEFINE_SYNTAX = ccc.syntax.DEFINE_SYNTAX;
 var IF = ccc.syntax.IF;
 var LAMBDA = ccc.syntax.LAMBDA;
-var LET = ccc.syntax.LET;
-var LET_SYNTAX = ccc.syntax.LET_SYNTAX;
-var LETREC = ccc.syntax.LETREC;
-var LETSEQ = ccc.syntax.LETSEQ;
 var QUOTE = ccc.syntax.QUOTE;
 var SET = ccc.syntax.SET;
-var SYNTAX_RULES = ccc.syntax.SYNTAX_RULES;
 
 function setUpPage() {
   asyncTestCase.stepTimeout = 50;

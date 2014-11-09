@@ -4,6 +4,7 @@ goog.provide('ccc.syntax');
 
 goog.require('ccc.syntax.BEGIN');
 goog.require('ccc.syntax.DEFINE');
+goog.require('ccc.syntax.DEFMACRO');
 goog.require('ccc.syntax.IF');
 goog.require('ccc.syntax.LAMBDA');
 goog.require('ccc.syntax.QUOTE');

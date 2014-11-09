@@ -15,6 +15,7 @@ cmacs.background.main = function() {
   var environment = new ccc.Environment();
   environment.set('begin', ccc.syntax.BEGIN);
   environment.set('define', ccc.syntax.DEFINE);
+  environment.set('defmacro', ccc.syntax.DEFMACRO);
   environment.set('if', ccc.syntax.IF);
   environment.set('lambda', ccc.syntax.LAMBDA);
   environment.set('\u03bb', ccc.syntax.LAMBDA);

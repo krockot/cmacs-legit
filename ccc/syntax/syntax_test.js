@@ -16,6 +16,7 @@ var asyncTestCase = goog.testing.AsyncTestCase.createAndInstall(document.title);
 
 var BEGIN = ccc.syntax.BEGIN;
 var DEFINE = ccc.syntax.DEFINE;
+var DEFMACRO = ccc.syntax.DEFMACRO;
 var IF = ccc.syntax.IF;
 var LAMBDA = ccc.syntax.LAMBDA;
 var QUOTE = ccc.syntax.QUOTE;

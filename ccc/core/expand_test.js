@@ -3,6 +3,7 @@
 goog.provide('ccc.ExpandTest');
 goog.setTestOnly('ccc.ExpandTest');
 
+goog.require('ccc.MacroExpander');
 goog.require('ccc.core');
 goog.require('ccc.core.build');
 goog.require('ccc.core.stringify');
@@ -16,6 +17,10 @@ goog.require('goog.testing.jsunit');
 
 var asyncTestCase = goog.testing.AsyncTestCase.createAndInstall(document.title);
 var logger = goog.log.getLogger('ccc.ExpandTest');
+var M = function(formalNames, formalTail, bodySpec) {
+  return new ccc.MacroExpander(formalNames, formalTail,
+      ccc.core.build(bodySpec));
+};
 
 function setUpPage() {
   asyncTestCase.stepTimeout = 50;
@@ -144,5 +149,42 @@ function testNestedTransformers() {
 
   RunTests([
     E(['meta-machine'], [adder, 26, 16], environment),
+  ]);
+}
+
+function testMacroSimpleExpansion() {
+  var fortyTwo = M([], null, [42]);
+  RunTests([
+    E([fortyTwo], 42)
+  ]);
+}
+
+function testMacroDynamicExpansion() {
+  // Test that macro body compilation and evaluation happens at expansion time.
+  var add = new ccc.NativeProcedure(function(environment, args, continuation) {
+    return continuation(args.car() + args.cdr().car());
+  });
+  var fortyTwo = M([], null, [[add, 40, 2]]);
+  RunTests([
+    E([fortyTwo], 42)
+  ]);
+}
+
+function testMacroArgBinding() {
+  var list = new ccc.NativeProcedure(function(environment, args, continuation) {
+    return continuation(args);
+  });
+  var cdr = new ccc.NativeProcedure(function(environment, args, continuation) {
+    return continuation(args.car().cdr());
+  });
+  var pickFirst = M(['a', 'b'], null, ['a']);
+  var pickSecond = M(['a', 'b'], null, ['b']);
+  var flip = M(['a', 'b'], null, [[list, 'b', 'a']]);
+  var tail = M([], 'rest', [[cdr, 'rest']]);
+  RunTests([
+    E([pickFirst, 1, 2], 1),
+    E([pickSecond, 1, 2], 2),
+    E([flip, 1, 2], [2, 1]),
+    E([tail, 1, 2, 3, 4], [2, 3, 4])
   ]);
 }

@@ -126,6 +126,20 @@ ccc.Pair.prototype.expand = function(environment, continuation) {
 
 
 /**
+ * Recursively map this pair given a transform function.
+ *
+ * @param {function(ccc.Data):ccc.Data} transform
+ * @return {!ccc.Pair}
+ */
+ccc.Pair.prototype.map = function(transform) {
+  var tail = this.cdr_;
+  if (ccc.isPair(tail))
+    tail = tail.map(transform);
+  return new ccc.Pair(transform(this.car_), tail);
+};
+
+
+/**
  * Continuation to use after head expansion.
  *
  * @param {!ccc.Environment} environment

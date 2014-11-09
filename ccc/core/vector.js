@@ -71,3 +71,13 @@ ccc.Vector.prototype.get = function(index) {
   return this.elements_[index];
 };
 
+
+/**
+ * Maps this vector to a new vector using the given transformation function.
+ *
+ * @param {function(ccc.Data):ccc.Data} transform
+ * @return {!ccc.Vector}
+ */
+ccc.Vector.prototype.map = function(transform) {
+  return new ccc.Vector(goog.array.map(this.elements_, transform));
+};

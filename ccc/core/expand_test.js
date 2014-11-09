@@ -17,7 +17,6 @@ goog.require('goog.testing.jsunit');
 var asyncTestCase = goog.testing.AsyncTestCase.createAndInstall(document.title);
 var logger = goog.log.getLogger('ccc.ExpandTest');
 var X = function(data) { return new ccc.Syntax(ccc.core.build(data)); };
-var ID = function(name) { return new ccc.Identifier(name); };
 
 function setUpPage() {
   asyncTestCase.stepTimeout = 50;
@@ -84,14 +83,14 @@ function testSimpleExpansion() {
     E(X(false), false),
     E(X(ccc.NIL), ccc.NIL),
     E(X(42), 42),
-    E(X('Ello'), ID('Ello')),
+    E(X('Ello'), 'Ello'),
     E(X('"Ello"'), '"Ello"'),
   ]);
 }
 
 function testNonTransformerListExpansion() {
   RunTests([
-    E(X([X('not-a-transformer'), X(1), X(2)]), [ID('not-a-transformer'), 1, 2]),
+    E(X([X('not-a-transformer'), X(1), X(2)]), ['not-a-transformer', 1, 2]),
   ]);
 }
 

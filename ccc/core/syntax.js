@@ -2,7 +2,6 @@
 
 goog.provide('ccc.Syntax');
 
-goog.require('ccc.Identifier');
 goog.require('ccc.Object');
 goog.require('ccc.Symbol');
 goog.require('ccc.core.stringify');
@@ -37,7 +36,7 @@ ccc.Syntax.prototype.expand = function(environment, continuation) {
     var value = environment.get(this.data_.name());
     if (ccc.isTransformer(value))
       return continuation(/** @type {ccc.Data} */(value));
-    return continuation(new ccc.Identifier(this.data_.name()));
+    return continuation(this.data_);
   }
   return goog.partial(ccc.expand(this.data_, environment), continuation);
 };

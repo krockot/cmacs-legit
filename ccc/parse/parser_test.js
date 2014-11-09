@@ -3,9 +3,9 @@
 goog.provide('ccc.parse.ParserTest');
 goog.setTestOnly('ccc.parse.ParserTest');
 
-goog.require('ccc.base');
-goog.require('ccc.base.build');
-goog.require('ccc.base.stringify');
+goog.require('ccc.core');
+goog.require('ccc.core.build');
+goog.require('ccc.core.stringify');
 goog.require('ccc.parse.Parser');
 goog.require('ccc.parse.Token');
 goog.require('ccc.parse.TokenReader');
@@ -103,11 +103,11 @@ var E = function(matchSpec) {
   return function(parser) {
     return parser.read().then(function(data) {
       assertNotNull('Ran out of parsed objects!', data);
-      var match = ccc.base.build(matchSpec);
+      var match = ccc.core.build(matchSpec);
       if (!ccc.equal(data, match)) {
         fail('Object mismatch:\n' +
-             '  Expected: ' + ccc.base.stringify(match) +
-             '\n  Actual: ' + ccc.base.stringify(data) + '\n');
+             '  Expected: ' + ccc.core.stringify(match) +
+             '\n  Actual: ' + ccc.core.stringify(data) + '\n');
       }
       return true;
     });
@@ -173,10 +173,10 @@ function testSimpleData() {
   ], [
     E(true),
     E(false),
-    E(undefined),
-    E({ 'str': 'Hello, world!' }),
+    E(ccc.UNSPECIFIED),
+    E(new String('Hello, world!')),
     E('hello-world'),
-    E({ 'chr': 10 }),
+    E(new ccc.Char(10)),
     E(-42e3),
   ]));
 }
@@ -190,7 +190,7 @@ function testSimpleVector() {
     NUMERIC_LITERAL(42),
     CLOSE_FORM(')')
   ], [
-    E({ 'vec': [true, false, undefined, 42] }),
+    E(new ccc.Vector([true, false, ccc.UNSPECIFIED, 42])),
   ]));
 }
 
@@ -206,7 +206,8 @@ function testNestedVector() {
     NUMERIC_LITERAL(42),
     CLOSE_FORM(')')
   ], [
-    E({ 'vec': [true, false, { 'vec': [true] }, undefined, 42] }),
+    E(new ccc.Vector(
+        [true, false, new ccc.Vector([true]), ccc.UNSPECIFIED, 42])),
   ]));
 }
 
@@ -218,7 +219,7 @@ function testSimplePair() {
     SYMBOL('b'),
     CLOSE_FORM(')')
   ], [
-    E({ 'pair': ['a', 'b'] }),
+    E(new ccc.Pair('a', 'b')),
   ]));
 }
 
@@ -258,7 +259,7 @@ function testDottedTail() {
     NUMERIC_LITERAL(3),
     CLOSE_FORM(']')
   ], [
-    E({ 'list': [1, 2], 'tail': 3 }),
+    E(ccc.Pair.makeList([1, 2], 3)),
   ]));
 }
 
@@ -338,10 +339,10 @@ function testComplexNesting() {
   ], [
     E(true),
     E(42),
-    E([{ 'chr': 10 }, 1, { 'vec': [
-        { 'str': 'foo' }, 'bar', 'baz',
-        { 'list': [false, true], 'tail': { 'vec': [undefined, []] } },
-        true] }, 3.14]),
+    E([new ccc.Char(10), 1, new ccc.Vector([
+        new String('foo'), 'bar', 'baz',
+        ccc.Pair.makeList([false, true], new ccc.Vector([ccc.UNSPECIFIED, []])),
+        true]), 3.14]),
     E([])
   ]));
 }
@@ -361,7 +362,7 @@ function testExpressionCommentInList() {
     SYMBOL('hay'),
     CLOSE_FORM(')')
   ], [
-    E({ 'list': [1, { 'str': 'hey' }], 'tail': 'hay' }),
+    E(ccc.Pair.makeList([1, new String('hey')], 'hay')),
   ]));
 }
 
@@ -379,7 +380,7 @@ function testExpressionCommentInVector() {
     SYMBOL('e'),
     CLOSE_FORM(')')
   ], [
-    E({ 'vec': ['a', 'e'] }),
+    E(new ccc.Vector(['a', 'e'])),
   ]));
 }
 
@@ -546,34 +547,14 @@ function testEofCases() {
     S([UNQUOTE_SPLICING()], [FAIL]),
     S([CLOSE_FORM('}')], [FAIL]),
     S([NUMERIC_LITERAL(1)], [E(1)]),
-    S([CHAR_LITERAL(65)], [E({ 'chr': 65 })]),
+    S([CHAR_LITERAL(65)], [E(new ccc.Char(65))]),
     S([SYMBOL('foo')], [E('foo')]),
-    S([STRING_LITERAL('hello')], [E({ 'str': 'hello' })]),
+    S([STRING_LITERAL('hello')], [E(new String('hello'))]),
     S([DOT()], [FAIL]),
     S([OMIT_DATUM()], [FAIL]),
     S([TRUE()], [E(true)]),
     S([FALSE()], [E(false)]),
-    S([UNSPECIFIED()], [E(undefined)]),
+    S([UNSPECIFIED()], [E(ccc.UNSPECIFIED)]),
     S([OPEN_LIST('('), OPEN_LIST('['), SYMBOL('a')], [FAIL])
   ]);
-}
-
-function testSyntax() {
-  RunSingleTest(S([SYNTAX(), SYMBOL('a')],
-    [E(['syntax', 'a'])]));
-}
-
-function testQuasisyntax() {
-  RunSingleTest(S([QUASISYNTAX(), SYMBOL('a')],
-    [E(['quasisyntax', 'a'])]));
-}
-
-function testUnsyntax() {
-  RunSingleTest(S([UNSYNTAX(), SYMBOL('a')],
-    [E(['unsyntax', 'a'])]));
-}
-
-function testUnsyntaxSplicing() {
-  RunSingleTest(S([UNSYNTAX_SPLICING(), SYMBOL('a')],
-    [E(['unsyntax-splicing', 'a'])]));
 }

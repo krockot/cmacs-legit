@@ -344,22 +344,6 @@ function testDots() {
   ]);
 }
 
-function testSyntax() {
-  RunTests([
-    S('#\'', [
-      E(T.SYNTAX)]),
-    S('#`', [
-      E(T.QUASISYNTAX)]),
-    S('#,', [
-      E(T.UNSYNTAX)]),
-    S('#,@', [
-      E(T.UNSYNTAX_SPLICING)]),
-    S('#,@foo', [
-      E(T.UNSYNTAX_SPLICING),
-      E(T.SYMBOL, 'foo')]),
-  ]);
-}
-
 function testSigns() {
   RunTests([
     S('-', [

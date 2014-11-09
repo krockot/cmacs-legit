@@ -15,7 +15,8 @@ goog.require('ccc.core');
  * 2. If o is a string, return a {@code ccc.Symbol} with that name.
  * 3. If o is a {@code ccc.Vector} return o.map(ccc.core.build).
  * 4. If o is a {@code ccc.Pair} return o.map(ccc.core.build).
- * 5. If o anything else, return it as-is.
+ * 5. If o is an instance of {@code String}, return its string value.
+ * 6. If o anything else, return it as-is.
  *
  * This should be used whenever a complex object is being constructed in JS
  * code, particularly with lots of symbols and nested lists.
@@ -30,5 +31,7 @@ ccc.core.build = function(spec) {
     return new ccc.Symbol(spec);
   if (ccc.isVector(spec) || ccc.isPair(spec))
     return spec.map(ccc.core.build);
+  if (spec instanceof String)
+    return spec.toString();
   return spec;
 };

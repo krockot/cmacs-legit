@@ -11,10 +11,7 @@ goog.require('goog.Promise');
  *
  * {@code DataReader} consumers should call {@code read} when they want a new
  * Data object from the underlying stream. If no more Data objects are available
- * {@code read} returns {@code null}.
- *
- * {@code readSyntax} can be used to read Data objects wrapped in Syntax objects
- * for additional context.
+ * {@code read} returns {@code null}
  *
  * @interface
  */
@@ -25,9 +22,3 @@ ccc.parse.DataReader = function() {};
  * @type {function():!goog.Promise.<ccc.Data, !ccc.Error>}
  */
 ccc.parse.DataReader.prototype.read;
-
-
-/**
- * @type {function():!goog.Promise.<!ccc.Syntax, !ccc.Error>}
- */
-ccc.parse.DataReader.prototype.readSyntax;

@@ -12,7 +12,6 @@ goog.require('ccc.Object');
 goog.require('ccc.Pair');
 goog.require('ccc.Procedure');
 goog.require('ccc.Symbol');
-goog.require('ccc.Syntax');
 goog.require('ccc.Thread');
 goog.require('ccc.Transformer');
 goog.require('ccc.Unspecified');

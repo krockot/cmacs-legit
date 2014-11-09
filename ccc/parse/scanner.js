@@ -231,10 +231,7 @@ var START_STATE_ = (function() {
     { match: any('bB'), state: 'binaryLiteralStart' },
     { match: any('oO'), state: 'octalLiteralStart' },
     { match: any('xX'), state: 'hexLiteralStart' },
-    { match: any('zZ'), state: 'base36LiteralStart' },
-    { match: single('\''), token: T.SYNTAX },
-    { match: single('`'), token: T.QUASISYNTAX },
-    { match: single(','), state: 'unsyntax' }
+    { match: any('zZ'), state: 'base36LiteralStart' }
   ]);
   D('hashT', [
     { match: delimiter, advance: false, token: T.TRUE }
@@ -294,13 +291,6 @@ var START_STATE_ = (function() {
     { match: single('@'), token: T.UNQUOTE_SPLICING },
     { match: whatever, advance: false, token: T.UNQUOTE },
     { match: eof, advance: false, token: T.UNQUOTE }
-  ]);
-
-  // Ambiguous unsyntax state. Either #,@ or #,.
-  D('unsyntax', [
-    { match: single('@'), token: T.UNSYNTAX_SPLICING },
-    { match: whatever, advance: false, token: T.UNSYNTAX },
-    { match: eof, advance: false, token: T.UNSYNTAX }
   ]);
 
   // Ambiguous dot state. This may be the start of a numeric literal or symbol,

@@ -126,7 +126,9 @@ ccc.Pair.prototype.expand = function(environment, continuation) {
 
 
 /**
- * Recursively map this pair given a transform function.
+ * Recursively map this pair given a transform function. The transform is
+ * applied to each car in the pair chain. If the list is improper, the transform
+ * is also applied to the tail element.
  *
  * @param {function(ccc.Data):ccc.Data} transform
  * @return {!ccc.Pair}
@@ -135,6 +137,8 @@ ccc.Pair.prototype.map = function(transform) {
   var tail = this.cdr_;
   if (ccc.isPair(tail))
     tail = tail.map(transform);
+  else
+    tail = transform(tail);
   return new ccc.Pair(transform(this.car_), tail);
 };
 

@@ -11,16 +11,13 @@ goog.require('ccc.core');
  * object {@code o} is processed recursively according to the following rough
  * outline:
  *
- * 1. If o is an Array:
- *    1a. Build each element of o using this procedure
- *    1b. Build a proper list consisting of all built elements.
- * 2. If o is a string which starts and ends with a ", strip quotes and build a
- *    string with the stripped contents.
- * 3. If o is any other string, build a symbol with that name.
+ * 1. If o is an Array, build a list from o.map(ccc.core.build).
+ * 2. If o is a string, return a {@code ccc.Symbol} with that name.
+ * 3. If o is a {@code ccc.Vector} return o.map(ccc.core.build).
  * 4. If o anything else, return it as-is.
  *
  * This should be used whenever a complex object is being constructed in JS
- * code, particularly with lots of nested lists and symbols.
+ * code, particularly with lots of symbols and nested lists.
  *
  * @param {*} spec
  * @return {!ccc.Data}
@@ -28,12 +25,9 @@ goog.require('ccc.core');
 ccc.core.build = function(spec) {
   if (spec instanceof Array)
     return ccc.Pair.makeList(goog.array.map(spec, ccc.core.build));
-  if (typeof spec == 'string') {
-    if (spec.length > 1 && spec.charAt(0) == '"' &&
-        spec.charAt(spec.length - 1) == '"') {
-      return spec.substr(1, spec.length - 2);
-    }
+  if (typeof spec == 'string')
     return new ccc.Symbol(spec);
-  }
+  if (ccc.isVector(spec))
+    return spec.map(ccc.core.build);
   return spec;
 };

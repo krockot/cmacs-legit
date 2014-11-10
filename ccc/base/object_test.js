@@ -69,3 +69,17 @@ function testEqual() {
     F(['equal?', 1, 1, 1]),
   ]);
 }
+
+function testNot() {
+  RunTests([
+    T(['not', 0], false),
+    T(['not', true], false),
+    T(['not', 1], false),
+    T(['not', ccc.NIL], false),
+    T(['not', ccc.UNSPECIFIED], false),
+    T(['not', ['list', 1, 2, 3]], false),
+    T(['not', false], true),
+    F(['not']),
+    F(['not', 1, 2]),
+  ]);
+}

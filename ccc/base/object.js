@@ -21,5 +21,14 @@ ccc.baseUtil.makeSimpleProcedures({
   'equal?': {
     args: [null, null],
     impl: ccc.equal
-  }
+  },
+
+  'not': {
+    args: [null],
+    impl: function(x) {
+      if (x === false)
+        return true;
+      return false;
+    }
+  },
 });

@@ -7,7 +7,7 @@ goog.require('ccc.core');
 
 
 
-ccc.baseUtil.makeSimpleProcedures({
+ccc.baseUtil.registerProcedures(ccc.base, {
   'eq?': {
     args: [null, null],
     impl: ccc.eq

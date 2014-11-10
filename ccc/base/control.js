@@ -44,7 +44,7 @@ ContinuationWrapper_.prototype.apply =
 };
 
 
-ccc.baseUtil.makeSimpleProcedures({
+ccc.baseUtil.registerProcedures(ccc.base, {
   'procedure?': {
     args: [null],
     impl: ccc.isApplicable

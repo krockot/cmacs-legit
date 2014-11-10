@@ -6,7 +6,7 @@ goog.require('ccc.baseUtil');
 goog.require('ccc.core');
 
 
-ccc.baseUtil.makeSimpleProcedures({
+ccc.baseUtil.registerProcedures(ccc.base, {
   '+': {
     optionalArgs: ccc.isNumber,
     impl: function() {

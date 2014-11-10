@@ -7,7 +7,7 @@ goog.require('ccc.core');
 goog.require('goog.array');
 
 
-ccc.baseUtil.makeSimpleProcedures({
+ccc.baseUtil.registerProcedures(ccc.base, {
   'list': {
     optionalArgs: null,
     impl: function() {
@@ -133,9 +133,9 @@ ccc.baseUtil.makeSimpleProcedures({
 
 
 /** @private */
-var makeListAccessProcedure = function(signature) {
+var registerListAccessor_ = function(signature) {
   var name = 'c' + signature + 'r';
-  ccc.baseUtil.makeSimpleProcedure(name, {
+  ccc.baseUtil.registerProcedure(ccc.base, name, {
     args: [ccc.isPair],
     impl: function(p) {
       for (var i = signature.length - 1; i >= 0; --i) {
@@ -153,4 +153,4 @@ var makeListAccessProcedure = function(signature) {
 goog.array.forEach(['aa', 'ad', 'da', 'dd', 'aaa', 'aad', 'ada', 'add', 'daa',
     'dad', 'dda', 'ddd', 'aaaa', 'aaad', 'aada', 'aadd', 'adaa', 'adad', 'adda',
     'addd', 'daaa', 'daad', 'dada', 'dadd', 'ddaa', 'ddad', 'ddda', 'dddd'],
-    makeListAccessProcedure);
+    registerListAccessor_);

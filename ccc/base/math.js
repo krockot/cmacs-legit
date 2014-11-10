@@ -31,4 +31,9 @@ ccc.baseUtil.makeSimpleProcedures({
       return sum;
     }
   },
+
+  'zero?': {
+    args: [null],
+    impl: function(x) { return x === 0; }
+  },
 });

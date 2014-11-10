@@ -19,7 +19,7 @@ function testAdd() {
     T(['+', 1, 2, 3, 4, 5], 15),
     F(['+', '+']),
     F(['+', false]),
-    F(['+', []])
+    F(['+', []]),
   ]);
 }
 
@@ -31,5 +31,16 @@ function testSubtract() {
     T(['-', 5, 2, 7], -4),
     F(['-', true]),
     F(['-', '-']),
+  ]);
+}
+
+function testZeroPredicate() {
+  RunTests([
+    T(['zero?', 0], true),
+    T(['zero?', 1], false),
+    T(['zero?', false], false),
+    T(['zero?', 'zero?'], false),
+    F(['zero?']),
+    F(['zero?', 0, 0]),
   ]);
 }

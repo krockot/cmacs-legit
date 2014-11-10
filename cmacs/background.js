@@ -17,10 +17,6 @@ cmacs.background.main = function() {
   goog.object.forEach(ccc.base, function(value, name) {
     environment.setValue(name, value);
   });
-  environment.setValue('zero?', new ccc.NativeProcedure(function(
-      environment, args, continuation) {
-    return continuation(args.car() === 0);
-  }));
   environment.setValue('display', new ccc.NativeProcedure(
       function(environment, args, continuation) {
     console.log(ccc.core.stringify(args.car()));

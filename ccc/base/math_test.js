@@ -69,6 +69,17 @@ function testExponentation() {
   ]);
 }
 
+function testNumberPredicate() {
+  RunTests([
+    T(['number?', 0], true),
+    T(['number?', -42], true),
+    T(['number?', false], false),
+    T(['number?', ccc.NIL], false),
+    F(['number?']),
+    F(['number?', 1, 2]),
+  ]);
+}
+
 function testZeroPredicate() {
   RunTests([
     T(['zero?', 0], true),

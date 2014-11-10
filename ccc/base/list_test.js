@@ -125,3 +125,15 @@ function testAppend() {
     T(['append', [], 42], 42),
   ]);
 }
+
+function testReverse() {
+  RunTests([
+    T(['reverse', []], []),
+    T(['reverse', ['list', 1]], [1]),
+    T(['reverse', ['list', 1, 2, 3]], [3, 2, 1]),
+    F(['reverse', ['cons', 1, 2]]),
+    F(['reverse', 1]),
+    F(['reverse']),
+    F(['reverse', [], []]),
+  ]);
+}

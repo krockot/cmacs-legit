@@ -94,6 +94,19 @@ ccc.baseUtil.makeSimpleProcedures({
       return tail;
     }
   },
+
+  'reverse': {
+    args: [null],
+    impl: function(list) {
+      if (ccc.isNil(list))
+        return ccc.NIL;
+      var elements = [];
+      if (!ccc.isPair(list) ||
+          !list.forEachProper(function(data) { elements.unshift(data); }))
+        return new ccc.Error('reverse: Argument is not a proper list');
+      return ccc.Pair.makeList(elements);
+    }
+  }
 });
 
 

@@ -114,3 +114,14 @@ function testLength() {
     F(['length', ['list', 1, 2], 3]),
   ]);
 }
+
+function testAppend() {
+  RunTests([
+    T(['append', ['quote', ['x']], ['quote', ['y']]], ['x', 'y']),
+    T(['append', ['list', 1], ['list', 2, 3, 4]], [1, 2, 3, 4]),
+    T(['append', ['quote', [1, [2]]], ['list', ['list', 3]]], [1, [2], [3]]),
+    T(['append', ['list', 1, 2], ['cons', 3, 4]],
+      ccc.Pair.makeList([1, 2, 3], 4)),
+    T(['append', [], 42], 42),
+  ]);
+}

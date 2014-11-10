@@ -54,18 +54,8 @@ ccc.baseUtil.makeSimpleProcedures({
   'list?': {
     args: [null],
     impl: function(data) {
-      var alt = null;
-      // |alt| scans the list at twice the rate of |data| to check for cycles.
-      if (ccc.isPair(data) && ccc.isPair(data.cdr()))
-        alt = data.cdr().cdr();
-      while (ccc.isPair(data) && alt !== data) {
-        data = data.cdr();
-        if (ccc.isPair(alt) && ccc.isPair(alt.cdr()))
-          alt = alt.cdr().cdr();
-        else
-          alt = null;
-      }
-      return ccc.isNil(data);
+      return ccc.isNil(data) || (ccc.isPair(data) &&
+          data.forEachProper(function(data) {}));
     }
   },
 
@@ -80,15 +70,30 @@ ccc.baseUtil.makeSimpleProcedures({
       if (ccc.isNil(data))
         return 0;
       var length = 0;
-      while (ccc.isPair(data)) {
-        data = data.cdr();
-        length++;
-      }
-      if (!ccc.isNil(data))
+      if (!ccc.isPair(data) || !data.forEachProper(function() { length++; }))
         return new ccc.Error('length: Argument is not a proper list');
       return length;
     }
-  }
+  },
+
+  'append': {
+    optionalArgs: null,
+    impl: function() {
+      if (arguments.length == 0)
+        return ccc.NIL;
+      var tail = arguments[arguments.length - 1];
+      for (var i = arguments.length - 2; i >= 0; --i) {
+        var list = arguments[i];
+        var elements = [];
+        if (!ccc.isNil(list) && (!ccc.isPair(list) ||
+            !list.forEachProper(function(data) { elements.push(data); })))
+          return new ccc.Error('append: Argument is not a proper list');
+        if (elements.length > 0)
+          tail = ccc.Pair.makeList(elements, tail);
+      }
+      return tail;
+    }
+  },
 });
 
 

@@ -144,6 +144,33 @@ ccc.Pair.prototype.map = function(transform) {
 
 
 /**
+ * Call a function on every car of a proper list. If this pair is not part of
+ * a proper list, this returns {@code false}. Otherwise it returns {@code true}
+ * after the function has been called on every car.
+ *
+ * @param {function(ccc.Data)} callback
+ * @return {boolean}
+ */
+ccc.Pair.prototype.forEachProper = function(callback) {
+  var hare = null;
+  if (ccc.isPair(this.cdr_))
+    hare = this.cdr_.cdr_;
+  var tortoise = this;
+  while (ccc.isPair(tortoise) && tortoise !== hare) {
+    callback(tortoise.car());
+    tortoise = tortoise.cdr();
+    if (ccc.isPair(hare) && ccc.isPair(hare.cdr_))
+      hare = hare.cdr_.cdr_;
+    else
+      hare = null;
+  }
+  if (!ccc.isNil(tortoise))
+    return false;
+  return true;
+};
+
+
+/**
  * Modifies the first element of this pair.
  *
  * @param {ccc.Data} data

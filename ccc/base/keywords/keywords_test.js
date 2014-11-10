@@ -1,12 +1,12 @@
 // The Cmacs Project.
 
-goog.provide('ccc.syntax.SyntaxTest');
-goog.setTestOnly('ccc.syntax.SyntaxTest');
+goog.provide('ccc.syntax.KeywordsTest');
+goog.setTestOnly('ccc.syntax.KeywordsTest');
 
 goog.require('ccc.core');
 goog.require('ccc.core.build');
 goog.require('ccc.core.stringify');
-goog.require('ccc.syntax');
+goog.require('ccc.base');
 goog.require('goog.Promise');
 goog.require('goog.debug.Console');
 goog.require('goog.log.Logger');
@@ -16,15 +16,15 @@ goog.require('goog.testing.jsunit');
 
 
 var asyncTestCase = goog.testing.AsyncTestCase.createAndInstall(document.title);
-var logger = goog.log.getLogger('ccc.syntax.SyntaxTest');
+var logger = goog.log.getLogger('ccc.syntax.KeywordsTest');
 
-var BEGIN = ccc.syntax.BEGIN;
-var DEFINE = ccc.syntax.DEFINE;
-var DEFMACRO = ccc.syntax.DEFMACRO;
-var IF = ccc.syntax.IF;
-var LAMBDA = ccc.syntax.LAMBDA;
-var QUOTE = ccc.syntax.QUOTE;
-var SET = ccc.syntax.SET;
+var BEGIN = ccc.base.begin;
+var DEFINE = ccc.base.define;
+var DEFMACRO = ccc.base.defmacro;
+var IF = ccc.base['if'];
+var LAMBDA = ccc.base.lambda;
+var QUOTE = ccc.base.quote;
+var SET = ccc.base['set!'];
 
 function setUpPage() {
   asyncTestCase.stepTimeout = 50;

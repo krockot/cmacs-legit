@@ -1,6 +1,6 @@
 // The Cmacs Project.
 
-goog.provide('ccc.syntax.IF')
+goog.provide('ccc.base.if_')
 
 goog.require('ccc.Branch');
 goog.require('ccc.core');
@@ -16,19 +16,19 @@ goog.require('ccc.core');
  * @extends {ccc.Transformer}
  * @private
  */
-ccc.syntax.IfTransformer_ = function() {
+var IfTransformer_ = function() {
 };
-goog.inherits(ccc.syntax.IfTransformer_, ccc.Transformer);
+goog.inherits(IfTransformer_, ccc.Transformer);
 
 
 /** @override */
-ccc.syntax.IfTransformer_.prototype.toString = function() {
+IfTransformer_.prototype.toString = function() {
   return '#<if-transformer>';
 };
 
 
 /** @override */
-ccc.syntax.IfTransformer_.prototype.transform = function(environment, args) {
+IfTransformer_.prototype.transform = function(environment, args) {
   return function(continuation) {
     if (!ccc.isPair(args) || !ccc.isPair(args.cdr()))
       return continuation(new ccc.Error('if: Not enough arguments'));
@@ -45,7 +45,7 @@ ccc.syntax.IfTransformer_.prototype.transform = function(environment, args) {
       return continuation(new ccc.Error('if: Invalid syntax'));
     }
     return ccc.expand(consequent, environment)(goog.partial(
-        ccc.syntax.IfTransformer_.onConsequentExpanded_, alternate, condition,
+        IfTransformer_.onConsequentExpanded_, alternate, condition,
         environment, continuation));
   };
 };
@@ -60,12 +60,12 @@ ccc.syntax.IfTransformer_.prototype.transform = function(environment, args) {
  * @return {ccc.Thunk}
  * @private
  */
-ccc.syntax.IfTransformer_.onConsequentExpanded_ = function(
+IfTransformer_.onConsequentExpanded_ = function(
     alternate, condition, environment, continuation, expandedConsequent) {
   if (ccc.isError(expandedConsequent))
     return continuation(expandedConsequent.pass());
   return ccc.expand(alternate, environment)(goog.partial(
-      ccc.syntax.IfTransformer_.onAlternateExpanded_, environment, continuation,
+      IfTransformer_.onAlternateExpanded_, environment, continuation,
       condition, expandedConsequent));
 };
 
@@ -79,7 +79,7 @@ ccc.syntax.IfTransformer_.onConsequentExpanded_ = function(
  * @return {ccc.Thunk}
  * @private
  */
-ccc.syntax.IfTransformer_.onAlternateExpanded_ = function(
+IfTransformer_.onAlternateExpanded_ = function(
     environment, continuation, condition, expandedConsequent,
     expandedAlternate) {
   if (ccc.isError(expandedAlternate))
@@ -90,8 +90,5 @@ ccc.syntax.IfTransformer_.onAlternateExpanded_ = function(
 };
 
 
-/**
- * @public {!ccc.Transformer}
- * @const
- */
-ccc.syntax.IF = new ccc.syntax.IfTransformer_();
+/** @const {!ccc.Transformer} */
+ccc.base['if'] = new IfTransformer_();

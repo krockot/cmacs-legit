@@ -1,9 +1,9 @@
 // The Cmacs Project.
 
-goog.provide('ccc.syntax.BEGIN');
+goog.provide('ccc.base.begin');
 
 goog.require('ccc.core');
-goog.require('ccc.syntax.LAMBDA')
+goog.require('ccc.base.lambda')
 
 
 
@@ -15,27 +15,26 @@ goog.require('ccc.syntax.LAMBDA')
  * @extends {ccc.Transformer}
  * @private
  */
-ccc.syntax.BeginTransformer_ = function() {
+var BeginTransformer_ = function() {
 };
-goog.inherits(ccc.syntax.BeginTransformer_, ccc.Transformer);
+goog.inherits(BeginTransformer_, ccc.Transformer);
 
 
 /** @override */
-ccc.syntax.BeginTransformer_.prototype.toString = function() {
+BeginTransformer_.prototype.toString = function() {
   return '#<begin-transformer>';
 };
 
 
 /** @override */
-ccc.syntax.BeginTransformer_.prototype.transform = function(environment, args) {
+BeginTransformer_.prototype.transform = function(environment, args) {
   return function(continuation) {
     if (!ccc.isPair(args))
       return continuation(
           new ccc.Error('begin: One or more expressions required'));
-    return ccc.syntax.LAMBDA.transform(environment,
+    return ccc.base.lambda.transform(environment,
         ccc.Pair.makeList([ccc.NIL], args))(goog.partial(
-            ccc.syntax.BeginTransformer_.onLambdaTransform_, environment,
-            continuation));
+            BeginTransformer_.onLambdaTransform_, environment, continuation));
   };
 };
 
@@ -50,14 +49,11 @@ ccc.syntax.BeginTransformer_.prototype.transform = function(environment, args) {
  * @return {ccc.Thunk}
  * @private
  */
-ccc.syntax.BeginTransformer_.onLambdaTransform_ = function(
+BeginTransformer_.onLambdaTransform_ = function(
     environment, continuation, procedure) {
   return continuation(new ccc.Pair(procedure, ccc.NIL));
 };
 
 
-/**
- * @public {!ccc.Transformer}
- * @const
- */
-ccc.syntax.BEGIN = new ccc.syntax.BeginTransformer_();
+/** @const {!ccc.Transformer} */
+ccc.base.begin = new BeginTransformer_();

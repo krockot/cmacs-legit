@@ -1,6 +1,6 @@
 // The Cmacs Project.
 
-goog.provide('ccc.syntax.DEFINE');
+goog.provide('ccc.base.define');
 
 goog.require('ccc.core');
 
@@ -14,20 +14,19 @@ goog.require('ccc.core');
  * @extends {ccc.Transformer}
  * @private
  */
-ccc.syntax.DefineTransformer_ = function() {
+var DefineTransformer_ = function() {
 };
-goog.inherits(ccc.syntax.DefineTransformer_, ccc.Transformer);
+goog.inherits(DefineTransformer_, ccc.Transformer);
 
 
 /** @override */
-ccc.syntax.DefineTransformer_.prototype.toString = function() {
+DefineTransformer_.prototype.toString = function() {
   return '#<define-transformer>';
 };
 
 
 /** @override */
-ccc.syntax.DefineTransformer_.prototype.transform = function(
-    environment, args) {
+DefineTransformer_.prototype.transform = function(environment, args) {
   return function(continuation) {
     if (!ccc.isPair(args))
       return continuation(new ccc.Error('define: Invalid argument list'));
@@ -41,7 +40,7 @@ ccc.syntax.DefineTransformer_.prototype.transform = function(
     if (!ccc.isNil(args.cdr().cdr()))
       return continuation(new ccc.Error('define: Too many arguments'));
     var bindProcedure = new ccc.NativeProcedure(goog.partial(
-        ccc.syntax.DefineTransformer_.bindSymbol_, args.car()));
+        DefineTransformer_.bindSymbol_, args.car()));
     return continuation(new ccc.Pair(bindProcedure, args.cdr()));
   };
 };
@@ -58,7 +57,7 @@ ccc.syntax.DefineTransformer_.prototype.transform = function(
  * @return {ccc.Thunk}
  * @private
  */
-ccc.syntax.DefineTransformer_.bindSymbol_ = function(
+DefineTransformer_.bindSymbol_ = function(
     symbol, environment, args, continuation) {
   goog.asserts.assert(ccc.isPair(args) && ccc.isNil(args.cdr()),
       'Expanded DEFINE procedure should always receive exactly one argument.');
@@ -72,8 +71,5 @@ ccc.syntax.DefineTransformer_.bindSymbol_ = function(
 };
 
 
-/**
- * @public {!ccc.Transformer}
- * @const
- */
-ccc.syntax.DEFINE = new ccc.syntax.DefineTransformer_();
+/** @const {!ccc.Transformer} */
+ccc.base.define = new DefineTransformer_();

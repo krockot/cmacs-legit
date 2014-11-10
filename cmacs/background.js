@@ -4,23 +4,19 @@ goog.provide('cmacs.background.main');
 
 goog.require('ccc.core');
 goog.require('ccc.core.stringify');
-goog.require('ccc.syntax');
+goog.require('ccc.base');
 goog.require('ccc.parse.Parser');
 goog.require('ccc.parse.Scanner');
 goog.require('goog.Promise');
+goog.require('goog.object');
 
 
 
 cmacs.background.main = function() {
   var environment = new ccc.Environment();
-  environment.setValue('begin', ccc.syntax.BEGIN);
-  environment.setValue('define', ccc.syntax.DEFINE);
-  environment.setValue('defmacro', ccc.syntax.DEFMACRO);
-  environment.setValue('if', ccc.syntax.IF);
-  environment.setValue('lambda', ccc.syntax.LAMBDA);
-  environment.setValue('\u03bb', ccc.syntax.LAMBDA);
-  environment.setValue('quote', ccc.syntax.QUOTE);
-  environment.setValue('set!', ccc.syntax.SET);
+  goog.object.forEach(ccc.base, function(value, name) {
+    environment.setValue(name, value);
+  });
   // Add some test library functions to play with.
   environment.setValue('-', new ccc.NativeProcedure(function(
       environment, args, continuation) {

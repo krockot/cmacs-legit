@@ -1,6 +1,6 @@
 // The Cmacs Project.
 
-goog.provide('ccc.syntax.SET');
+goog.provide('ccc.base.set');
 
 goog.require('ccc.core');
 goog.require('goog.asserts');
@@ -15,19 +15,19 @@ goog.require('goog.asserts');
  * @extends {ccc.Transformer}
  * @private
  */
-ccc.syntax.SetTransformer_ = function() {
+var SetTransformer_ = function() {
 };
-goog.inherits(ccc.syntax.SetTransformer_, ccc.Transformer);
+goog.inherits(SetTransformer_, ccc.Transformer);
 
 
 /** @override */
-ccc.syntax.SetTransformer_.prototype.toString = function() {
+SetTransformer_.prototype.toString = function() {
   return '#<set-transformer>';
 };
 
 
 /** @override */
-ccc.syntax.SetTransformer_.prototype.transform = function(environment, args) {
+SetTransformer_.prototype.transform = function(environment, args) {
   return function(continuation) {
     if (!ccc.isPair(args))
       return continuation(new ccc.Error('set!: Invalid argument list'));
@@ -41,7 +41,7 @@ ccc.syntax.SetTransformer_.prototype.transform = function(environment, args) {
     if (!ccc.isNil(args.cdr().cdr()))
       return continuation(new ccc.Error('set!: Too many arguments'));
     var setProcedure = new ccc.NativeProcedure(goog.partial(
-        ccc.syntax.SetTransformer_.updateBinding_, args.car()));
+        SetTransformer_.updateBinding_, args.car()));
     return continuation(new ccc.Pair(setProcedure, args.cdr()));
   };
 };
@@ -58,7 +58,7 @@ ccc.syntax.SetTransformer_.prototype.transform = function(environment, args) {
  * @return {ccc.Thunk}
  * @private
  */
-ccc.syntax.SetTransformer_.updateBinding_ = function(
+SetTransformer_.updateBinding_ = function(
     symbol, environment, args, continuation) {
   goog.asserts.assert(ccc.isPair(args) && ccc.isNil(args.cdr()),
       'Expanded SET! procedure should always receive exactly one argument.');
@@ -71,8 +71,5 @@ ccc.syntax.SetTransformer_.updateBinding_ = function(
 };
 
 
-/**
- * @public {!ccc.Transformer}
- * @const
- */
-ccc.syntax.SET = new ccc.syntax.SetTransformer_();
+/** @const {!ccc.Transformer} */
+ccc.base['set!'] = new SetTransformer_();

@@ -1,6 +1,6 @@
 // The Cmacs Project.
 
-goog.provide('ccc.syntax.QUOTE');
+goog.provide('ccc.base.quote');
 
 goog.require('ccc.core');
 goog.require('goog.asserts');
@@ -14,24 +14,24 @@ goog.require('goog.asserts');
  * @extends {ccc.Transformer}
  * @private
  */
-ccc.syntax.QuoteTransformer_ = function() {
+var QuoteTransformer_ = function() {
 };
-goog.inherits(ccc.syntax.QuoteTransformer_, ccc.Transformer);
+goog.inherits(QuoteTransformer_, ccc.Transformer);
 
 
 /** @override */
-ccc.syntax.QuoteTransformer_.prototype.toString = function() {
+QuoteTransformer_.prototype.toString = function() {
   return '#<quote-transformer>';
 };
 
 
 /** @override */
-ccc.syntax.QuoteTransformer_.prototype.transform = function(environment, args) {
+QuoteTransformer_.prototype.transform = function(environment, args) {
   return function(continuation) {
     if (!ccc.isPair(args) || !ccc.isNil(args.cdr()))
       return continuation(new ccc.Error('quote: Invalid syntax'));
     var quoteProcedure = new ccc.NativeProcedure(goog.partial(
-        ccc.syntax.QuoteTransformer_.nativeImpl_, args.car()));
+        QuoteTransformer_.nativeImpl_, args.car()));
     return continuation(new ccc.Pair(quoteProcedure, ccc.NIL));
   };
 };
@@ -48,7 +48,7 @@ ccc.syntax.QuoteTransformer_.prototype.transform = function(environment, args) {
  * @return {ccc.Thunk}
  * @private
  */
-ccc.syntax.QuoteTransformer_.nativeImpl_ = function(
+QuoteTransformer_.nativeImpl_ = function(
     data, environment, args, continuation) {
   goog.asserts.assert(ccc.isNil(args),
       'Expanded QUOTE procedure should never received arguments');
@@ -56,8 +56,5 @@ ccc.syntax.QuoteTransformer_.nativeImpl_ = function(
 };
 
 
-/**
- * @public {!ccc.Transformer}
- * @const
- */
-ccc.syntax.QUOTE = new ccc.syntax.QuoteTransformer_();
+/** @const {!ccc.Transformer} */
+ccc.base.quote = new QuoteTransformer_();

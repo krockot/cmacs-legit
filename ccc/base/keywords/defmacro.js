@@ -1,6 +1,6 @@
 // The Cmacs Project.
 
-goog.provide('ccc.syntax.DEFMACRO');
+goog.provide('ccc.base.defmacro');
 
 goog.require('ccc.MacroExpander');
 goog.require('ccc.core');
@@ -14,20 +14,19 @@ goog.require('ccc.core');
  * @constructor
  * @extends {ccc.Transformer}
  */
-ccc.syntax.DefmacroTransformer_ = function() {
+var DefmacroTransformer_ = function() {
 };
-goog.inherits(ccc.syntax.DefmacroTransformer_, ccc.Transformer);
+goog.inherits(DefmacroTransformer_, ccc.Transformer);
 
 
 /** @override */
-ccc.syntax.DefmacroTransformer_.prototype.toString = function() {
+DefmacroTransformer_.prototype.toString = function() {
   return '#<defmacro-transformer>';
 };
 
 
 /** @override */
-ccc.syntax.DefmacroTransformer_.prototype.transform = function(
-    environment, args) {
+DefmacroTransformer_.prototype.transform = function(environment, args) {
   return function(continuation) {
     if (!ccc.isPair(args) || !ccc.isPair(args.cdr()))
       return continuation(new ccc.Error('defmacro: Invalid syntax'));
@@ -60,5 +59,5 @@ ccc.syntax.DefmacroTransformer_.prototype.transform = function(
 };
 
 
-/** @type {!ccc.Transformer} */
-ccc.syntax.DEFMACRO = new ccc.syntax.DefmacroTransformer_();
+/** @const {!ccc.Transformer} */
+ccc.base.defmacro = new DefmacroTransformer_();

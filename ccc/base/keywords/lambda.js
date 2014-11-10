@@ -1,6 +1,6 @@
 // The Cmacs Project.
 
-goog.provide('ccc.syntax.LAMBDA');
+goog.provide('ccc.base.lambda');
 
 goog.require('ccc.ProcedureGenerator');
 goog.require('ccc.core');
@@ -17,19 +17,19 @@ goog.require('goog.asserts');
  * @extends {ccc.Transformer}
  * @private
  */
-ccc.syntax.LambdaTransformer_ = function() {
+var LambdaTransformer_ = function() {
 };
-goog.inherits(ccc.syntax.LambdaTransformer_, ccc.Transformer);
+goog.inherits(LambdaTransformer_, ccc.Transformer);
 
 
 /** @override */
-ccc.syntax.LambdaTransformer_.prototype.toString = function() {
+LambdaTransformer_.prototype.toString = function() {
   return '#<lambda-transformer>';
 };
 
 
 /** @override */
-ccc.syntax.LambdaTransformer_.prototype.transform = function(
+LambdaTransformer_.prototype.transform = function(
     environment, args) {
   return function (continuation) {
     if (!ccc.isPair(args) || ccc.isNil(args.cdr()))
@@ -51,10 +51,10 @@ ccc.syntax.LambdaTransformer_.prototype.transform = function(
     var body = args.cdr();
     if (!ccc.isPair(body))
       return continuation(new ccc.Error('lambda: Invalid syntax'));
-    return ccc.syntax.LambdaTransformer_.expandBody_(
+    return LambdaTransformer_.expandBody_(
         /** @type {!ccc.Pair} */ (body), environment,
-        goog.partial(ccc.syntax.LambdaTransformer_.onBodyExpanded_,
-            formalNames, formalTail, environment, continuation));
+        goog.partial(LambdaTransformer_.onBodyExpanded_, formalNames,
+            formalTail, environment, continuation));
   };
 };
 
@@ -66,13 +66,12 @@ ccc.syntax.LambdaTransformer_.prototype.transform = function(
  * @return {ccc.Thunk}
  * @private
  */
-ccc.syntax.LambdaTransformer_.expandBody_ = function(
+LambdaTransformer_.expandBody_ = function(
     body, environment, continuation) {
   if (ccc.isNil(body))
     return continuation(ccc.NIL);
-  return goog.partial(ccc.syntax.LambdaTransformer_.expandBody_, body.cdr(),
-      environment, goog.partial(
-          ccc.syntax.LambdaTransformer_.onBodyTailExpanded_, body.car(),
+  return goog.partial(LambdaTransformer_.expandBody_, body.cdr(), environment,
+      goog.partial(LambdaTransformer_.onBodyTailExpanded_, body.car(),
           environment, continuation));
 };
 
@@ -85,11 +84,11 @@ ccc.syntax.LambdaTransformer_.expandBody_ = function(
  * @return {ccc.Thunk}
  * @private
  */
-ccc.syntax.LambdaTransformer_.onBodyTailExpanded_ = function(
+LambdaTransformer_.onBodyTailExpanded_ = function(
     bodyHead, environment, continuation, expandedBodyTail) {
   return ccc.expand(bodyHead, environment)(goog.partial(
-      ccc.syntax.LambdaTransformer_.onBodyHeadExpanded_, expandedBodyTail,
-      environment, continuation));
+      LambdaTransformer_.onBodyHeadExpanded_, expandedBodyTail, environment,
+      continuation));
 };
 
 
@@ -101,7 +100,7 @@ ccc.syntax.LambdaTransformer_.onBodyTailExpanded_ = function(
  * @return {ccc.Thunk}
  * @private
  */
-ccc.syntax.LambdaTransformer_.onBodyHeadExpanded_ = function(
+LambdaTransformer_.onBodyHeadExpanded_ = function(
     expandedBodyTail, environment, continuation, expandedBodyHead) {
   if (ccc.isError(expandedBodyHead))
     return continuation(expandedBodyHead.pass());
@@ -118,7 +117,7 @@ ccc.syntax.LambdaTransformer_.onBodyHeadExpanded_ = function(
  * @return {ccc.Thunk}
  * @private
  */
-ccc.syntax.LambdaTransformer_.onBodyExpanded_ = function(
+LambdaTransformer_.onBodyExpanded_ = function(
     formalNames, formalTail, environment, continuation, expandedBody) {
   if (ccc.isError(expandedBody))
     return continuation(expandedBody.pass());
@@ -129,8 +128,8 @@ ccc.syntax.LambdaTransformer_.onBodyExpanded_ = function(
 };
 
 
-/**
- * @public {!ccc.Transformer}
- * @const
- */
-ccc.syntax.LAMBDA = new ccc.syntax.LambdaTransformer_();
+/** @const {!ccc.Transformer} */
+ccc.base.lambda = new LambdaTransformer_();
+
+/** @const */
+ccc.base['\u03bb'] = ccc.base.lambda;

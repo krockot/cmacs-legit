@@ -79,3 +79,14 @@ function testZeroPredicate() {
     F(['zero?', 0, 0]),
   ]);
 }
+
+function testIntegerPredicate() {
+  RunTests([
+    T(['integer?', 1], true),
+    T(['integer?', 0], true),
+    T(['integer?', ccc.NIL], false),
+    T(['integer?', true], false),
+    F(['integer?']),
+    F(['integer?', 1, 2]),
+  ]);
+}

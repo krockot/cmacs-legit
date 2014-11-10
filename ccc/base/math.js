@@ -72,4 +72,9 @@ ccc.baseUtil.makeSimpleProcedures({
     args: [null],
     impl: function(x) { return x === 0; }
   },
+
+  'integer?': {
+    args: [null],
+    impl: function(x) { return ccc.isInteger(x); }
+  }
 });

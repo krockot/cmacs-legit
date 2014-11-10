@@ -39,8 +39,8 @@ function T(spec, opt_expectedOutputSpec) {
   goog.object.forEach(ccc.base, function(value, name) {
     environment.setValue(name, value);
   });
-  var thread = new ccc.Thread(ccc.evalSource(ccc.core.build(spec),
-      environment));
+  var source = ccc.core.build(spec);
+  var thread = new ccc.Thread(ccc.evalSource(source, environment));
   return thread.run().then(function(result) {
     logger.log(goog.log.Logger.Level.INFO, goog.string.format(
         'Evaluation completed in %s thunks in %s ms.', thread.thunkCounter_,
@@ -50,8 +50,8 @@ function T(spec, opt_expectedOutputSpec) {
     if (goog.isDef(opt_expectedOutputSpec)) {
       var expectedOutput = ccc.core.build(opt_expectedOutputSpec);
       if (!ccc.equal(result, expectedOutput))
-        return goog.Promise.reject('Object mismatch.\n' +
-            'Expected: ' + ccc.core.stringify(expectedOutput) +
+        return goog.Promise.reject('Object mismatch on expression ' + source +
+            '\nExpected: ' + ccc.core.stringify(expectedOutput) +
             '\nActual: ' + ccc.core.stringify(result) + '\n');
     }
     return result;

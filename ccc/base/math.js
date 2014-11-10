@@ -120,5 +120,21 @@ ccc.baseUtil.makeSimpleProcedures({
           maximum = arguments[i];
       return maximum;
     }
-  }
+  },
+
+  'abs': {
+    args: [ccc.isNumber],
+    impl: function(x) { return Math.abs(x); }
+  },
+
+  'mod': {
+    args: [ccc.isNumber, ccc.isNumber],
+    impl: function(x, n) {
+      if (n === 0)
+        return new ccc.Error('Division by zero');
+      return x % n;
+    }
+  },
+
+
 });

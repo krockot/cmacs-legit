@@ -160,3 +160,29 @@ function testMax() {
     F(['max', false, 6]),
   ]);
 }
+
+function testAbs() {
+  RunTests([
+    T(['abs', 0], 0),
+    T(['abs', 42], 42),
+    T(['abs', -42], 42),
+    F(['abs']),
+    F(['abs', 1, 2]),
+    F(['abs', true]),
+  ]);
+}
+
+function testMod() {
+  RunTests([
+    T(['mod', 5, 2], 1),
+    T(['mod', 4, 2], 0),
+    T(['mod', 7, -5], 2),
+    T(['mod', -7, -5], -2),
+    T(['mod', -7, 5], -2),
+    F(['mod', 4, 0]),
+    F(['mod', 1]),
+    F(['mod']),
+    F(['mod', 1, 2, 3]),
+    F(['mod', true, 1]),
+  ]);
+}

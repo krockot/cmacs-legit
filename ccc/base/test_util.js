@@ -65,12 +65,6 @@ var F = function(spec) {
 };
 
 var RunTests = function(tests) {
-  return goog.Promise.all(tests);
-};
-
-var ExpectFailures = function(tests) {
-  return goog.Promise.firstFulfilled(tests).then(function(result) {
-    justFail(new Error('Expected failure; got success with ' +
-        result.toString()));
-  }).thenCatch(function() {});
+  asyncTestCase.waitForAsync();
+  return goog.Promise.all(tests).then(continueTesting, justFail);
 };

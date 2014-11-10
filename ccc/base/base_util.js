@@ -73,6 +73,8 @@ ccc.baseUtil.makeSimpleProcedure = function(name, spec) {
       continuation: continuation,
     };
     var result = spec.impl.apply(context, argList);
+    if (!goog.isDef(result))
+      result = ccc.UNSPECIFIED;
     if (!!spec.thunk)
       return /** @type {ccc.Thunk} */ (result);
     return continuation(/** @type {ccc.Data} */ (result));

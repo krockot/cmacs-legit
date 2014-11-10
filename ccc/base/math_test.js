@@ -276,3 +276,86 @@ function testLog() {
     F(['log', true]),
   ]);
 }
+
+function testSin() {
+  RunTests([
+    T(['sin', 0], Math.sin(0)),
+    T(['sin', 1], Math.sin(1)),
+    T(['sin', Math.sqrt(2)], Math.sin(Math.sqrt(2))),
+    T(['sin', 42], Math.sin(42)),
+    T(['sin', -42], Math.sin(-42)),
+    F(['sin']),
+    F(['sin', 1, 2]),
+    F(['sin', true]),
+  ]);
+}
+
+function testCos() {
+  RunTests([
+    T(['cos', 0], Math.cos(0)),
+    T(['cos', 1], Math.cos(1)),
+    T(['cos', Math.sqrt(2)], Math.cos(Math.sqrt(2))),
+    T(['cos', 42], Math.cos(42)),
+    T(['cos', -42], Math.cos(-42)),
+    F(['cos']),
+    F(['cos', 1, 2]),
+    F(['cos', true]),
+  ]);
+}
+
+function testTan() {
+  RunTests([
+    T(['tan', 0], Math.tan(0)),
+    T(['tan', 1], Math.tan(1)),
+    T(['tan', Math.sqrt(2)], Math.tan(Math.sqrt(2))),
+    T(['tan', 42], Math.tan(42)),
+    T(['tan', -42], Math.tan(-42)),
+    F(['tan']),
+    F(['tan', 1, 2]),
+    F(['tan', true]),
+  ]);
+}
+
+function testAsin() {
+  RunTests([
+    T(['asin', -1], Math.asin(-1)),
+    T(['asin', 0], Math.asin(0)),
+    T(['asin', 0.707], Math.asin(0.707)),
+    T(['asin', 1], Math.asin(1)),
+    F(['asin', -1.1]),
+    F(['asin', 1.1]),
+    F(['asin']),
+    F(['asin', true]),
+    F(['asin', 1, 1]),
+  ]);
+}
+
+function testAcos() {
+  RunTests([
+    T(['acos', -1], Math.acos(-1)),
+    T(['acos', 0], Math.acos(0)),
+    T(['acos', 0.707], Math.acos(0.707)),
+    T(['acos', 1], Math.acos(1)),
+    F(['acos', -1.1]),
+    F(['acos', 1.1]),
+    F(['acos']),
+    F(['acos', true]),
+    F(['acos', 1, 1]),
+  ]);
+}
+
+function testAtan() {
+  RunTests([
+    T(['atan', 0], 0),
+    T(['atan', 1], Math.atan(1)),
+    T(['atan', 2], Math.atan(2)),
+    T(['atan', -1], Math.atan(-1)),
+    T(['atan', 1, 2], Math.atan2(1, 2)),
+    T(['atan', -1, -2], Math.atan2(-1, -2)),
+    F(['atan', 1, 2, 3]),
+    F(['atan']),
+    F(['atan', true]),
+    F(['atan', true, 1]),
+    F(['atan', 1, true]),
+  ]);
+}

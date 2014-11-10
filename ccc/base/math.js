@@ -167,4 +167,47 @@ ccc.baseUtil.makeSimpleProcedures({
       return Math.log(n);
     }
   },
+
+  'sin': {
+    args: [ccc.isNumber],
+    impl: Math.sin
+  },
+
+  'cos': {
+    args: [ccc.isNumber],
+    impl: Math.cos
+  },
+
+  'tan': {
+    args: [ccc.isNumber],
+    impl: Math.tan
+  },
+
+  'asin': {
+    args: [ccc.isNumber],
+    impl: function(x) {
+      if (x < -1 || x > 1)
+        return new ccc.Error('asin: Invalid argument');
+      return Math.asin(x);
+    }
+  },
+
+  'acos': {
+    args: [ccc.isNumber],
+    impl: function(x) {
+      if (x < -1 || x > 1)
+        return new ccc.Error('acos: Invalid argument');
+      return Math.acos(x);
+    }
+  },
+
+  'atan': {
+    args: [ccc.isNumber],
+    optionalArgs: [ccc.isNumber],
+    impl: function(y, opt_x) {
+      if (goog.isDef(opt_x))
+        return Math.atan2(y, opt_x);
+      return Math.atan(y);
+    }
+  }
 });

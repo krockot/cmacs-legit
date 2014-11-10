@@ -102,3 +102,15 @@ function testNullPredicate() {
     F(['null?', 1, 2]),
   ]);
 }
+
+function testLength() {
+  RunTests([
+    T(['length', []], 0),
+    T(['length', ['list', 1]], 1),
+    T(['length', ['list', 1, 2, 3, 4]], 4),
+    F(['length', ['cons', 1, 2]]),
+    F(['length', 1]),
+    F(['length']),
+    F(['length', ['list', 1, 2], 3]),
+  ]);
+}

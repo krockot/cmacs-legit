@@ -73,6 +73,22 @@ ccc.baseUtil.makeSimpleProcedures({
     args: [null],
     impl: ccc.isNil
   },
+
+  'length': {
+    args: [null],
+    impl: function(data) {
+      if (ccc.isNil(data))
+        return 0;
+      var length = 0;
+      while (ccc.isPair(data)) {
+        data = data.cdr();
+        length++;
+      }
+      if (!ccc.isNil(data))
+        return new ccc.Error('length: Argument is not a proper list');
+      return length;
+    }
+  }
 });
 
 

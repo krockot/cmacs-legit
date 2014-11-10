@@ -40,8 +40,6 @@ ccc.baseUtil.makeSimpleProcedure = function(name, spec) {
         argList[argIndex++] = arg.car();
         arg = arg.cdr();
       }
-      if (!ccc.isNil(arg))
-        return continuation(new ccc.Error(name + ': Too many arguments'));
     }
     if (goog.isDef(spec.optionalArgs)) {
       if (spec.optionalArgs instanceof Array) {
@@ -55,8 +53,6 @@ ccc.baseUtil.makeSimpleProcedure = function(name, spec) {
           argList[argIndex++] = arg.car();
           arg = arg.cdr();
         }
-        if (!ccc.isNil(arg))
-          return continuation(new ccc.Error(name + ': Too many arguments'));
       } else if (spec.optionalArgs instanceof Function ||
                  goog.isNull(spec.optionalArgs)) {
         var predicate = spec.optionalArgs;
@@ -67,10 +63,10 @@ ccc.baseUtil.makeSimpleProcedure = function(name, spec) {
           argList[argIndex++] = arg.car();
           arg = arg.cdr();
         }
-        if (!ccc.isNil(arg))
-          return continuation(new ccc.Error(name + ': Invalid argument list'));
       }
     }
+    if (!ccc.isNil(arg))
+      return continuation(new ccc.Error(name + ': Too many arguments'));
     var context = {
       environment: environment,
       args: args,

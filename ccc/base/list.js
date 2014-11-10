@@ -24,6 +24,55 @@ ccc.baseUtil.makeSimpleProcedures({
     args: [ccc.isPair],
     impl: function(p) { return p.cdr(); }
   },
+
+  'cons': {
+    args: [null, null],
+    impl: function(car, cdr) {
+      return new ccc.Pair(car, cdr);
+    }
+  },
+
+  'set-car!': {
+    args: [ccc.isPair, null],
+    impl: function(pair, data) {
+      pair.setCar(data);
+    }
+  },
+
+  'set-cdr!': {
+    args: [ccc.isPair, null],
+    impl: function(pair, data) {
+      pair.setCdr(data);
+    }
+  },
+
+  'pair?': {
+    args: [null],
+    impl: ccc.isPair
+  },
+
+  'list?': {
+    args: [null],
+    impl: function(data) {
+      var alt = null;
+      // |alt| scans the list at twice the rate of |data| to check for cycles.
+      if (ccc.isPair(data) && ccc.isPair(data.cdr()))
+        alt = data.cdr().cdr();
+      while (ccc.isPair(data) && alt !== data) {
+        data = data.cdr();
+        if (ccc.isPair(alt) && ccc.isPair(alt.cdr()))
+          alt = alt.cdr().cdr();
+        else
+          alt = null;
+      }
+      return ccc.isNil(data);
+    }
+  },
+
+  'null?': {
+    args: [null],
+    impl: ccc.isNil
+  },
 });
 
 

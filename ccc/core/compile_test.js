@@ -35,13 +35,15 @@ function justFail(reason) {
 }
 
 // Single expansion test. Takes an input object and an expected output object.
-function E(input, expectedOutputSpec, opt_environment) {
+function E(input, opt_expectedOutputSpec, opt_environment) {
   var environment = (goog.isDef(opt_environment)
       ? opt_environment
       : new ccc.Environment(opt_environment));
   var thread = new ccc.Thread(ccc.compile(ccc.core.build(input), environment));
   return thread.run().then(function(result) {
-    var expectedOutput = ccc.core.build(expectedOutputSpec);
+    if (!goog.isDef(opt_expectedOutputSpec))
+      return;
+    var expectedOutput = ccc.core.build(opt_expectedOutputSpec);
     logger.log(goog.log.Logger.Level.INFO, goog.string.format(
         'Compilation completed in %s thunks in %s ms.', thread.thunkCounter_,
         thread.age_));
@@ -72,6 +74,31 @@ function testSimpleCompilation() {
     E(ccc.NIL, ccc.NIL),
     E(42, 42),
     E(new String('Ello'), new String('Ello')),
-    E('Ello', 'Ello')
+  ]);
+}
+
+function testUnknownSymbolCompilation() {
+  var globalEnvironment = new ccc.Environment();
+  var environment = new ccc.Environment(globalEnvironment);
+  // Verify that compiling an unbound symbol introduces a new uninitialized
+  // binding in global environment.
+  RunTests([
+    E('hello', undefined, environment).then(function() {
+      var location = globalEnvironment.get('hello');
+      assertNotNull(location);
+      assert(location instanceof ccc.ImmediateLocation);
+      assertNull(location.getValue());
+    })
+  ]);
+}
+
+function testKnownSymbolCompilation() {
+  var globalEnvironment = new ccc.Environment();
+  var environment = new ccc.Environment(globalEnvironment);
+  // Verify that a bound symbol compiles to its bound location.
+  var location = new ccc.ImmediateLocation();
+  globalEnvironment.set('foo', location);
+  RunTests([
+    E('foo', location, environment)
   ]);
 }

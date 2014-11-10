@@ -24,6 +24,12 @@ ccc.Environment = function(opt_parent) {
    */
   this.bindings_ = {};
 
+  /**
+   * The array of currently active locals for this environment.
+   * @private {!Array.<ccc.Data>}
+   */
+  this.locals_ = [];
+
   /** @private {number} */
   this.id_ = ++ccc.Environment.nextId_;
 };
@@ -56,61 +62,119 @@ ccc.Environment.prototype.toString = function() {
 
 
 /**
- * Sets the {@code ccc.Data} associated with a name within this environment.
+ * Sets the {@code ccc.Location} associated with a name within this environment.
  *
  * @param {string} name
- * @param {ccc.Data} data
+ * @param {!ccc.Location} location
  */
-ccc.Environment.prototype.set = function(name, data) {
-  goog.object.set(this.bindings_, name, data);
+ccc.Environment.prototype.set = function(name, location) {
+  goog.object.set(this.bindings_, name, location);
 };
 
 
 /**
- * Gets the {@code ccc.Data} to which a name is bound. If the binding does not
- * exist in the immediate environment, the ancestor environments are search
- * recursively.
- *
- * Returns {@code null} if the binding does not exist.
+ * Binds a name to a new {@code ccc.ImmediateLocation} holding the given value.
  *
  * @param {string} name
- * @return {?ccc.Data}
+ * @param {ccc.Data} value
+ */
+ccc.Environment.prototype.setValue = function(name, value) {
+  var location = new ccc.ImmediateLocation();
+  location.setValue(value);
+  this.set(name, location);
+};
+
+
+/**
+ * Sets the {@code ccc.Location} associated with a name in this environment's
+ * top-level ancestor.
+ *
+ * @param {string} name
+ * @param {!ccc.Location} location
+ */
+ccc.Environment.prototype.setGlobal = function(name, location) {
+  var environment = this;
+  while (!goog.isNull(environment.parent_))
+    environment = environment.parent_;
+  environment.set(name, location);
+};
+
+
+/**
+ * Binds a top-level name to a new {@code ccc.ImmediateLocation} holding the
+ * given value.
+ *
+ * @param {string} name
+ * @param {ccc.Data} value
+ */
+ccc.Environment.prototype.setGlobalValue = function(name, value) {
+  var location = new ccc.ImmediateLocation();
+  location.setValue(value);
+  this.setGlobal(name, location);
+};
+
+
+/**
+ * Gets the {@code ccc.Location} to which a name is bound. If the binding does
+ * not exist in the immediate environment, the ancestor environments are
+ * searched recursively. Returns {@code null} if the binding does not exist.
+ *
+ * @param {string} name
+ * @return {?ccc.Location}
  */
 ccc.Environment.prototype.get = function(name) {
-  var data = /** @type {?ccc.Data} */ (
+  var location = /** @type {ccc.Location} */ (
       goog.object.get(this.bindings_, name, null));
-  if (goog.isNull(data) && !goog.isNull(this.parent_))
+  if (goog.isNull(location) && !goog.isNull(this.parent_))
     return this.parent_.get(name);
-  return data;
+  return location;
 };
 
 
 /**
- * Indicates if the environment has a direct binding for the given name.
+ * Gets the {@code ccc.Data} stored at a given local index or {@code null} if
+ * no such local location exists.
  *
- * @param {string} name
+ * @param {number} index
+ * @return {?ccc.Data}
+ */
+ccc.Environment.prototype.getLocalValue = function(index) {
+  if (index < this.locals_.length)
+    return this.locals_[index];
+  return null;
+};
+
+
+/**
+ * Sets the {@code ccc.Data} stored at a given local index. Returns {@code true}
+ * if the local location exists and was updated, or {@code false} otherwise.
+ *
+ * @param {number} index
+ * @param {ccc.Data} value
  * @return {boolean}
  */
-ccc.Environment.prototype.hasBinding = function(name) {
-  return goog.object.containsKey(this.bindings_, name);
+ccc.Environment.prototype.setLocalValue = function(index, value) {
+  if (index >= this.locals_.length)
+    return false;
+  this.locals_[index] = value;
+  return true;
 };
 
 
 /**
- * Indicates if this is a top-level environment.
+ * Sets the array of active local bindings for this environment.
  *
- * @return {boolean}
+ * @param {!Array.<ccc.Data>} locals
  */
-ccc.Environment.prototype.isToplevel = function() {
-  return goog.isNull(this.parent_);
+ccc.Environment.prototype.setActiveLocals = function(locals) {
+  this.locals_ = locals;
 };
 
 
-
 /**
- * A mapping from binding name to {@code ccc.Data}.
+ * A mapping from binding name to {@code ccc.Location}.
  *
- * @typedef {Object.<string, ccc.Data>}
+ * @typedef {Object.<string, !ccc.Location>}
  * @private
  */
 ccc.BindingMap_;

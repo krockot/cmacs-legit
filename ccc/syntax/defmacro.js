@@ -53,7 +53,7 @@ ccc.syntax.DefmacroTransformer_.prototype.transform = function(
       formalTail = formal.name();
     else if (!ccc.isNil(formal))
       return continuation(new ccc.Error('defmacro: Invalid argument list'));
-    environment.set(name.name(),
+    environment.setValue(name.name(),
         new ccc.MacroExpander(formalNames, formalTail, body));
     return continuation(ccc.UNSPECIFIED);
   };

@@ -16,21 +16,21 @@ goog.require('goog.asserts');
  *
  * @param {!ccc.Environment} scope The innermost environment at the point
  *     of this Procedure's construction.
- * @param {!Array.<string>} formalNames
- * @param {?string} formalTail
+ * @param {!Array.<!ccc.Location>} argLocations
+ * @param {ccc.Location} argTailLocation
  * @param {!ccc.Pair} body A proper list of one or more compiled objects.
  * @constructor
  * @extends {ccc.Object}
  */
-ccc.Procedure = function(scope, formalNames, formalTail, body) {
+ccc.Procedure = function(scope, argLocations, argTailLocation, body) {
   /** @private {!ccc.Environment} */
   this.scope_ = scope;
 
-  /** @private {!Array.<string>} */
-  this.formalNames_ = formalNames;
+  /** @private {!Array.<!ccc.Location>} */
+  this.argLocations_ = argLocations;
 
-  /** @private {?string} */
-  this.formalTail_ = formalTail;
+  /** @private {ccc.Location} */
+  this.argTailLocation_ = argTailLocation;
 
   /** @private {!ccc.Pair} */
   this.body_ = body;
@@ -52,20 +52,20 @@ ccc.Procedure.prototype.isApplicable = function() {
 
 /** @override */
 ccc.Procedure.prototype.apply = function(environment, args, continuation) {
-  var innerScope = new ccc.Environment(this.scope_);
+  var locals = [];
   var arg = args;
-  for (var i = 0; i < this.formalNames_.length; ++i) {
+  for (var i = 0; i < this.argLocations_.length; ++i) {
     if (!ccc.isPair(arg))
       return continuation(new ccc.Error('Not enough arguments'));
-    innerScope.set(this.formalNames_[i], arg.car());
+    locals[i] = arg.car();
     arg = arg.cdr();
   }
   if (!ccc.isNil(arg) && goog.isNull(this.formalTail_))
     return continuation(new ccc.Error('Too many arguments'));
-  if (!goog.isNull(this.formalTail_))
-    innerScope.set(this.formalTail_, arg);
+  if (!goog.isNull(this.argTailLocation_))
+    locals[this.argLocations_.length] = arg;
   return goog.partial(ccc.Procedure.evalBodyContinuationImpl_,
-      this.scope_, innerScope, continuation, this.body_, ccc.NIL);
+      this.scope_, locals, continuation, this.body_, ccc.NIL);
 };
 
 
@@ -73,8 +73,8 @@ ccc.Procedure.prototype.apply = function(environment, args, continuation) {
  * Unbound continuation used to step through expressions in the procedure's
  * body. The tail expression is passed the calling continuation.
  *
- * @param {!ccc.Environment} outerEnvironment
- * @param {!ccc.Environment} innerEnvironment
+ * @param {!ccc.Environment} environment
+ * @param {!Array.<ccc.Data>} locals
  * @param {!ccc.Continuation} continuation
  * @param {ccc.Data} form
  * @param {ccc.Data} result
@@ -82,13 +82,14 @@ ccc.Procedure.prototype.apply = function(environment, args, continuation) {
  * @private
  */
 ccc.Procedure.evalBodyContinuationImpl_ = function(
-    outerEnvironment, innerEnvironment, continuation, form, result) {
+    environment, locals, continuation, form, result) {
   if (ccc.isError(result))
     return continuation(result.pass());
   goog.asserts.assert(ccc.isPair(form));
+  environment.setActiveLocals(locals);
   if (ccc.isNil(form.cdr()))
-    return goog.partial(ccc.eval(form.car(), innerEnvironment), continuation);
-  return goog.partial(ccc.eval(form.car(), innerEnvironment), goog.partial(
-      ccc.Procedure.evalBodyContinuationImpl_,
-      outerEnvironment, innerEnvironment, continuation, form.cdr()));
+    return goog.partial(ccc.eval(form.car(), environment), continuation);
+  return goog.partial(ccc.eval(form.car(), environment), goog.partial(
+      ccc.Procedure.evalBodyContinuationImpl_, environment, locals,
+      continuation, form.cdr()));
 };

@@ -3,24 +3,18 @@
 goog.provide('ccc.Location');
 
 goog.require('ccc.Object');
+goog.require('goog.asserts');
 
 
 
 /**
- * A binding location. A Location holds a single {@code ccc.Data} and is
- * allocated dynamically during compilation or evaluation. Symbol names may in
- * turn be bound to locations within an environment.
+ * Location defines a common interface for binding locations to implement
+ * value boxing and unboxing.
  *
  * @constructor
  * @extends {ccc.Object}
  */
 ccc.Location = function() {
-  /**
-   * The value stored in this location. Defaults {@code null}, meaning the
-   * location is uninitialized and inaccessible.
-   * @private {?ccc.Data}
-   */
-  this.value_ = null;
 };
 goog.inherits(ccc.Location, ccc.Object);
 
@@ -38,15 +32,16 @@ ccc.isLocation = function(data) {
 
 /** @override */
 ccc.Location.prototype.toString = function() {
-  return '#<location:' + this.value_ + '>';
+  return '#<invalid-location>';
 };
 
 
 /** @override */
 ccc.Location.prototype.eval = function(environment, continuation) {
-  if (goog.isNull(this.value_))
+  var value = this.getValue();
+  if (goog.isNull(value))
     return continuation(new ccc.Error('Referencing uninitialized location'));
-  return continuation(this.value_);
+  return continuation(value);
 };
 
 
@@ -56,7 +51,8 @@ ccc.Location.prototype.eval = function(environment, continuation) {
  * @return {?ccc.Data}
  */
 ccc.Location.prototype.getValue = function() {
-  return this.value_;
+  goog.asserts.assert(false, 'Not reached');
+  return null;
 };
 
 
@@ -66,6 +62,6 @@ ccc.Location.prototype.getValue = function() {
  * @param {ccc.Data} value
  */
 ccc.Location.prototype.setValue = function(value) {
-  this.value_ = value;
+  goog.asserts.assert(false, 'Not reached');
 };
 

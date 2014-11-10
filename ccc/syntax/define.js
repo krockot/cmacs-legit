@@ -62,7 +62,12 @@ ccc.syntax.DefineTransformer_.bindSymbol_ = function(
     symbol, environment, args, continuation) {
   goog.asserts.assert(ccc.isPair(args) && ccc.isNil(args.cdr()),
       'Expanded DEFINE procedure should always receive exactly one argument.');
-  environment.set(symbol.name(), args.car());
+  var location = environment.get(symbol.name());
+  if (goog.isNull(location)) {
+    location = new ccc.ImmediateLocation();
+    environment.set(symbol.name(), location);
+  }
+  location.setValue(args.car());
   return continuation(ccc.UNSPECIFIED);
 };
 

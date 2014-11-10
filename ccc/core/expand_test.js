@@ -109,7 +109,7 @@ function testSimpleTransformer() {
     };
   });
   var environment = new ccc.Environment();
-  environment.set('the-machine', transformer);
+  environment.setValue('the-machine', transformer);
 
   RunTests([
     E(['the-machine', true, 26, 16], [adder, 26, 16], environment),
@@ -128,7 +128,7 @@ function testNestedTransformers() {
     };
   });
   var environment = new ccc.Environment();
-  environment.set('the-machine', transformer);
+  environment.setValue('the-machine', transformer);
 
   var oneSix = new TestTransformer(function(environment, args) {
     return function(continuation) {
@@ -136,7 +136,7 @@ function testNestedTransformers() {
       return goog.partial(continuation, 16);
     };
   });
-  environment.set('dieciséis', oneSix);
+  environment.setValue('dieciséis', oneSix);
 
   var needMoreLayers = new TestTransformer(function(environment, args) {
     return function(continuation) {
@@ -145,7 +145,7 @@ function testNestedTransformers() {
           ['the-machine', true, 26, ['dieciséis']]));
     };
   });
-  environment.set('meta-machine', needMoreLayers);
+  environment.setValue('meta-machine', needMoreLayers);
 
   RunTests([
     E(['meta-machine'], [adder, 26, 16], environment),

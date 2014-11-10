@@ -68,15 +68,15 @@ function RunTests(tests) {
 function testEnvironment() {
   var outer = new ccc.Environment();
   var inner = new ccc.Environment(outer);
-  outer.set('x', ccc.T);
-  outer.set('y', ccc.T);
-  inner.set('x', ccc.F);
-  inner.set('z', ccc.NIL);
-  assertEquals(ccc.T, outer.get('x'));
-  assertEquals(ccc.F, inner.get('x'));
-  assertEquals(ccc.T, outer.get('y'));
-  assertEquals(ccc.T, inner.get('y'));
-  assertEquals(ccc.NIL, inner.get('z'));
+  outer.setValue('x', ccc.T);
+  outer.setValue('y', ccc.T);
+  inner.setValue('x', ccc.F);
+  inner.setValue('z', ccc.NIL);
+  assertEquals(ccc.T, outer.get('x').getValue());
+  assertEquals(ccc.F, inner.get('x').getValue());
+  assertEquals(ccc.T, outer.get('y').getValue());
+  assertEquals(ccc.T, inner.get('y').getValue());
+  assertEquals(ccc.NIL, inner.get('z').getValue());
   assertNull(outer.get('z'));
 }
 
@@ -93,15 +93,25 @@ function testSelfEvaluators() {
   ]);
 }
 
-function testSymbolLookup() {
+function testImmediateLocation() {
   var environment = new ccc.Environment();
-  environment.set('answer', 42);
-  environment.set('question', ccc.UNSPECIFIED);
-  // TODO(krockot): Remove this test. It's testing hack behavior. Symbol lookup
-  // should not happen during evaluation.
+  environment.setValue('answer', 42);
+  environment.setValue('question', ccc.UNSPECIFIED);
   RunTests([
-    E('answer', 42, environment),
-    E('question', ccc.UNSPECIFIED, environment)
+    E(environment.get('answer'), 42, environment),
+    E(environment.get('question'), ccc.UNSPECIFIED, environment)
+  ]);
+}
+
+function testLocalLocation() {
+  var outerEnvironment = new ccc.Environment();
+  var foo = new ccc.LocalLocation(outerEnvironment, 0);
+  var bar = new ccc.LocalLocation(outerEnvironment, 1);
+  outerEnvironment.setActiveLocals([42, 43])
+  var environment = new ccc.Environment(outerEnvironment);
+  RunTests([
+    E(foo, 42, environment),
+    E(bar, 43, environment)
   ]);
 }
 

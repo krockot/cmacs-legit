@@ -45,13 +45,13 @@ ccc.MacroExpander.prototype.transform = function(environment, args) {
     for (var i = 0; i < this.formalNames_.length; ++i) {
       if (ccc.isNil(arg))
         return continuation(new ccc.Error('Macro use missing arguments'));
-      innerEnvironment.set(this.formalNames_[i], arg.car());
+      innerEnvironment.setValue(this.formalNames_[i], arg.car());
       arg = arg.cdr();
     }
     if (!ccc.isNil(arg) && goog.isNull(this.formalTail_))
       return continuation(new ccc.Error('Macro use has too many arguments'));
     if (!goog.isNull(this.formalTail_))
-      environment.set(this.formalTail_, arg);
+      environment.setValue(this.formalTail_, arg);
     return this.expandBody_(this.body_, innerEnvironment, goog.bind(
         this.onBodyExpanded_, this, innerEnvironment, continuation));
   }.bind(this);

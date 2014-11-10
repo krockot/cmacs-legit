@@ -3,6 +3,7 @@
 goog.provide('ccc.ProcedureGenerator');
 
 goog.require('ccc.core');
+goog.require('goog.array');
 goog.require('goog.asserts');
 
 
@@ -19,10 +20,15 @@ goog.require('goog.asserts');
  *     the rest of the argument list, or {@code null} if the generated procedure
  *     takes a fixed number of arguments.
  * @param {!ccc.Pair} body The procedure body
+ * @param {!Array.<!ccc.LocalLocation>=} opt_argLocations Compiled locations of
+ *     arguments for the generated procedure.
+ * @param {ccc.LocalLocation=} opt_argTailLocation Compiled location of the
+ *     generated procedure's argument tail, if any.
  * @constructor
  * @extends {ccc.Object}
  */
-ccc.ProcedureGenerator = function(formalNames, formalTail, body) {
+ccc.ProcedureGenerator = function(
+    formalNames, formalTail, body, opt_argLocations, opt_argTailLocation) {
   /** @private {!Array.<string>} */
   this.formalNames_ = formalNames;
 
@@ -31,6 +37,13 @@ ccc.ProcedureGenerator = function(formalNames, formalTail, body) {
 
   /** @private {!ccc.Pair} */
   this.body_ = body;
+
+  /** @private {!Array.<!ccc.LocalLocation>} */
+  this.argLocations_ = goog.isDef(opt_argLocations) ? opt_argLocations : [];
+
+  /** @private {ccc.LocalLocation} */
+  this.argTailLocation_ = (goog.isDef(opt_argTailLocation)
+      ? opt_argTailLocation : null);
 };
 goog.inherits(ccc.ProcedureGenerator, ccc.Object);
 
@@ -43,7 +56,20 @@ ccc.ProcedureGenerator.prototype.toString = function() {
 
 /** @override */
 ccc.ProcedureGenerator.prototype.compile = function(environment, continuation) {
-  return this.compileBody_(this.body_, environment, goog.bind(
+  var compileScope = new ccc.Environment(environment);
+  this.argLocations_ = [];
+  goog.array.forEach(this.formalNames_, function(name, index) {
+    var location = new ccc.LocalLocation(compileScope, index);
+    compileScope.set(name, location);
+    this.argLocations_[index] = location;
+  }, this);
+  this.argTailLocation_ = null;
+  if (!goog.isNull(this.formalTail_)) {
+    this.argTailLocation_ = new ccc.LocalLocation(compileScope,
+        this.formalNames_.length);
+    compileScope.set(this.formalTail_, this.argTailLocation_);
+  }
+  return this.compileBody_(this.body_, compileScope, goog.bind(
       this.onBodyCompiled_, this, environment, continuation));
 };
 
@@ -109,7 +135,8 @@ ccc.ProcedureGenerator.prototype.onBodyCompiled_ = function(
     return continuation(compiledBody.pass());
   goog.asserts.assert(ccc.isPair(compiledBody));
   return continuation(new ccc.ProcedureGenerator(this.formalNames_,
-      this.formalTail_, /** @type {!ccc.Pair} */ (compiledBody)));
+      this.formalTail_, /** @type {!ccc.Pair} */ (compiledBody),
+      this.argLocations_, this.argTailLocation_));
 };
 
 
@@ -122,6 +149,12 @@ ccc.ProcedureGenerator.prototype.isApplicable = function() {
 /** @override */
 ccc.ProcedureGenerator.prototype.apply = function(
     environment, args, continuation) {
-  return continuation(new ccc.Procedure(environment, this.formalNames_,
-      this.formalTail_, this.body_));
+  var scope = new ccc.Environment(environment);
+  goog.array.forEach(this.argLocations_, function(location) {
+    location.setEnvironment(scope);
+  });
+  if (!goog.isNull(this.argTailLocation_))
+    this.argTailLocation_.setEnvironment(scope);
+  return continuation(new ccc.Procedure(scope, this.argLocations_,
+      this.argTailLocation_, this.body_));
 };

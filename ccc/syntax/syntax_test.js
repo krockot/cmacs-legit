@@ -143,8 +143,7 @@ function testDefine() {
   var environment = new ccc.Environment();
   TE(DEFINE, ['foo', 42], ccc.UNSPECIFIED, environment).then(function() {
     var foo = environment.get('foo');
-    assert(ccc.isNumber(foo));
-    assertEquals(42, foo);
+    assertEquals(42, foo.getValue());
   }).then(continueTesting, justFail);
 }
 
@@ -172,12 +171,12 @@ function testSet() {
     return TE(DEFINE, ['foo', 41], undefined, environment).then(function() {
       var foo = environment.get('foo');
       assertNotNull(foo);
-      assertEquals(41, foo);
+      assertEquals(41, foo.getValue());
       // And finally set the existing binding to 42
       return TE(SET, ['foo', 42], undefined, environment).then(function() {
         var foo = environment.get('foo');
         assertNotNull(foo)
-        assertEquals(42, foo);
+        assertEquals(42, foo.getValue());
       });
     });
   }).then(continueTesting, justFail);
@@ -186,7 +185,7 @@ function testSet() {
 function testInnerSet() {
   asyncTestCase.waitForAsync();
   var environment = new ccc.Environment();
-  environment.set('x', 41);
+  environment.setValue('x', 41);
   RunTests([
     TL([[], [SET, 'x', 42], 'x'], [], 42, environment)
   ]).then(continueTesting, justFail);
@@ -261,12 +260,13 @@ function testSimpleLambda() {
 function testLambdaClosure() {
   asyncTestCase.waitForAsync();
   var environment = new ccc.Environment();
-  environment.set('x', false);
+  environment.setValue('x', false);
   // Apply the identity lambda and verify that the symbol 'x must have
   // been internally bound to the argument #t.
   TL([['x'], 'x'], [true], true).then(function() {
     // Then also verify that the outer environment's 'x is still bound to #f.
-    assertEquals(false, environment.get('x'));
+    assertNotNull(environment.get('x'));
+    assertEquals(false, environment.get('x').getValue());
   }).then(continueTesting, justFail);
 }
 

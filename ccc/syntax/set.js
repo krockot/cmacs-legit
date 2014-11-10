@@ -62,11 +62,11 @@ ccc.syntax.SetTransformer_.updateBinding_ = function(
     symbol, environment, args, continuation) {
   goog.asserts.assert(ccc.isPair(args) && ccc.isNil(args.cdr()),
       'Expanded SET! procedure should always receive exactly one argument.');
-  if (!environment.hasBinding(symbol.name())) {
+  var location = environment.get(symbol.name());
+  if (goog.isNull(location))
     return continuation(new ccc.Error(
         'Cannot update binding for unbound symbol \'' + symbol.name()));
-  }
-  environment.set(symbol.name(), args.car());
+  location.setValue(args.car());
   return continuation(ccc.UNSPECIFIED);
 };
 

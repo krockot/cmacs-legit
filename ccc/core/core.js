@@ -5,6 +5,8 @@ goog.provide('ccc.core');
 goog.require('ccc.Char');
 goog.require('ccc.Environment');
 goog.require('ccc.Error');
+goog.require('ccc.ImmediateLocation');
+goog.require('ccc.LocalLocation');
 goog.require('ccc.Location');
 goog.require('ccc.NativeProcedure');
 goog.require('ccc.Nil');

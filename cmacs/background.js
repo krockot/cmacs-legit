@@ -13,28 +13,28 @@ goog.require('goog.Promise');
 
 cmacs.background.main = function() {
   var environment = new ccc.Environment();
-  environment.set('begin', ccc.syntax.BEGIN);
-  environment.set('define', ccc.syntax.DEFINE);
-  environment.set('defmacro', ccc.syntax.DEFMACRO);
-  environment.set('if', ccc.syntax.IF);
-  environment.set('lambda', ccc.syntax.LAMBDA);
-  environment.set('\u03bb', ccc.syntax.LAMBDA);
-  environment.set('quote', ccc.syntax.QUOTE);
-  environment.set('set!', ccc.syntax.SET);
+  environment.setValue('begin', ccc.syntax.BEGIN);
+  environment.setValue('define', ccc.syntax.DEFINE);
+  environment.setValue('defmacro', ccc.syntax.DEFMACRO);
+  environment.setValue('if', ccc.syntax.IF);
+  environment.setValue('lambda', ccc.syntax.LAMBDA);
+  environment.setValue('\u03bb', ccc.syntax.LAMBDA);
+  environment.setValue('quote', ccc.syntax.QUOTE);
+  environment.setValue('set!', ccc.syntax.SET);
   // Add some test library functions to play with.
-  environment.set('-', new ccc.NativeProcedure(function(
+  environment.setValue('-', new ccc.NativeProcedure(function(
       environment, args, continuation) {
     return continuation(args.car() - args.cdr().car());
   }));
-  environment.set('+', new ccc.NativeProcedure(function(
+  environment.setValue('+', new ccc.NativeProcedure(function(
       environment, args, continuation) {
     return continuation(args.car() + args.cdr().car());
   }));
-  environment.set('zero?', new ccc.NativeProcedure(function(
+  environment.setValue('zero?', new ccc.NativeProcedure(function(
       environment, args, continuation) {
     return continuation(args.car() === 0);
   }));
-  environment.set('display', new ccc.NativeProcedure(
+  environment.setValue('display', new ccc.NativeProcedure(
       function(environment, args, continuation) {
     console.log(ccc.core.stringify(args.car()));
     return continuation(ccc.UNSPECIFIED);

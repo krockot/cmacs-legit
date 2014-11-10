@@ -2,6 +2,7 @@
 
 goog.provide('ccc.Symbol');
 
+goog.require('ccc.ImmediateLocation');
 goog.require('ccc.Object');
 goog.require('ccc.Transformer');
 
@@ -47,20 +48,24 @@ ccc.Symbol.prototype.eq = function(other) {
 
 /** @override */
 ccc.Symbol.prototype.expand = function(environment, continuation) {
-  var value = environment.get(this.name_);
-  if (ccc.isTransformer(value))
-    return continuation(/** @type {!ccc.Transformer} */ (value));
+  var location = environment.get(this.name_);
+  if (!goog.isNull(location)) {
+    var value = location.getValue();
+    if (ccc.isTransformer(value))
+      return continuation(/** @type {!ccc.Transformer} */ (value));
+  }
   return continuation(this);
 };
 
 
 /** @override */
-ccc.Symbol.prototype.eval = function(environment, continuation) {
-  // TODO(krockot): Remove this hack. Symbols should be compiled out.
-  var value = environment.get(this.name_);
-  if (goog.isNull(value))
-    return continuation(new ccc.Error('Unbound symbol |' + this.name_ + '|'));
-  return continuation(value);
+ccc.Symbol.prototype.compile = function(environment, continuation) {
+  var location = environment.get(this.name_);
+  if (goog.isNull(location)) {
+    location = new ccc.ImmediateLocation();
+    environment.setGlobal(this.name_, location);
+  }
+  return continuation(location);
 };
 
 

@@ -6,7 +6,6 @@ goog.require('ccc.baseUtil');
 goog.require('ccc.core');
 
 
-
 ccc.baseUtil.makeSimpleProcedures({
   '+': {
     optionalArgs: ccc.isNumber,

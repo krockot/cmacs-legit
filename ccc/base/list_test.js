@@ -137,3 +137,19 @@ function testReverse() {
     F(['reverse', [], []]),
   ]);
 }
+
+function testListTail() {
+  RunTests([
+    T(['list-tail', ['list', 1, 2, 3, 4], 2], [3, 4]),
+    T(['list-tail', [], 0], []),
+    T(['list-tail', ['list', 1], 1], []),
+    T(['list-tail', ['cons', 1, 2], 0], new ccc.Pair(1, 2)),
+    T(['list-tail', ['cons', 1, 2], 1], 2),
+    F(['list-tail', [], 1]),
+    F(['list-tail', ['list', 1, 2], 42]),
+    F(['list-tail']),
+    F(['list-tail', ['list', 1, 2]]),
+    F(['list-tail', 1, 2]),
+    F(['list-tail', ['list', 1, 2], 3, 4]),
+  ]);
+}

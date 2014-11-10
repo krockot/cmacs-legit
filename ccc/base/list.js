@@ -106,6 +106,17 @@ ccc.baseUtil.makeSimpleProcedures({
         return new ccc.Error('reverse: Argument is not a proper list');
       return ccc.Pair.makeList(elements);
     }
+  },
+
+  'list-tail': {
+    args: [null, ccc.isNumber],
+    impl: function(list, k) {
+      while (ccc.isPair(list) && k--)
+        list = list.cdr();
+      if (k > 0)
+        return new ccc.Error('list-tail: Index out of range');
+      return list;
+    }
   }
 });
 

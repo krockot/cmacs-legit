@@ -61,6 +61,13 @@ ccc.baseUtil.makeSimpleProcedures({
     }
   },
 
+  '**': {
+    args: [ccc.isNumber, ccc.isNumber],
+    impl: function(a, b) {
+      return Math.pow(a, b);
+    }
+  },
+
   'zero?': {
     args: [null],
     impl: function(x) { return x === 0; }

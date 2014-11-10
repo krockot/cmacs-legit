@@ -58,6 +58,17 @@ function testDivide() {
   ]);
 }
 
+function testExponentation() {
+  RunTests([
+    T(['**', 2, 3], 8),
+    T(['**', 3, 4], 81),
+    F(['**']),
+    F(['**', 1]),
+    F(['**', 1, 2, 3]),
+    F(['**', true, false])
+  ]);
+}
+
 function testZeroPredicate() {
   RunTests([
     T(['zero?', 0], true),

@@ -6,6 +6,7 @@ goog.require('ccc.baseUtil');
 goog.require('ccc.core');
 
 
+
 /**
  * Wrapper object around a {@code ccc.Continuation}.
  *

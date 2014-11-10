@@ -144,6 +144,26 @@ ccc.Pair.prototype.map = function(transform) {
 
 
 /**
+ * Modifies the first element of this pair.
+ *
+ * @param {ccc.Data} data
+ */
+ccc.Pair.prototype.setCar = function(data) {
+  this.car_ = data;
+};
+
+
+/**
+ * Modifies the second element of this pair.
+ *
+ * @param {ccc.Data} data
+ */
+ccc.Pair.prototype.setCdr = function(data) {
+  this.cdr_ = data;
+};
+
+
+/**
  * Continuation to use after head expansion.
  *
  * @param {!ccc.Environment} environment

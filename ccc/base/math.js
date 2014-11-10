@@ -63,9 +63,7 @@ ccc.baseUtil.makeSimpleProcedures({
 
   '**': {
     args: [ccc.isNumber, ccc.isNumber],
-    impl: function(a, b) {
-      return Math.pow(a, b);
-    }
+    impl: Math.pow
   },
 
   'zero?': {
@@ -75,7 +73,7 @@ ccc.baseUtil.makeSimpleProcedures({
 
   'integer?': {
     args: [null],
-    impl: function(x) { return ccc.isInteger(x); }
+    impl: ccc.isInteger,
   },
 
   'positive?': {
@@ -101,30 +99,18 @@ ccc.baseUtil.makeSimpleProcedures({
   'min': {
     args: [ccc.isNumber],
     optionalArgs: ccc.isNumber,
-    impl: function() {
-      var minimum = arguments[0];
-      for (var i = 0; i < arguments.length; ++i)
-        if (arguments[i] < minimum)
-          minimum = arguments[i];
-      return minimum;
-    }
+    impl: Math.min
   },
 
   'max': {
     args: [ccc.isNumber],
     optionalArgs: ccc.isNumber,
-    impl: function() {
-      var maximum = arguments[0];
-      for (var i = 0; i < arguments.length; ++i)
-        if (arguments[i] > maximum)
-          maximum = arguments[i];
-      return maximum;
-    }
+    impl: Math.max
   },
 
   'abs': {
     args: [ccc.isNumber],
-    impl: function(x) { return Math.abs(x); }
+    impl: Math.abs
   },
 
   'mod': {
@@ -138,21 +124,21 @@ ccc.baseUtil.makeSimpleProcedures({
 
   'floor': {
     args: [ccc.isNumber],
-    impl: function(x) { return Math.floor(x); }
+    impl: Math.floor
   },
 
   'ceiling': {
     args: [ccc.isNumber],
-    impl: function(x) { return Math.ceil(x); }
+    impl: Math.ceil
   },
 
   'truncate': {
     args: [ccc.isNumber],
-    impl: function(x) { return Math.trunc(x); }
+    impl: Math.trunc
   },
 
   'round': {
     args: [ccc.isNumber],
-    impl: function(x) { return Math.round(x); }
+    impl: Math.round
   },
 });

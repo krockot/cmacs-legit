@@ -97,4 +97,28 @@ ccc.baseUtil.makeSimpleProcedures({
     args: [ccc.isInteger],
     impl: function(x) { return x % 2 !== 0; }
   },
+
+  'min': {
+    args: [ccc.isNumber],
+    optionalArgs: ccc.isNumber,
+    impl: function() {
+      var minimum = arguments[0];
+      for (var i = 0; i < arguments.length; ++i)
+        if (arguments[i] < minimum)
+          minimum = arguments[i];
+      return minimum;
+    }
+  },
+
+  'max': {
+    args: [ccc.isNumber],
+    optionalArgs: ccc.isNumber,
+    impl: function() {
+      var maximum = arguments[0];
+      for (var i = 0; i < arguments.length; ++i)
+        if (arguments[i] > maximum)
+          maximum = arguments[i];
+      return maximum;
+    }
+  }
 });

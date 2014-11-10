@@ -140,3 +140,23 @@ function testOddPredicate() {
     F(['odd?', true]),
   ]);
 }
+
+function testMin() {
+  RunTests([
+    T(['min', 0], 0),
+    T(['min', 1, 2, 3], 1),
+    T(['min', 9, 8, -10, 7], -10),
+    F(['min']),
+    F(['min', 1, 2, true]),
+  ]);
+}
+
+function testMax() {
+  RunTests([
+    T(['max', 0], 0),
+    T(['max', 1, 2, 3], 3),
+    T(['max', -10, -9, 12, 4, 5], 12),
+    F(['max']),
+    F(['max', false, 6]),
+  ]);
+}

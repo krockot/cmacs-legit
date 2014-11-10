@@ -10,3 +10,11 @@
  * @type {string|undefined}
  */
 Function.prototype.displayName;
+
+
+/**
+ * ES6 defines this function and I want to use it.
+ *
+ * @type {function(*):boolean}
+ */
+Number.isInteger;

@@ -29,6 +29,17 @@ ccc.isNumber = function(data) {
 
 
 /**
+ * Indicates if a given {@code ccc.Data} is an integer.
+ *
+ * @param {ccc.Data} data
+ * @return {boolean}
+ */
+ccc.isInteger = function(data) {
+  return Number.isInteger(data);
+};
+
+
+/**
  * Indicates if a given {@code ccc.Data} is a {@code ccc.Object} of
  * any kind.
  *

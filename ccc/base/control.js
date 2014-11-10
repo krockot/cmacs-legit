@@ -45,6 +45,11 @@ ContinuationWrapper_.prototype.apply =
 
 
 ccc.baseUtil.makeSimpleProcedures({
+  'procedure?': {
+    args: [null],
+    impl: ccc.isApplicable
+  },
+
   'call/cc': {
     args: [ccc.isApplicable],
     thunk: true,

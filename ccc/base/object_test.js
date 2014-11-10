@@ -83,3 +83,15 @@ function testNot() {
     F(['not', 1, 2]),
   ]);
 }
+
+function testBooleanPredicate() {
+  RunTests([
+    T(['boolean?', 0], false),
+    T(['boolean?', ccc.NIL], false),
+    T(['boolean?', ccc.UNSPECIFIED], false),
+    T(['boolean?', true], true),
+    T(['boolean?', false], true),
+    F(['boolean?']),
+    F(['boolean?', true, true]),
+  ]);
+}

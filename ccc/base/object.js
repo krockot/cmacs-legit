@@ -31,4 +31,9 @@ ccc.baseUtil.makeSimpleProcedures({
       return false;
     }
   },
+
+  'boolean?': {
+    args: [null],
+    impl: function(x) { return x === true || x === false; }
+  },
 });

@@ -153,3 +153,20 @@ function testListTail() {
     F(['list-tail', ['list', 1, 2], 3, 4]),
   ]);
 }
+
+function testListRef() {
+  RunTests([
+    T(['list-ref', ['list', 1, 2, 3, 4], 2], 3),
+    T(['list-ref', ['list', 1], 0], 1),
+    T(['list-ref', ['cons', 1, 2], 0], 1),
+    F(['list-ref', ['cons', 1, 2], 1]),
+    F(['list-ref', ['list', 1], 1]),
+    F(['list-ref', [], 0]),
+    F(['list-ref', [], 1]),
+    F(['list-ref', ['list', 1, 2], 42]),
+    F(['list-ref']),
+    F(['list-ref', ['list', 1, 2]]),
+    F(['list-ref', 1, 2]),
+    F(['list-ref', ['list', 1, 2], 3, 4]),
+  ]);
+}

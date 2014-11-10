@@ -117,7 +117,18 @@ ccc.baseUtil.makeSimpleProcedures({
         return new ccc.Error('list-tail: Index out of range');
       return list;
     }
-  }
+  },
+
+  'list-ref': {
+    args: [ccc.isPair, ccc.isNumber],
+    impl: function(list, k) {
+      while (ccc.isPair(list) && k--)
+        list = list.cdr();
+      if (k > 0 || !ccc.isPair(list))
+        return new ccc.Error('list-ref: Index out of range');
+      return list.car();
+    }
+  },
 });
 
 

@@ -32,6 +32,35 @@ ccc.baseUtil.makeSimpleProcedures({
     }
   },
 
+  '*': {
+    optionalArgs: ccc.isNumber,
+    impl: function() {
+      var product = 1;
+      for (var i = 0; i < arguments.length; ++i)
+        product *= arguments[i];
+      return product;
+    }
+  },
+
+  '/': {
+    args: [ccc.isNumber],
+    optionalArgs: ccc.isNumber,
+    impl: function() {
+      if (arguments.length == 1) {
+        if (arguments[0] == 0)
+          return new ccc.Error('Division by zero');
+        return 1 / arguments[0];
+      }
+      var quotient = arguments[0];
+      for (var i = 1; i < arguments.length; ++i) {
+        if (arguments[i] === 0)
+          return new ccc.Error('Division by zero');
+        quotient /= arguments[i];
+      }
+      return quotient;
+    }
+  },
+
   'zero?': {
     args: [null],
     impl: function(x) { return x === 0; }

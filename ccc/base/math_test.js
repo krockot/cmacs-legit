@@ -34,6 +34,30 @@ function testSubtract() {
   ]);
 }
 
+function testMultiply() {
+  RunTests([
+    T(['*'], 1),
+    T(['*', 2], 2),
+    T(['*', 3, 4], 12),
+    T(['*', 1, 2, 3, 4], 24),
+    F(['*', '*']),
+    F(['*', true]),
+  ]);
+}
+
+function testDivide() {
+  RunTests([
+    T(['/', 1], 1),
+    T(['/', 2], 1/2),
+    T(['/', 3, 4], 3/4),
+    T(['/', 1, 2, 3], 1/2/3),
+    F(['/']),
+    F(['/', 0]),
+    F(['/', 1, 2, 3, 0, 4]),
+    F(['/', true]),
+  ]);
+}
+
 function testZeroPredicate() {
   RunTests([
     T(['zero?', 0], true),

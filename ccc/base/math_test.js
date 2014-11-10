@@ -90,3 +90,53 @@ function testIntegerPredicate() {
     F(['integer?', 1, 2]),
   ]);
 }
+
+function testPositivePredicate() {
+  RunTests([
+    T(['positive?', 0], false),
+    T(['positive?', 1], true),
+    T(['positive?', -1], false),
+    F(['positive?']),
+    F(['positive?', 1, 2]),
+    F(['positive?', true]),
+  ]);
+}
+
+function testNegativePredicate() {
+  RunTests([
+    T(['negative?', 0], false),
+    T(['negative?', -1], true),
+    T(['negative?', 1], false),
+    F(['negative?']),
+    F(['negative?', 1, 2]),
+    F(['negative?', true]),
+  ]);
+}
+
+function testEvenPredicate() {
+  RunTests([
+    T(['even?', 0], true),
+    T(['even?', 2], true),
+    T(['even?', -4], true),
+    T(['even?', 1], false),
+    T(['even?', -1], false),
+    F(['even?', 1.5]),
+    F(['even?']),
+    F(['even?', 1, 2]),
+    F(['even?', true]),
+  ]);
+}
+
+function testOddPredicate() {
+  RunTests([
+    T(['odd?', 0], false),
+    T(['odd?', 2], false),
+    T(['odd?', -4], false),
+    T(['odd?', 1], true),
+    T(['odd?', -1], true),
+    F(['odd?', 1.5]),
+    F(['odd?']),
+    F(['odd?', 1, 2]),
+    F(['odd?', true]),
+  ]);
+}

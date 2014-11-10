@@ -76,5 +76,25 @@ ccc.baseUtil.makeSimpleProcedures({
   'integer?': {
     args: [null],
     impl: function(x) { return ccc.isInteger(x); }
-  }
+  },
+
+  'positive?': {
+    args: [ccc.isNumber],
+    impl: function(x) { return x > 0; }
+  },
+
+  'negative?': {
+    args: [ccc.isNumber],
+    impl: function(x) { return x < 0; }
+  },
+
+  'even?': {
+    args: [ccc.isInteger],
+    impl: function(x) { return x % 2 === 0; }
+  },
+
+  'odd?': {
+    args: [ccc.isInteger],
+    impl: function(x) { return x % 2 !== 0; }
+  },
 });

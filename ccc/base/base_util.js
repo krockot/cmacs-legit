@@ -21,7 +21,7 @@ goog.require('goog.object');
  * fields referencing the current environment, continuation, and raw argument
  * list.
  *
- * @param {ccc.baseUtil.SimpleFunctionSpec} spec
+ * @param {ccc.baseUtil.SimpleProcedureSpec} spec
  */
 ccc.baseUtil.makeSimpleProcedure = function(name, spec) {
   ccc.base[name] = new ccc.NativeProcedure(function(
@@ -96,17 +96,29 @@ var TypePredicate_;
  *   args: (!Array.<?TypePredicate_>|undefined),
  *   optionalArgs: (!Array.<?TypePredicate_>|?TypePredicate_|undefined),
  *   thunk: (boolean|undefined),
- *   impl: (function(*):*)
+ *   impl: (function(this:ccc.baseUtil.ProcedureContext, *):*)
  * }}
  */
-ccc.baseUtil.SimpleFunctionSpec;
+ccc.baseUtil.SimpleProcedureSpec;
+
+
+/**
+ * Context to which |this| is bound within baseUtil-generated procedures.
+ *
+ * @typedef {{
+ *   environment: (!ccc.Environment),
+ *   args: (!ccc.Pair|!ccc.Nil),
+ *   continuation: (ccc.Continuation)
+ * }}
+ */
+ccc.baseUtil.ProcedureContext;
 
 
 /**
  * Creates multiple simple procedure bindings given a mapping from name to
  * procedure spec.
  *
- * @param {!Object.<string, ccc.baseUtil.SimpleFunctionSpec>} specMap
+ * @param {!Object.<string, ccc.baseUtil.SimpleProcedureSpec>} specMap
  */
 ccc.baseUtil.makeSimpleProcedures = function(specMap) {
   goog.object.forEach(specMap, function(spec, name) {

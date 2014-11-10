@@ -136,5 +136,23 @@ ccc.baseUtil.makeSimpleProcedures({
     }
   },
 
+  'floor': {
+    args: [ccc.isNumber],
+    impl: function(x) { return Math.floor(x); }
+  },
 
+  'ceiling': {
+    args: [ccc.isNumber],
+    impl: function(x) { return Math.ceil(x); }
+  },
+
+  'truncate': {
+    args: [ccc.isNumber],
+    impl: function(x) { return Math.trunc(x); }
+  },
+
+  'round': {
+    args: [ccc.isNumber],
+    impl: function(x) { return Math.round(x); }
+  },
 });

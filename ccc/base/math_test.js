@@ -186,3 +186,56 @@ function testMod() {
     F(['mod', true, 1]),
   ]);
 }
+
+function testFloor() {
+  RunTests([
+    T(['floor', 1], 1),
+    T(['floor', 1.1], 1),
+    T(['floor', 1.9], 1),
+    T(['floor', -0.1], -1),
+    T(['floor', -1.001], -2),
+    F(['floor']),
+    F(['floor', 1, 2]),
+    F(['floor', true]),
+  ]);
+}
+
+function testCeiling() {
+  RunTests([
+    T(['ceiling', 1], 1),
+    T(['ceiling', 1.1], 2),
+    T(['ceiling', 0.9], 1),
+    T(['ceiling', -0.1], 0),
+    T(['ceiling', -1.001], -1),
+    F(['ceiling']),
+    F(['ceiling', 1, 2]),
+    F(['ceiling', true]),
+  ]);
+}
+
+function testTruncate() {
+  RunTests([
+    T(['truncate', 1], 1),
+    T(['truncate', 1.1], 1),
+    T(['truncate', 1.9], 1),
+    T(['truncate', -0.1], 0),
+    T(['truncate', -1.001], -1),
+    F(['truncate']),
+    F(['truncate', 1, 2]),
+    F(['truncate', true]),
+  ]);
+}
+
+function testRound() {
+  RunTests([
+    T(['round', 1], 1),
+    T(['round', 1.1], 1),
+    T(['round', 1.5], 2),
+    T(['round', -0.1], 0),
+    T(['round', -1.001], -1),
+    T(['round', -3.5], -3),
+    F(['round']),
+    F(['round', 1, 2]),
+    F(['round', true]),
+  ]);
+}

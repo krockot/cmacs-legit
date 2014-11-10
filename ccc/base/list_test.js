@@ -19,3 +19,13 @@ function testList() {
     T(['list', ['list', 1, 2], 3], [[1, 2], 3]),
   ]);
 }
+
+function testListAccessors() {
+  RunTests([
+    T(['car', ['list', 1, 2]], 1),
+    T(['cdr', ['list', 1, 2, 3]], [2, 3]),
+    T(['cadr', ['list', 1, 2, 3]], 2),
+    T(['caaddr', ['quote', [1, 2, [3, 4]]]], 3),
+    T(['caddar', ['quote', [[40, 41, 42], 2, 3]]], 42),
+  ]);
+}

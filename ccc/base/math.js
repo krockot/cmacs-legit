@@ -141,4 +141,30 @@ ccc.baseUtil.makeSimpleProcedures({
     args: [ccc.isNumber],
     impl: Math.round
   },
+
+  'sqrt': {
+    args: [ccc.isNumber],
+    impl: function(x) {
+      if (x < 0)
+        return new ccc.Error('sqrt: Invalid argument');
+      return Math.sqrt(x);
+    }
+  },
+
+  'exp': {
+    args: [ccc.isNumber],
+    impl: Math.exp
+  },
+
+  'log': {
+    args: [ccc.isNumber],
+    optionalArgs: [ccc.isNumber],
+    impl: function(n, opt_base) {
+      if (n === 0)
+        return new ccc.Error('log: Invalid argument');
+      if (goog.isDef(opt_base))
+        return Math.log(n) / Math.log(opt_base);
+      return Math.log(n);
+    }
+  },
 });

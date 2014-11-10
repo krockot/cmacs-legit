@@ -239,3 +239,40 @@ function testRound() {
     F(['round', true]),
   ]);
 }
+
+function testSqrt() {
+  RunTests([
+    T(['sqrt', 2], Math.sqrt(2)),
+    T(['sqrt', 4], 2),
+    T(['sqrt', 1], 1),
+    T(['sqrt', 0], 0),
+    F(['sqrt', -1]),
+    F(['sqrt']),
+    F(['sqrt', 1, 2]),
+    F(['sqrt', true]),
+  ]);
+}
+
+function testExp() {
+  RunTests([
+    T(['exp', 1], Math.E),
+    T(['exp', 0], 1),
+    T(['exp', 2], Math.exp(2)),
+    T(['exp', -1], Math.exp(-1)),
+    F(['exp']),
+    F(['exp', 1, 2]),
+    F(['exp', true]),
+  ]);
+}
+
+function testLog() {
+  RunTests([
+    T(['log', Math.E], 1),
+    T(['log', 10, 10], 1),
+    T(['log', 8, 2], 3),
+    T(['log', 1, 42], 0),
+    F(['log', 1, 2, 3]),
+    F(['log']),
+    F(['log', true]),
+  ]);
+}

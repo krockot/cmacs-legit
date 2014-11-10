@@ -157,8 +157,8 @@ ccc.Pair.prototype.forEachProper = function(callback) {
     hare = this.cdr_.cdr_;
   var tortoise = this;
   while (ccc.isPair(tortoise) && tortoise !== hare) {
-    callback(tortoise.car());
-    tortoise = tortoise.cdr();
+    callback(tortoise.car_);
+    tortoise = tortoise.cdr_;
     if (ccc.isPair(hare) && ccc.isPair(hare.cdr_))
       hare = hare.cdr_.cdr_;
     else

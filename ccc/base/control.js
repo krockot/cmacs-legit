@@ -59,4 +59,19 @@ ccc.baseUtil.makeSimpleProcedures({
           this.continuation);
     }
   },
+
+  'apply': {
+    args: [ccc.isApplicable, null],
+    optionalArgs: null,
+    thunk: true,
+    impl: /** @this {ccc.baseUtil.ProcedureContext} */ function(procedure) {
+      var args = arguments[arguments.length - 1];
+      if (!ccc.isNil(args) && (!ccc.isPair(args) ||
+          !args.forEachProper(function() {})))
+        return this.continuation(new ccc.Error('apply: Invalid argument list'));
+      for (var i = arguments.length - 2; i >= 1; --i)
+        args = new ccc.Pair(arguments[i], args);
+      return procedure.apply(this.environment, args, this.continuation);
+    }
+  },
 });

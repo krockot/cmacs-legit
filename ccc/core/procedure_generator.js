@@ -150,11 +150,14 @@ ccc.ProcedureGenerator.prototype.isApplicable = function() {
 ccc.ProcedureGenerator.prototype.apply = function(
     environment, args, continuation) {
   var scope = new ccc.Environment(environment);
-  goog.array.forEach(this.argLocations_, function(location) {
+  goog.array.forEach(this.argLocations_, function(location, index) {
+    scope.set(this.formalNames_[index], location);
     location.setEnvironment(scope);
-  });
-  if (!goog.isNull(this.argTailLocation_))
+  }, this);
+  if (!goog.isNull(this.argTailLocation_)) {
+    scope.set(this.formalTail_, this.argTailLocation_);
     this.argTailLocation_.setEnvironment(scope);
+  }
   return continuation(new ccc.Procedure(scope, this.argLocations_,
       this.argTailLocation_, this.body_));
 };

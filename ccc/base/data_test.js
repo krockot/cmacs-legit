@@ -1,7 +1,7 @@
 // The Cmacs Project.
 
-goog.provide('ccc.base.ObjectTest');
-goog.setTestOnly('ccc.base.ObjectTest');
+goog.provide('ccc.base.DataTest');
+goog.setTestOnly('ccc.base.DataTest');
 
 goog.require('ccc.baseTestUtil');
 
@@ -9,7 +9,7 @@ goog.require('ccc.baseTestUtil');
 var asyncTestCase = goog.testing.AsyncTestCase.createAndInstall(document.title);
 
 function setUpPage() {
-  setUpBaseTest('ccc.base.ObjectTest');
+  setUpBaseTest('ccc.base.DataTest');
 }
 
 function testEq() {

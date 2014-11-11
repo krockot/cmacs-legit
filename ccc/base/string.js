@@ -27,4 +27,72 @@ ccc.baseUtil.registerProcedures(ccc.base, {
     args: [ccc.isString],
     impl: function(x) { return x.length; }
   },
+
+  'string=?': {
+    args: [ccc.isString, ccc.isString],
+    impl: function(a, b) { return a === b; }
+  },
+
+  'string<?': {
+    args: [ccc.isString, ccc.isString],
+    impl: function(a, b) {
+      return a < b;
+    }
+  },
+
+  'string<=?': {
+    args: [ccc.isString, ccc.isString],
+    impl: function(a, b) {
+      return a <= b;
+    }
+  },
+
+  'string>?': {
+    args: [ccc.isString, ccc.isString],
+    impl: function(a, b) {
+      return a > b;
+    }
+  },
+
+  'string>=?': {
+    args: [ccc.isString, ccc.isString],
+    impl: function(a, b) {
+      return a >= b;
+    }
+  },
+
+  'string-ci=?': {
+    args: [ccc.isString, ccc.isString],
+    impl: function(a, b) {
+      return a.toLocaleLowerCase() === b.toLocaleLowerCase();
+    }
+  },
+
+  'string-ci<?': {
+    args: [ccc.isString, ccc.isString],
+    impl: function(a, b) {
+      return a.toLocaleLowerCase() < b.toLocaleLowerCase();
+    }
+  },
+
+  'string-ci<=?': {
+    args: [ccc.isString, ccc.isString],
+    impl: function(a, b) {
+      return a.toLocaleLowerCase() <= b.toLocaleLowerCase();
+    }
+  },
+
+  'string-ci>?': {
+    args: [ccc.isString, ccc.isString],
+    impl: function(a, b) {
+      return a.toLocaleLowerCase() > b.toLocaleLowerCase();
+    }
+  },
+
+  'string-ci>=?': {
+    args: [ccc.isString, ccc.isString],
+    impl: function(a, b) {
+      return a.toLocaleLowerCase() >= b.toLocaleLowerCase();
+    }
+  },
 });

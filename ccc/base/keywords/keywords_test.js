@@ -21,7 +21,7 @@ var L = function(e, t) { return ccc.Pair.makeList(e, t); };
 
 var notEvaluated = new ccc.NativeProcedure(function(
     environment, args, continuation) {
-  fail('This should never be evaluated.');
+  justFail(new Error('This should never be evaluated.'));
 });
 
 function setUpPage() {

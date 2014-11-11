@@ -46,3 +46,22 @@ function testApply() {
     F(['apply', '+', ['cons', 1, 2]]),
   ]);
 }
+
+function testMap() {
+  RunTests([
+    T(['map', 'cadr', ['quote', [['a', 'b'], ['d', 'e'], ['g', 'h']]]],
+      ['b', 'e', 'h']),
+    T(['map', ['lambda', ['n'], ['**', 'n', 'n']], ['list', 1, 2, 3, 4, 5]],
+      [1, 4, 27, 256, 3125]),
+    T(['map', '+', ['list', 1, 2, 3], ['list', 4, 5, 6]], [5, 7, 9]),
+    T(['map', '+', ['list', 1, 2, 3], []], []),
+    T(['map', '+', ['list', 1, 2, 3], ['list', 1, 2]], [2, 4]),
+    T(['map', '+', ['list', 1, 2], ['list', 1, 2, 3]], [2, 4]),
+    F(['map']),
+    F(['map', '+']),
+    F(['map', false, []]),
+    F(['map', '+', false]),
+    F(['map', '+', [], false]),
+    F(['map', '+', ['cons', 1, 2], ['list', 1, 2, 3]]),
+  ]);
+}

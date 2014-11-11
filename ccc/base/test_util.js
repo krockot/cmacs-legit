@@ -58,8 +58,8 @@ function T(spec, opt_expectedOutputSpec) {
 
 var F = function(spec) {
   return T(spec).then(
-      goog.partial(justFail, 'Expected failure; got success'),
-      function() {});
+      goog.partial(justFail, 'Expected failure; got success on expression ' +
+          ccc.core.stringify(ccc.core.build(spec))), function() {});
 };
 
 var RunTests = function(tests) {

@@ -6,6 +6,7 @@ goog.setTestOnly('ccc.base.ListTest');
 goog.require('ccc.baseTestUtil');
 
 var asyncTestCase = goog.testing.AsyncTestCase.createAndInstall(document.title);
+var C = function(chr) { return new ccc.Char(chr); };
 
 function setUpPage() {
   setUpBaseTest('ccc.base.ListTest');
@@ -168,5 +169,16 @@ function testListRef() {
     F(['list-ref', ['list', 1, 2]]),
     F(['list-ref', 1, 2]),
     F(['list-ref', ['list', 1, 2], 3, 4]),
+  ]);
+}
+
+function testListToString() {
+  RunTests([
+    T(['list->string', ['list', C(65), C(66), C(67)]], new String('ABC')),
+    T(['list->string', []], new String('')),
+    F(['list->string', ['cons', C(1), C(2)]]),
+    F(['list->string']),
+    F(['list->string', 1, 2, 3]),
+    F(['list->string', ['list', C(1), C(2)], C(3)]),
   ]);
 }

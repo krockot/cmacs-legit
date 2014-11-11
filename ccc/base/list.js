@@ -129,6 +129,27 @@ ccc.baseUtil.registerProcedures(ccc.base, {
       return list.car();
     }
   },
+
+  'list->string': {
+    args: [null],
+    impl: function(list) {
+      if (ccc.isNil(list))
+        return '';
+      if (!ccc.isPair(list))
+        return new ccc.Error('list->string: Invalid argument type');
+      var result = '';
+      var isValid = true;
+      var isProper = list.forEachProper(function(chr) {
+        if (!ccc.isChar(chr))
+          isValid = false;
+        else
+          result += String.fromCharCode(chr.value());
+      });
+      if (!isValid || !isProper)
+        return new ccc.Error('list->string: Invalid list argument');
+      return result;
+    }
+  },
 });
 
 

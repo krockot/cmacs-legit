@@ -7,6 +7,7 @@ goog.require('ccc.baseTestUtil');
 
 
 var asyncTestCase = goog.testing.AsyncTestCase.createAndInstall(document.title);
+var C = function(chr) { return new ccc.Char(chr); };
 var S = function(str) { return new String(str); };
 
 function setUpPage() {
@@ -29,11 +30,11 @@ function testMakeString() {
   RunTests([
     T(['make-string', 0], S('')),
     T(['make-string', 1], S('\0')),
-    T(['make-string', 3, new ccc.Char(955)], S('\u03bb\u03bb\u03bb')),
+    T(['make-string', 3, C(955)], S('\u03bb\u03bb\u03bb')),
     F(['make-string']),
-    F(['make-string', new ccc.Char(0)]),
+    F(['make-string', C(0)]),
     F(['make-string', true]),
-    F(['make-string', 1, new ccc.Char(0), 2]),
+    F(['make-string', 1, C(0), 2]),
   ]);
 }
 
@@ -209,5 +210,15 @@ function testStringAppend() {
     T(['string-append', S('foo'), S('bar')], S('foobar')),
     T(['string-append', S('foo'), S('bar'), S('baz')], S('foobarbaz')),
     F(['string-append', 1, 2, 3, 4]),
+  ]);
+}
+
+function testStringToList() {
+  RunTests([
+    T(['string->list', S('hello')], [C(104), C(101), C(108), C(108), C(111)]),
+    T(['string->list', S('')], []),
+    F(['string->list']),
+    F(['string->list', 1234]),
+    F(['string->list', S('hello'), 1234]),
   ]);
 }

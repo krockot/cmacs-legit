@@ -120,4 +120,13 @@ ccc.baseUtil.registerProcedures(ccc.base, {
       return Array.prototype.join.call(arguments, '');
     }
   },
+
+  'string->list': {
+    args: [ccc.isString],
+    impl: function(str) {
+      return ccc.Pair.makeList(str.split('').map(function(chr) {
+        return new ccc.Char(chr.charCodeAt(0));
+      }));
+    }
+  },
 });

@@ -1,12 +1,15 @@
 // The Cmacs Project.
 
-goog.provide('ccc.base.object');
+goog.provide('ccc.base.data');
 
 goog.require('ccc.baseUtil');
 goog.require('ccc.core');
 
 
-
+/**
+ * Procedures for dealing with general data or primitive types which don't
+ * warrant their own distinct definitions file.
+ */
 ccc.baseUtil.registerProcedures(ccc.base, {
   'eq?': {
     args: [null, null],

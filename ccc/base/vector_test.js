@@ -84,3 +84,16 @@ function testVectorSet() {
     F(['vector-set!', [1, 2, 3], 1, 2]),
   ]);
 }
+
+function testVectorFill() {
+  RunTests([
+    T(['begin',
+        ['define', 'x', V([1, 2, 3, 4])],
+        ['vector-fill!', 'x', ['quote', 'nope']],
+        'x'], V(['nope', 'nope', 'nope', 'nope'])),
+    F(['vector-fill!']),
+    F(['vector-fill!', V(['yip', 'yip', 'yip'])]),
+    F(['vector-fill!', V(['nope', 'nope']), 1, 2]),
+    F(['vector-fill!', 1, 2]),
+  ]);
+}

@@ -53,4 +53,12 @@ ccc.base.registerProcedures({
       v.set(k, data);
     }
   },
+
+  'vector-fill!': {
+    args: [ccc.isVector, null],
+    impl: function(v, data) {
+      for (var i = 0; i < v.size(); ++i)
+        v.set(i, data);
+    }
+  },
 });

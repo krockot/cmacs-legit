@@ -2,6 +2,7 @@
 
 goog.provide('ccc.base.quote');
 
+goog.require('ccc.base');
 goog.require('ccc.core');
 goog.require('goog.asserts');
 
@@ -56,5 +57,4 @@ QuoteTransformer_.nativeImpl_ = function(
 };
 
 
-/** @const {!ccc.Transformer} */
-ccc.base.quote = new QuoteTransformer_();
+ccc.base.registerBinding('quote', new QuoteTransformer_());

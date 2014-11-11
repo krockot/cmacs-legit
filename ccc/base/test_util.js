@@ -6,7 +6,7 @@ goog.setTestOnly('ccc.baseTestUtil');
 goog.require('ccc.core');
 goog.require('ccc.core.build');
 goog.require('ccc.core.stringify');
-goog.require('ccc.base');
+goog.require('ccc.base.all');
 goog.require('goog.Promise');
 goog.require('goog.debug.Console');
 goog.require('goog.log.Logger');
@@ -36,9 +36,7 @@ function justFail(reason) {
 
 function T(spec, opt_expectedOutputSpec) {
   var environment = new ccc.Environment();
-  goog.object.forEach(ccc.base, function(value, name) {
-    environment.setValue(name, value);
-  });
+  ccc.base.addToEnvironment(environment);
   var source = ccc.core.build(spec);
   var thread = new ccc.Thread(ccc.evalSource(source, environment));
   return thread.run().then(function(result) {

@@ -1,14 +1,57 @@
 // The Cmacs Project.
 
-/** @fileoverview This provides utility functions for use by base library
- * implementation code.
- */
-
-goog.provide('ccc.baseUtil');
+goog.provide('ccc.Library');
 
 goog.require('ccc.core');
+goog.require('goog.asserts');
 goog.require('goog.object');
 
+
+
+/**
+ * A Library is a collection of named objects that can be registered within an
+ * environment. See {@code ccc.base} for an example.
+ *
+ * @constructor
+ */
+ccc.Library = function() {
+  /** @private {!Object.<string, ccc.Data>} */
+  this.bindings_ = {};
+};
+
+
+/**
+ * Registers a new binding with this library.
+ *
+ * @param {string} name
+ * @param {ccc.Data} data
+ */
+ccc.Library.prototype.registerBinding = function(name, data) {
+  this.bindings_[name] = data;
+};
+
+
+/**
+ * Adds this library to an environment.
+ *
+ * @param {!ccc.Environment} environment
+ */
+ccc.Library.prototype.addToEnvironment = function(environment) {
+  goog.object.forEach(this.bindings_, function(data, name) {
+    environment.setValue(name, data);
+  });
+};
+
+
+/**
+ * Gets a binding from the library.
+ *
+ * @param {string} name
+ */
+ccc.Library.prototype.get = function(name) {
+  goog.asserts.assert(goog.object.containsKey(this.bindings_, name));
+  return this.bindings_[name];
+};
 
 
 /**
@@ -21,10 +64,10 @@ goog.require('goog.object');
  * fields referencing the current environment, continuation, and raw argument
  * list.
  *
- * @param {ccc.baseUtil.SimpleProcedureSpec} spec
+ * @param {ccc.Library.SimpleProcedureSpec} spec
  */
-ccc.baseUtil.registerProcedure = function(namespace, name, spec) {
-  namespace[name] = new ccc.NativeProcedure(function(
+ccc.Library.prototype.registerProcedure = function(name, spec) {
+  var procedure = new ccc.NativeProcedure(function(
       environment, args, continuation) {
     var argList = [];
     var argIndex = 0;
@@ -79,7 +122,22 @@ ccc.baseUtil.registerProcedure = function(namespace, name, spec) {
       return /** @type {ccc.Thunk} */ (result);
     return continuation(/** @type {ccc.Data} */ (result));
   });
+  this.registerBinding(name, procedure);
 };
+
+
+/**
+ * Creates multiple simple procedure bindings given a mapping from name to
+ * procedure spec.
+ *
+ * @param {!Object.<string, ccc.Library.SimpleProcedureSpec>} specMap
+ */
+ccc.Library.prototype.registerProcedures = function(specMap) {
+  goog.object.forEach(specMap, function(spec, name) {
+    this.registerProcedure(name, spec);
+  }, this);
+};
+
 
 
 /**
@@ -89,6 +147,7 @@ ccc.baseUtil.registerProcedure = function(namespace, name, spec) {
  * @private
  */
 var TypePredicate_;
+
 
 
 /**
@@ -124,14 +183,15 @@ var TypePredicate_;
  *   args: (!Array.<?TypePredicate_>|undefined),
  *   optionalArgs: (!Array.<?TypePredicate_>|?TypePredicate_|undefined),
  *   thunk: (boolean|undefined),
- *   impl: (function(this:ccc.baseUtil.ProcedureContext, *):*)
+ *   impl: (function(this:ccc.Library.ProcedureContext, *):*)
  * }}
  */
-ccc.baseUtil.SimpleProcedureSpec;
+ccc.Library.SimpleProcedureSpec;
+
 
 
 /**
- * Context to which |this| is bound within baseUtil-generated procedure
+ * Context to which |this| is bound within Library-generated procedure
  * implementations.
  *
  * |environment| is the calling environment.
@@ -144,17 +204,4 @@ ccc.baseUtil.SimpleProcedureSpec;
  *   continuation: (ccc.Continuation)
  * }}
  */
-ccc.baseUtil.ProcedureContext;
-
-
-/**
- * Creates multiple simple procedure bindings given a mapping from name to
- * procedure spec.
- *
- * @param {!Object.<string, ccc.baseUtil.SimpleProcedureSpec>} specMap
- */
-ccc.baseUtil.registerProcedures = function(namespace, specMap) {
-  goog.object.forEach(specMap, function(spec, name) {
-    ccc.baseUtil.registerProcedure(namespace, name, spec);
-  });
-};
+ccc.Library.ProcedureContext;

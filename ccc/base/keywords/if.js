@@ -3,6 +3,7 @@
 goog.provide('ccc.base.if_')
 
 goog.require('ccc.Branch');
+goog.require('ccc.base');
 goog.require('ccc.core');
 
 
@@ -90,5 +91,4 @@ IfTransformer_.onAlternateExpanded_ = function(
 };
 
 
-/** @const {!ccc.Transformer} */
-ccc.base['if'] = new IfTransformer_();
+ccc.base.registerBinding('if', new IfTransformer_());

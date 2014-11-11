@@ -3,6 +3,7 @@
 goog.provide('ccc.base.defmacro');
 
 goog.require('ccc.MacroExpander');
+goog.require('ccc.base');
 goog.require('ccc.core');
 
 
@@ -59,5 +60,4 @@ DefmacroTransformer_.prototype.transform = function(environment, args) {
 };
 
 
-/** @const {!ccc.Transformer} */
-ccc.base.defmacro = new DefmacroTransformer_();
+ccc.base.registerBinding('defmacro', new DefmacroTransformer_());

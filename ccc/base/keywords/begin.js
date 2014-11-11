@@ -2,8 +2,9 @@
 
 goog.provide('ccc.base.begin');
 
+goog.require('ccc.base');
+goog.require('ccc.base.lambda');
 goog.require('ccc.core');
-goog.require('ccc.base.lambda')
 
 
 
@@ -32,7 +33,7 @@ BeginTransformer_.prototype.transform = function(environment, args) {
     if (!ccc.isPair(args))
       return continuation(
           new ccc.Error('begin: One or more expressions required'));
-    return ccc.base.lambda.transform(environment,
+    return ccc.base.get('lambda').transform(environment,
         ccc.Pair.makeList([ccc.NIL], args))(goog.partial(
             BeginTransformer_.onLambdaTransform_, environment, continuation));
   };
@@ -55,5 +56,4 @@ BeginTransformer_.onLambdaTransform_ = function(
 };
 
 
-/** @const {!ccc.Transformer} */
-ccc.base.begin = new BeginTransformer_();
+ccc.base.registerBinding('begin', new BeginTransformer_());

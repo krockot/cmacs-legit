@@ -2,12 +2,12 @@
 
 goog.provide('ccc.base.list');
 
-goog.require('ccc.baseUtil');
+goog.require('ccc.base');
 goog.require('ccc.core');
 goog.require('goog.array');
 
 
-ccc.baseUtil.registerProcedures(ccc.base, {
+ccc.base.registerProcedures({
   'list': {
     optionalArgs: null,
     impl: function() {
@@ -156,7 +156,7 @@ ccc.baseUtil.registerProcedures(ccc.base, {
 /** @private */
 var registerListAccessor_ = function(signature) {
   var name = 'c' + signature + 'r';
-  ccc.baseUtil.registerProcedure(ccc.base, name, {
+  ccc.base.registerProcedure(name, {
     args: [ccc.isPair],
     impl: function(p) {
       for (var i = signature.length - 1; i >= 0; --i) {

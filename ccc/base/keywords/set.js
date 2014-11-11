@@ -2,6 +2,7 @@
 
 goog.provide('ccc.base.set');
 
+goog.require('ccc.base');
 goog.require('ccc.core');
 goog.require('goog.asserts');
 
@@ -71,5 +72,4 @@ SetTransformer_.updateBinding_ = function(
 };
 
 
-/** @const {!ccc.Transformer} */
-ccc.base['set!'] = new SetTransformer_();
+ccc.base.registerBinding('set!', new SetTransformer_());

@@ -2,6 +2,7 @@
 
 goog.provide('ccc.base.define');
 
+goog.require('ccc.base');
 goog.require('ccc.core');
 
 
@@ -71,5 +72,4 @@ DefineTransformer_.bindSymbol_ = function(
 };
 
 
-/** @const {!ccc.Transformer} */
-ccc.base.define = new DefineTransformer_();
+ccc.base.registerBinding('define', new DefineTransformer_());

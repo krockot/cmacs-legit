@@ -3,6 +3,7 @@
 goog.provide('ccc.base.lambda');
 
 goog.require('ccc.ProcedureGenerator');
+goog.require('ccc.base');
 goog.require('ccc.core');
 goog.require('goog.asserts');
 
@@ -128,8 +129,7 @@ LambdaTransformer_.onBodyExpanded_ = function(
 };
 
 
-/** @const {!ccc.Transformer} */
-ccc.base.lambda = new LambdaTransformer_();
+ccc.base.registerBinding('lambda', new LambdaTransformer_());
 
-/** @const */
-ccc.base['\u03bb'] = ccc.base.lambda;
+
+ccc.base.registerBinding('\u03bb', ccc.base.get('lambda'));

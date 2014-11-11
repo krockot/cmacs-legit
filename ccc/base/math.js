@@ -2,11 +2,11 @@
 
 goog.provide('ccc.base.math');
 
-goog.require('ccc.baseUtil');
+goog.require('ccc.base');
 goog.require('ccc.core');
 
 
-ccc.baseUtil.registerProcedures(ccc.base, {
+ccc.base.registerProcedures({
   '+': {
     optionalArgs: ccc.isNumber,
     impl: function() {

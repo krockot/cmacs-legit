@@ -4,7 +4,7 @@ goog.provide('cmacs.background.main');
 
 goog.require('ccc.core');
 goog.require('ccc.core.stringify');
-goog.require('ccc.base');
+goog.require('ccc.base.all');
 goog.require('ccc.parse.Parser');
 goog.require('ccc.parse.Scanner');
 goog.require('goog.Promise');
@@ -14,9 +14,7 @@ goog.require('goog.object');
 
 cmacs.background.main = function() {
   var environment = new ccc.Environment();
-  goog.object.forEach(ccc.base, function(value, name) {
-    environment.setValue(name, value);
-  });
+  ccc.base.addToEnvironment(environment);
   environment.setValue('display', new ccc.NativeProcedure(
       function(environment, args, continuation) {
     console.log(ccc.core.stringify(args.car()));

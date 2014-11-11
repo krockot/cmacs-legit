@@ -2,7 +2,7 @@
 
 goog.provide('ccc.base.data');
 
-goog.require('ccc.baseUtil');
+goog.require('ccc.base');
 goog.require('ccc.core');
 
 
@@ -10,7 +10,7 @@ goog.require('ccc.core');
  * Procedures for dealing with general data or primitive types which don't
  * warrant their own distinct definitions file.
  */
-ccc.baseUtil.registerProcedures(ccc.base, {
+ccc.base.registerProcedures({
   'eq?': {
     args: [null, null],
     impl: ccc.eq

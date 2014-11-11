@@ -2,7 +2,7 @@
 
 goog.provide('ccc.base.control');
 
-goog.require('ccc.baseUtil');
+goog.require('ccc.base');
 goog.require('ccc.core');
 
 
@@ -44,7 +44,7 @@ ContinuationWrapper_.prototype.apply =
 };
 
 
-ccc.baseUtil.registerProcedures(ccc.base, {
+ccc.base.registerProcedures({
   'procedure?': {
     args: [null],
     impl: ccc.isApplicable
@@ -53,7 +53,7 @@ ccc.baseUtil.registerProcedures(ccc.base, {
   'call/cc': {
     args: [ccc.isApplicable],
     thunk: true,
-    impl: /** @this {ccc.baseUtil.ProcedureContext} */ function(procedure) {
+    impl: /** @this {ccc.Library.ProcedureContext} */ function(procedure) {
       return procedure.apply(this.environment,
           new ccc.Pair(new ContinuationWrapper_(this.continuation), ccc.NIL),
           this.continuation);
@@ -64,7 +64,7 @@ ccc.baseUtil.registerProcedures(ccc.base, {
     args: [ccc.isApplicable, null],
     optionalArgs: null,
     thunk: true,
-    impl: /** @this {ccc.baseUtil.ProcedureContext} */ function(procedure) {
+    impl: /** @this {ccc.Library.ProcedureContext} */ function(procedure) {
       var args = arguments[arguments.length - 1];
       if (!ccc.isNil(args) && (!ccc.isPair(args) ||
           !args.forEachProper(function() {})))

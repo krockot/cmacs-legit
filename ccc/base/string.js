@@ -129,4 +129,11 @@ ccc.base.registerProcedures({
       }));
     }
   },
+
+  'string->symbol': {
+    args: [ccc.isString],
+    impl: function(str) {
+      return new ccc.Symbol(str);
+    }
+  },
 });

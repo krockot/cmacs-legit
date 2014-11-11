@@ -39,4 +39,16 @@ ccc.base.registerProcedures({
     args: [null],
     impl: function(x) { return x === true || x === false; }
   },
+
+  'symbol?': {
+    args: [null],
+    impl: ccc.isSymbol
+  },
+
+  'symbol->string': {
+    args: [ccc.isSymbol],
+    impl: function(symbol) {
+      return symbol.name();
+    }
+  },
 });

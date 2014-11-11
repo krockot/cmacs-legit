@@ -95,3 +95,23 @@ function testBooleanPredicate() {
     F(['boolean?', true, true]),
   ]);
 }
+
+function testSymbolPredicate() {
+  RunTests([
+    T(['symbol?', ['quote', 'foo']], true),
+    T(['symbol?', new String('foo')], false),
+    T(['symbol?', false], false),
+    F(['symbol?']),
+    F(['symbol?', 1, 2]),
+  ]);
+}
+
+function testSymbolToString() {
+  RunTests([
+    T(['symbol->string', ['quote', 'foo']], new String('foo')),
+    T(['symbol->string', ['quote', '']], new String('')),
+    F(['symbol->string']),
+    F(['symbol->string', new String('foo')]),
+    F(['symbol->string', ['quote', 'foo'], 1]),
+  ]);
+}

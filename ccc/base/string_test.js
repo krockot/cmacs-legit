@@ -222,3 +222,13 @@ function testStringToList() {
     F(['string->list', S('hello'), 1234]),
   ]);
 }
+
+function testStringToSymbol() {
+  RunTests([
+    T(['string->symbol', S('hello')], 'hello'),
+    T(['string->symbol', S('')], ''),
+    F(['string->symbol']),
+    F(['string->symbol', ['quote', 'hello']]),
+    F(['string->symbol', S('hey'), 1]),
+  ]);
+}

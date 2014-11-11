@@ -18,7 +18,7 @@ var logger;
 
 function setUpBaseTest(name) {
   logger = goog.log.getLogger(name);
-  asyncTestCase.stepTimeout = 50;
+  asyncTestCase.stepTimeout = 250;
   asyncTestCase.timeToSleepAfterFailure = 50;
   goog.Promise.setUnhandledRejectionHandler(justFail);
   new goog.debug.Console().setCapturing(true);

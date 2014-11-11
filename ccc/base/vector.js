@@ -8,4 +8,8 @@ goog.require('goog.array');
 
 
 ccc.base.registerProcedures({
+  'vector?': {
+    args: [null],
+    impl: ccc.isVector
+  },
 });

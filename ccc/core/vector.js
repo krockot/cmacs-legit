@@ -60,6 +60,16 @@ ccc.Vector.prototype.size = function() {
 
 
 /**
+ * Retrieves the elements in the vector.
+ *
+ * @return {!Array.<ccc.Data>}
+ */
+ccc.Vector.prototype.elements = function() {
+  return this.elements_;
+};
+
+
+/**
  * Retrieves the element at a given index, or {@code null} if out of bounds.
  *
  * @param {number} index

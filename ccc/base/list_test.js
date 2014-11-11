@@ -182,3 +182,13 @@ function testListToString() {
     F(['list->string', ['list', C(1), C(2)], C(3)]),
   ]);
 }
+
+function testListToVector() {
+  RunTests([
+    T(['list->vector', ['list', 1, 2, 3]], new ccc.Vector([1, 2, 3])),
+    T(['list->vector', []], new ccc.Vector([])),
+    F(['list->vector']),
+    F(['list->vector', ['list', 1, 2, 3], 1]),
+    F(['list->vector', 1, 2, 3]),
+  ]);
+}

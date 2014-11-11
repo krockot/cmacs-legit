@@ -61,4 +61,11 @@ ccc.base.registerProcedures({
         v.set(i, data);
     }
   },
+
+  'vector->list': {
+    args: [ccc.isVector],
+    impl: function(v) {
+      return ccc.Pair.makeList(v.elements());
+    }
+  },
 });

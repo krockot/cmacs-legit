@@ -97,3 +97,13 @@ function testVectorFill() {
     F(['vector-fill!', 1, 2]),
   ]);
 }
+
+function testVectorToList() {
+  RunTests([
+    T(['vector->list', V([])], []),
+    T(['vector->list', V([1, 2, 3])], [1, 2, 3]),
+    F(['vector->list']),
+    F(['vector->list', V([]), 1]),
+    F(['vector->list', 1]),
+  ]);
+}

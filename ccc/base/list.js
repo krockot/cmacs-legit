@@ -150,6 +150,20 @@ ccc.base.registerProcedures({
       return result;
     }
   },
+
+  'list->vector': {
+    args: [null],
+    impl: function(list) {
+      if (ccc.isNil(list))
+        return new ccc.Vector([]);
+      if (!ccc.isPair(list))
+        return new ccc.Error('list->vector: Invalid argument type');
+      var elements = [];
+      if (!list.forEachProper(function(data) { elements.push(data); }))
+        return new ccc.Error('list->vector: Invalid list argument');
+      return new ccc.Vector(elements);
+    }
+  },
 });
 
 

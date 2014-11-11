@@ -105,4 +105,27 @@ ccc.base.registerProcedures({
       return doNextApplication(this.continuation);
     }
   },
+
+  'for-each': {
+    args: [ccc.isApplicable, null],
+    optionalArgs: null,
+    thunk: true,
+    impl: /** @this {ccc.Library.ProcedureContext} */ function(procedure) {
+      var lists = Array.prototype.slice.call(arguments, 1);
+      var environment = this.environment;
+      var isList = function(x) { return ccc.isPair(x) || ccc.isNil(x); };
+      var doNextApplication = function(continuation) {
+        if (!goog.array.every(lists, isList))
+          return continuation(new ccc.Error('for-each: Invalid list argument'));
+        if (goog.array.some(lists, ccc.isNil))
+          return continuation(ccc.UNSPECIFIED);
+        var args = ccc.Pair.makeList(goog.array.map(lists,
+            function(list) { return list.car(); }));
+        lists = goog.array.map(lists, function(list) { return list.cdr(); });
+        return procedure.apply(environment, args, goog.partial(
+            doNextApplication, continuation));
+      };
+      return doNextApplication(this.continuation);
+    }
+  },
 });

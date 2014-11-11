@@ -65,3 +65,20 @@ function testMap() {
     F(['map', '+', ['cons', 1, 2], ['list', 1, 2, 3]]),
   ]);
 }
+
+function testForEach() {
+  RunTests([
+    T(['begin',
+        ['define', 'x', 0],
+        ['define', 'v', ['make-vector', 5]],
+        ['for-each', ['lambda', ['i'],
+                        ['set!', 'x', ['+', 'x', 'i']],
+                        ['vector-set!', 'v', 'i', 'x']],
+                     ['list', 0, 1, 2, 3, 4]],
+        'v'], new ccc.Vector([0, 1, 3, 6, 10])),
+    F(['for-each']),
+    F(['for-each', '+']),
+    F(['for-each', '+', 1]),
+    F(['for-each', '+', ['cons', 1, 2], ['list', 1, 2, 3]]),
+  ]);
+}

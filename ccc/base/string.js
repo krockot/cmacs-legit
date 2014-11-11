@@ -95,4 +95,29 @@ ccc.baseUtil.registerProcedures(ccc.base, {
       return a.toLocaleLowerCase() >= b.toLocaleLowerCase();
     }
   },
+
+  'substring': {
+    args: [ccc.isString, ccc.isInteger],
+    optionalArgs: [ccc.isInteger],
+    impl: function(str, start, opt_end) {
+      if (start < 0)
+        start += str.length;
+      if (start < 0 || start >= str.length)
+        return new ccc.Error('substring: Invalid start index');
+      if (goog.isDef(opt_end)) {
+        if (opt_end < 0)
+          opt_end += str.length;
+        if (opt_end <= start || opt_end > str.length)
+          return new ccc.Error('substring: Invalid end index');
+      }
+      return str.substring(start, opt_end);
+    }
+  },
+
+  'string-append': {
+    optionalArgs: ccc.isString,
+    impl: function() {
+      return Array.prototype.join.call(arguments, '');
+    }
+  },
 });

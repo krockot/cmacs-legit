@@ -182,3 +182,32 @@ function testStringCIGreaterThanOrEqualPredicate() {
     F(['string-ci>=?', S('hello'), S('hello'), S('hello')]),
   ]);
 }
+
+function testSubstring() {
+  RunTests([
+    T(['substring', S('Hello, world'), 1], S('ello, world')),
+    T(['substring', S('hey'), 2], S('y')),
+    T(['substring', S('hey'), 1, 2], S('e')),
+    T(['substring', S('hey'), 1, 3], S('ey')),
+    T(['substring', S('foobar'), -2], S('ar')),
+    T(['substring', S('foobar'), -3, -1], S('ba')),
+    F(['substring']),
+    F(['substring', S('hey')]),
+    F(['substring', S('hey'), 3]),
+    F(['substring', S('hey'), -4]),
+    F(['substring', S('hey'), 1, 1]),
+    F(['substring', S('hey'), 1, 4]),
+    F(['substring', S('hey'), 1, 0]),
+    F(['substring', S('hey'), -1, -2]),
+  ]);
+}
+
+function testStringAppend() {
+  RunTests([
+    T(['string-append'], S('')),
+    T(['string-append', S('hey')], S('hey')),
+    T(['string-append', S('foo'), S('bar')], S('foobar')),
+    T(['string-append', S('foo'), S('bar'), S('baz')], S('foobarbaz')),
+    F(['string-append', 1, 2, 3, 4]),
+  ]);
+}

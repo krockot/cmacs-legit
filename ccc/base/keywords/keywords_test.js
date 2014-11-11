@@ -3,10 +3,10 @@
 goog.provide('ccc.syntax.KeywordsTest');
 goog.setTestOnly('ccc.syntax.KeywordsTest');
 
+goog.require('ccc.base.all');
 goog.require('ccc.core');
 goog.require('ccc.core.build');
 goog.require('ccc.core.stringify');
-goog.require('ccc.base');
 goog.require('goog.Promise');
 goog.require('goog.debug.Console');
 goog.require('goog.log.Logger');
@@ -17,14 +17,12 @@ goog.require('goog.testing.jsunit');
 
 var asyncTestCase = goog.testing.AsyncTestCase.createAndInstall(document.title);
 var logger = goog.log.getLogger('ccc.syntax.KeywordsTest');
+var L = function(e, t) { return ccc.Pair.makeList(e, t); };
 
-var BEGIN = ccc.base.begin;
-var DEFINE = ccc.base.define;
-var DEFMACRO = ccc.base.defmacro;
-var IF = ccc.base['if'];
-var LAMBDA = ccc.base.lambda;
-var QUOTE = ccc.base.quote;
-var SET = ccc.base['set!'];
+var notEvaluated = new ccc.NativeProcedure(function(
+    environment, args, continuation) {
+  fail('This should never be evaluated.');
+});
 
 function setUpPage() {
   asyncTestCase.stepTimeout = 50;
@@ -43,46 +41,14 @@ function justFail(reason) {
   setTimeout(goog.partial(fail, reason), 0);
 }
 
-// Single test case which applies a transformer to a list and validates the
-// resulting object.
-var T = function(
-    transformer, argsSpec, opt_expectedOutputSpec, opt_environment) {
+// Test case to evaluate a single expression and optionally validate the result.
+var T = function(spec, opt_expectedOutputSpec, opt_environment) {
   var environment = (goog.isDef(opt_environment)
       ? opt_environment
       : new ccc.Environment());
-  var args = ccc.core.build(argsSpec);
-  var thread = new ccc.Thread(transformer.transform(environment, args));
-  return thread.run().then(function(transformed) {
-    assertNotNull(transformed);
-    logger.log(goog.log.Logger.Level.INFO, goog.string.format(
-        'Transformation completed in %s thunks in %s ms.', thread.thunkCounter_,
-        thread.age_));
-    if (goog.isDef(opt_expectedOutputSpec)) {
-      var expectedOutput = ccc.core.build(opt_expectedOutputSpec);
-      if (!ccc.equal(transformed, expectedOutput))
-        return goog.Promise.reject('Object mismatch.\n' +
-            'Expected: ' + ccc.core.stringify(expectedOutput) +
-            '\nActual: ' + ccc.core.stringify(transformed) + '\n');
-    }
-    return transformed;
-  });
-};
-
-var F = function(transformer, argsSpec) {
-  return T(transformer, argsSpec).then(
-      goog.partial(justFail, 'Expected failure; got success'),
-      function() {});
-};
-
-// Single test case which applies a transformer to a list, evaluates the result,
-// and then validates the result of the evaluation.
-var TE = function(
-    transformer, argsSpec, opt_expectedOutputSpec, opt_environment) {
-  var environment = (goog.isDef(opt_environment)
-      ? opt_environment
-      : new ccc.Environment());
-  var form = new ccc.Pair(transformer, ccc.core.build(argsSpec));
-  var thread = new ccc.Thread(ccc.evalSource(form, environment));
+  ccc.base.addToEnvironment(environment);
+  var source = ccc.core.build(spec);
+  var thread = new ccc.Thread(ccc.evalSource(source, environment));
   return thread.run().then(function(result) {
     logger.log(goog.log.Logger.Level.INFO, goog.string.format(
         'Evaluation completed in %s thunks in %s ms.', thread.thunkCounter_,
@@ -90,214 +56,113 @@ var TE = function(
     if (goog.isDef(opt_expectedOutputSpec)) {
       var expectedOutput = ccc.core.build(opt_expectedOutputSpec);
       if (!ccc.equal(result, expectedOutput))
-        return goog.Promise.reject('Object mismatch.\n' +
+        return goog.Promise.reject('Object mismatch on result of ' +
+            ccc.core.stringify(source) + '\n' +
             'Expected: ' + ccc.core.stringify(expectedOutput) +
             '\nActual: ' + ccc.core.stringify(result) + '\n');
     }
   });
 };
 
-var FE = function(transformer, argsSpec) {
-  return TE(transformer, argsSpec).then(
-      goog.partial(justFail, 'Expected failure; got success'),
+// Test case which evaluates a single expression and expects failure.
+var F = function(spec) {
+  return T(spec).then(goog.partial(justFail, 'Expected failure; got success ' +
+      'with expression ' + ccc.core.stringify(ccc.core.build(spec))),
       function() {});
-};
-
-// Single test case which transforms a supplied lambda expression and applies
-// it to a list of arguments, validating the result.
-var TL = function(
-    formalsAndBodySpec, argsSpec, opt_expectedOutputSpec, opt_environment) {
-  var environment = (goog.isDef(opt_environment)
-      ? opt_environment
-      : new ccc.Environment());
-  var lambdaForm = new ccc.Pair(LAMBDA, ccc.core.build(formalsAndBodySpec));
-  var callForm = new ccc.Pair(lambdaForm, ccc.core.build(argsSpec));
-  var thread = new ccc.Thread(ccc.evalSource(callForm, environment));
-  return thread.run().then(function(result) {
-    logger.log(goog.log.Logger.Level.INFO, goog.string.format(
-        'Evaluation completed in %s thunks in %s ms.', thread.thunkCounter_,
-        thread.age_));
-    if (goog.isDef(opt_expectedOutputSpec)) {
-      var expectedOutput = ccc.core.build(opt_expectedOutputSpec);
-      if (!ccc.equal(result, expectedOutput))
-        return goog.Promise.reject('Object mismatch.\n' +
-            'Expected: ' + ccc.core.stringify(expectedOutput) +
-            '\nActual: ' + ccc.core.stringify(result) + '\n');
-    }
-  });
 };
 
 var RunTests = function(tests) {
-  return goog.Promise.all(tests);
-};
-
-var ExpectFailures = function(tests) {
-  return goog.Promise.firstFulfilled(tests).then(function(result) {
-    justFail(new Error('Expected failure; got success with ' +
-        result.toString()));
-  }).thenCatch(function() {});
+  asyncTestCase.waitForAsync();
+  return goog.Promise.all(tests).then(continueTesting, justFail);
 };
 
 function testDefine() {
-  asyncTestCase.waitForAsync();
   var environment = new ccc.Environment();
-  TE(DEFINE, ['foo', 42], ccc.UNSPECIFIED, environment).then(function() {
-    var foo = environment.get('foo');
-    assertEquals(42, foo.getValue());
-  }).then(continueTesting, justFail);
-}
-
-function testBadDefineSyntax() {
-  asyncTestCase.waitForAsync();
-  ExpectFailures([
-    // DEFINE with no arguments.
-    T(DEFINE, []),
-    // DEFINE with only a symbol argument.
-    T(DEFINE, ['bananas']),
-    // DEFINE with a non-symbol first argument.
-    T(DEFINE, [true, true]),
-    // DEFINE with too many arguments!
-    T(DEFINE, ['bananas', true, true]),
-  ]).then(continueTesting, justFail);
+  RunTests([
+    T(['define', 'foo', 42], ccc.UNSPECIFIED, environment).then(function() {
+      var foo = environment.get('foo');
+      assertEquals(42, foo.getValue());
+    }),
+    F(['define']),
+    F(['define', 'bananas']),
+    F(['define', true, true]),
+    F(['define', 'bananas', true, true]),
+  ]);
 }
 
 function testSet() {
-  asyncTestCase.waitForAsync();
   var environment = new ccc.Environment();
-  // First try to set unbound symbol 'foo and expect it to fail.
-  TE(SET, ['foo', 42], undefined, environment).then(justFail).thenCatch(
-      function() {
-    // Now bind foo to 41
-    return TE(DEFINE, ['foo', 41], undefined, environment).then(function() {
-      var foo = environment.get('foo');
-      assertNotNull(foo);
-      assertEquals(41, foo.getValue());
-      // And finally set the existing binding to 42
-      return TE(SET, ['foo', 42], undefined, environment).then(function() {
-        var foo = environment.get('foo');
-        assertNotNull(foo)
-        assertEquals(42, foo.getValue());
-      });
-    });
-  }).then(continueTesting, justFail);
+  environment.setValue('bar', 41);
+  RunTests([
+    F(['set!', 'foo', 42]),
+    T(['set!', 'bar', 42], ccc.UNSPECIFIED, environment).then(function() {
+      assertEquals(42, environment.get('bar').getValue());
+    }),
+    F(['set!']),
+    F(['set!', 'bananas']),
+    F(['set!', true, true]),
+    F(['set!', 'bananas', true, true]),
+  ]);
 }
 
 function testInnerSet() {
   asyncTestCase.waitForAsync();
-  var environment = new ccc.Environment();
-  environment.setValue('x', 41);
+  var env1 = new ccc.Environment();
+  var env2 = new ccc.Environment();
+  env1.setValue('x', 41);
+  env2.setValue('x', 41);
   RunTests([
-    TL([[], [SET, 'x', 42], 'x'], [], 42, environment)
+    T([['lambda', [], ['set!', 'x', 42], 'x']], 42, env1),
+    T([['lambda', ['x'], ['set!', 'x', 2], 'x'], 1], 2, env2).then(function() {
+      // The outer |x| should still be bound to 41.
+      assertEquals(41, env2.get('x').getValue());
+    }),
+    T([['lambda', ['y'], ['set!', 'y', 6], 'y'], 1], 6, env1).then(function() {
+      // The inner |y| binding shouldn't leak out.
+      assertNull(env1.get('y'));
+    }),
   ]).then(continueTesting, justFail);
 }
 
-function testBadSetSyntax() {
-  asyncTestCase.waitForAsync();
-  ExpectFailures([
-    // SET with no arguments: FAIL!
-    T(SET, []),
-    // SET with only a symbol argument: FAIL!
-    T(SET, ['bananas']),
-    // SET a non-symbol first argument: FAIL!
-    T(SET, [true, true]),
-    // SET with too many arguments: FAIL!
-    T(SET, ['bananas', true, true]),
-  ]).then(continueTesting, justFail);
-}
-
-function testIfTrue() {
-  asyncTestCase.waitForAsync();
-  TE(IF, [[], true], true).then(continueTesting, justFail);
-}
-
-function testIfFalse() {
-  asyncTestCase.waitForAsync();
-  TE(IF, [false, true, []], []).then(continueTesting, justFail);
-}
-
-function testIfFalseWithNoAlternateIsUnspecified() {
-  asyncTestCase.waitForAsync();
-  TE(IF, [false, true], ccc.UNSPECIFIED).then(continueTesting, justFail);
-}
-
-function testBadIfSyntax() {
-  asyncTestCase.waitForAsync();
-  ExpectFailures([
-    // IF with no arguments: FAIL!
-    T(IF, []),
-    // IF with only a condition: FAIL!
-    T(IF, [true]),
-    // IF with too many arguments: FAIL!
-    T(IF, [true, true, true, []]),
-    // IF with weird improper list: DEFINITELY FAIL!
-    T(IF, ccc.Pair.makeList([true, true], true)),
-  ]).then(continueTesting, justFail);
+function testIf() {
+  RunTests([
+    T(['if', [], true, [notEvaluated]], true),
+    T(['if', 0, true, [notEvaluated]], true),
+    T(['if', false, [notEvaluated], []], ccc.NIL),
+    T(['if', false, [notEvaluated]], ccc.UNSPECIFIED),
+    F(['if']),
+    F(['if', true]),
+    F(['if', true, true, true, []]),
+    F(['if', true, new ccc.Pair(true, true)]),
+  ]);
 }
 
 function testQuote() {
-  asyncTestCase.waitForAsync();
-  var list = [true, false, []];
-  TE(QUOTE, [list], list).then(continueTesting, justFail);
-}
-
-function testBadQuoteSyntax() {
-  asyncTestCase.waitForAsync();
-  ExpectFailures([
-    // No arguments
-    T(QUOTE, []),
-    // Too many arguments
-    T(QUOTE, [true, true]),
-  ]).then(continueTesting, justFail);
-}
-
-function testSimpleLambda() {
-  asyncTestCase.waitForAsync();
   RunTests([
-    TL([[], true, 42], [], 42)
-  ]).then(continueTesting, justFail);
+    T(['quote', [true, false, []]], [true, false, []]),
+    T(['quote', [notEvaluated]], [notEvaluated]),
+    F(['quote']),
+    F(['quote', true, true]),
+  ]);
 }
 
-function testLambdaClosure() {
-  asyncTestCase.waitForAsync();
+function testLambda() {
   var environment = new ccc.Environment();
   environment.setValue('x', false);
-  // Apply the identity lambda and verify that the symbol 'x must have
-  // been internally bound to the argument #t.
-  TL([['x'], 'x'], [true], true).then(function() {
-    // Then also verify that the outer environment's 'x is still bound to #f.
-    assertNotNull(environment.get('x'));
-    assertEquals(false, environment.get('x').getValue());
-  }).then(continueTesting, justFail);
-}
-
-function testLambdaTailArgs() {
-  asyncTestCase.waitForAsync();
   RunTests([
-    // ((lambda rest rest) 1 2 3 4) -> (1 2 3 4)
-    TL(['rest', 'rest'], [1, 2, 3, 4], [1, 2, 3, 4]),
-    // ((lambda (foo . rest) rest) 1 2 3 4) -> (2 3 4)
-    TL([ccc.Pair.makeList(['foo'], 'rest'), 'rest'], [1, 2, 3, 4], [2, 3, 4]),
-    // ((lambda (a b . rest) rest) 1 2 3 4) -> (3 4)
-    TL([ccc.Pair.makeList(['a', 'b'], 'rest'), 'rest'], [1, 2, 3, 4], [3, 4]),
-    // ((lambda (a b c d . rest) rest) 1 2 3 4) -> ()
-    TL([ccc.Pair.makeList(['a', 'b', 'c', 'd'], 'rest'), 'rest'],
-       [1, 2, 3, 4],
-       []),
-  ]).then(continueTesting, justFail);
-}
-
-function testBadLambdaSyntax() {
-  asyncTestCase.waitForAsync();
-  ExpectFailures([
-    // ((lambda))
-    TL([], [], []),
-    // ((lambda foo) 1)
-    TL(['foo'], [1], []),
-    // ((lambda 42) 1)
-    TL([42], [1], []),
-    // ((lambda foo . foo) 1)
-    TL([ccc.Pair.makeList(['foo'], 'foo')], [1], 1),
-  ]).then(continueTesting, justFail);
+    T([['lambda', [], 42]], 42),
+    T([['lambda', ['x'], 'x'], true], true, environment).then(function() {
+      assertEquals(false, environment.get('x').getValue());
+    }),
+    T([['lambda', 'rest', 'rest'], 1, 2, 3, 4], [1, 2, 3, 4]),
+    T([['lambda', L(['foo'], 'rest'), 'rest'], 1, 2, 3, 4], [2, 3, 4]),
+    T([['lambda', L(['a', 'b'], 'rest'), 'rest'], 1, 2, 3, 4], [3, 4]),
+    T([['lambda', L(['a', 'b', 'c', 'd'], 'rest'), 'rest'], 1, 2, 3, 4], []),
+    F(['lambda']),
+    F(['lambda', 'foo']),
+    F(['lambda', 42]),
+    F(L(['lambda', 'foo'], 'foo')),
+  ]);
 }
 
 function testBegin() {
@@ -318,8 +183,9 @@ function testBegin() {
     assertEquals(2, count);
     return continuation(3);
   });
-  TE(BEGIN, [[native1], [native2], [native3]], 3).then(
-      continueTesting, justFail);
+  RunTests([
+    T(['begin', [native1], [native2], [native3]], 3),
+  ]);
 }
 
 function DISABLED_testLet() {

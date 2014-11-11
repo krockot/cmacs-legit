@@ -73,6 +73,18 @@ ccc.Vector.prototype.get = function(index) {
 
 
 /**
+ * Sets the element at a given index.
+ *
+ * @param {number} index
+ * @param {ccc.Data} data
+ */
+ccc.Vector.prototype.set = function(index, data) {
+  goog.asserts.assert(index >= 0 && index < this.elements_.length);
+  this.elements_[index] = data;
+};
+
+
+/**
  * Maps this vector to a new vector using the given transformation function.
  *
  * @param {function(ccc.Data):ccc.Data} transform

@@ -46,3 +46,41 @@ function testMakeVector() {
     F(['make-vector', 1, 1, 1]),
   ]);
 }
+
+function testVectorLength() {
+  RunTests([
+    T(['vector-length', V([])], 0),
+    T(['vector-length', V([2, 3, 4])], 3),
+    F(['vector-length']),
+    F(['vector-length', 1]),
+    F(['vector-length', V([]), 1]),
+  ]);
+}
+
+function testVectorRef() {
+  RunTests([
+    T(['vector-ref', V([1]), 0], 1),
+    T(['vector-ref', V([1, 2, 3, 4]), 2], 3),
+    F(['vector-ref']),
+    F(['vector-ref', V([1, 2, 3])]),
+    F(['vector-ref', V([]), 0]),
+    F(['vector-ref', V([1, 2, 3]), 3]),
+    F(['vector-ref', V([])]),
+    F(['vector-ref', V([1]), false]),
+    F(['vector-ref', V([1]), 0, 0]),
+  ]);
+}
+
+function testVectorSet() {
+  RunTests([
+    T(['begin',
+        ['define', 'x', V([1, 2, 3, 4])],
+        ['vector-set!', 'x', 1, true],
+        'x'], V([1, true, 3, 4])),
+    F(['vector-set!']),
+    F(['vector-set!', V([1, 2, 3])]),
+    F(['vector-set!', V([1, 2, 3], 1)]),
+    F(['vector-set!', V([1, 2, 3], 1, 2, 3)]),
+    F(['vector-set!', [1, 2, 3], 1, 2]),
+  ]);
+}

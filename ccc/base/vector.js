@@ -28,4 +28,29 @@ ccc.base.registerProcedures({
       return new ccc.Vector(goog.array.repeat(data, k));
     }
   },
+
+  'vector-length': {
+    args: [ccc.isVector],
+    impl: function(v) {
+      return v.size();
+    }
+  },
+
+  'vector-ref': {
+    args: [ccc.isVector, ccc.isInteger],
+    impl: function(v, k) {
+      if (k < 0 || k >= v.size())
+        return new ccc.Error('vector-ref: Index out of bounds');
+      return v.get(k);
+    }
+  },
+
+  'vector-set!': {
+    args: [ccc.isVector, ccc.isInteger, null],
+    impl: function(v, k, data) {
+      if (k < 0 || k >= v.size())
+        return new ccc.Error('vector-set!: Index out of bounds');
+      v.set(k, data);
+    }
+  },
 });

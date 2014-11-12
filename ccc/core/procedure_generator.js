@@ -60,6 +60,7 @@ ccc.ProcedureGenerator.prototype.compile = function(environment, continuation) {
   this.argLocations_ = [];
   goog.array.forEach(this.formalNames_, function(name, index) {
     var location = new ccc.LocalLocation(compileScope, index);
+    location.setName(name);
     compileScope.set(name, location);
     this.argLocations_[index] = location;
   }, this);
@@ -67,6 +68,7 @@ ccc.ProcedureGenerator.prototype.compile = function(environment, continuation) {
   if (!goog.isNull(this.formalTail_)) {
     this.argTailLocation_ = new ccc.LocalLocation(compileScope,
         this.formalNames_.length);
+    this.argTailLocation_.setName(this.formalTail_);
     compileScope.set(this.formalTail_, this.argTailLocation_);
   }
   return this.compileBody_(this.body_, compileScope, goog.bind(

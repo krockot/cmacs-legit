@@ -15,6 +15,8 @@ goog.require('goog.asserts');
  * @extends {ccc.Object}
  */
 ccc.Location = function() {
+  /** @private {string} */
+  this.name_ = '<unknown>';
 };
 goog.inherits(ccc.Location, ccc.Object);
 
@@ -40,7 +42,8 @@ ccc.Location.prototype.toString = function() {
 ccc.Location.prototype.eval = function(environment, continuation) {
   var value = this.getValue();
   if (goog.isNull(value))
-    return continuation(new ccc.Error('Referencing uninitialized location'));
+    return continuation(new ccc.Error('Referencing uninitialized variable ' +
+        this.name_));
   return continuation(value);
 };
 
@@ -65,3 +68,12 @@ ccc.Location.prototype.setValue = function(value) {
   goog.asserts.assert(false, 'Not reached');
 };
 
+
+/**
+ * Tags this location with a name which may be useful for debugging.
+ *
+ * @param {string} name
+ */
+ccc.Location.prototype.setName = function(name) {
+  this.name_ = name;
+};

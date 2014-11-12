@@ -63,6 +63,7 @@ ccc.Symbol.prototype.compile = function(environment, continuation) {
   var location = environment.get(this.name_);
   if (goog.isNull(location)) {
     location = new ccc.ImmediateLocation();
+    location.setName(this.name_);
     environment.setGlobal(this.name_, location);
   }
   return continuation(location);

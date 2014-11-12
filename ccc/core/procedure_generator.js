@@ -155,6 +155,7 @@ ccc.ProcedureGenerator.prototype.apply = function(
     location.setEnvironment(scope);
   }, this);
   if (!goog.isNull(this.argTailLocation_)) {
+    goog.asserts.assert(!goog.isNull(this.formalTail_));
     scope.set(this.formalTail_, this.argTailLocation_);
     this.argTailLocation_.setEnvironment(scope);
   }

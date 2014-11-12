@@ -185,6 +185,32 @@ function testSetTail() {
   ]);
 }
 
+function testTake() {
+  RunTests([
+    T(['take', 0, []], []),
+    T(['take', 1000, []], []),
+    T(['take', 1, ['list', 1, 2, 3]], [1]),
+    T(['take', 2, ['list', 1, 2, 3]], [1, 2]),
+    T(['take', 3, ['list', 1, 2, 3]], [1, 2, 3]),
+    T(['take', 42, ['list', 1, 2]], [1, 2]),
+    F(['take']),
+    F(['take', -1, []]),
+    F(['take', 0]),
+    F(['take', 0, [], 1]),
+    F(['take', [], 0]),
+  ]);
+}
+
+function testRepeat() {
+  RunTests([
+    T(['car', ['repeat', 1]], 1),
+    T(['cadr', ['repeat', 1]], 1),
+    T(['cadddr', ['repeat', 1]], 1),
+    T(['take', 8, ['repeat', 1, 2, 3]], [1, 2, 3, 1, 2, 3, 1, 2]),
+    T(['repeat'], []),
+  ]);
+}
+
 function testListToString() {
   RunTests([
     T(['list->string', ['list', C(65), C(66), C(67)]], new String('ABC')),

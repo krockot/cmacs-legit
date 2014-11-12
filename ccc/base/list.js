@@ -141,6 +141,36 @@ ccc.base.registerProcedures({
     }
   },
 
+  'take': {
+    args: [ccc.isInteger, null],
+    impl: function(k, list) {
+      if (k < 0)
+        return new ccc.Error('take: Index must be zero or positive');
+      if (ccc.isNil(list))
+        return ccc.NIL;
+      var elements = [];
+      while (k-- && ccc.isPair(list)) {
+        elements.push(list.car());
+        list = list.cdr();
+      }
+      return ccc.Pair.makeList(elements);
+    }
+  },
+
+  'repeat': {
+    optionalArgs: null,
+    impl: function() {
+      if (arguments.length == 0)
+        return ccc.NIL;
+      var tail = new ccc.Pair(arguments[arguments.length - 1], ccc.NIL);
+      var cycle = tail;
+      for (var i = arguments.length - 2; i >= 0; --i)
+        cycle = new ccc.Pair(arguments[i], cycle);
+      tail.setCdr(cycle);
+      return cycle;
+    }
+  },
+
   'list->string': {
     args: [null],
     impl: function(list) {

@@ -130,6 +130,17 @@ ccc.base.registerProcedures({
     }
   },
 
+  'set-tail!': {
+    args: [ccc.isPair, null],
+    impl: function(list, newTail) {
+      var tail = ccc.NIL;
+      if (!list.forEachProper(function(car, pair) { tail = pair; }))
+        return new ccc.Error('set-tail!: Invalid list argument');
+      if (ccc.isPair(tail))
+        tail.setCdr(newTail);
+    }
+  },
+
   'list->string': {
     args: [null],
     impl: function(list) {

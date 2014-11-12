@@ -148,7 +148,7 @@ ccc.Pair.prototype.map = function(transform) {
  * a proper list, this returns {@code false}. Otherwise it returns {@code true}
  * after the function has been called on every car.
  *
- * @param {function(ccc.Data)} callback
+ * @param {function(ccc.Data, !ccc.Pair)} callback
  * @return {boolean}
  */
 ccc.Pair.prototype.forEachProper = function(callback) {
@@ -157,7 +157,7 @@ ccc.Pair.prototype.forEachProper = function(callback) {
     hare = this.cdr_.cdr_;
   var tortoise = this;
   while (ccc.isPair(tortoise) && tortoise !== hare) {
-    callback(tortoise.car_);
+    callback(tortoise.car_, tortoise);
     tortoise = tortoise.cdr_;
     if (ccc.isPair(hare) && ccc.isPair(hare.cdr_))
       hare = hare.cdr_.cdr_;

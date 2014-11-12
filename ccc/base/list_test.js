@@ -172,6 +172,19 @@ function testListRef() {
   ]);
 }
 
+function testSetTail() {
+  RunTests([
+    T(['begin',
+        ['define', 'x', ['list', 1, 2, 3]],
+        ['set-tail!', 'x', ['list', 4, 5]],
+        'x'], [1, 2, 3, 4, 5]),
+    F(['set-tail!']),
+    F(['set-tail!', ['list', 1, 2, 3]]),
+    F(['set-tail!', ['list', 1, 2, 3], 1, 2]),
+    F(['set-tail!', 1, 2]),
+  ]);
+}
+
 function testListToString() {
   RunTests([
     T(['list->string', ['list', C(65), C(66), C(67)]], new String('ABC')),

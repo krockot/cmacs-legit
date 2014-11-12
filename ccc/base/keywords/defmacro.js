@@ -38,8 +38,6 @@ DefmacroTransformer_.prototype.transform = function(environment, args) {
     if (!ccc.isSymbol(name))
       return continuation(new ccc.Error('defmacro: Expected symbol for name'));
     var formals = args.cdr().car();
-    if (!ccc.isPair(formals) && !ccc.isNil(formals))
-      return continuation(new ccc.Error('defmacro: Invalid argument list'));
     var formalNames = [];
     var formalTail = null;
     var formal = formals;

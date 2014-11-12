@@ -166,7 +166,6 @@ function testLambda() {
 }
 
 function testBegin() {
-  asyncTestCase.waitForAsync();
   var count = 0;
   var native1 = new ccc.NativeProcedure(
       function(environment, args, continuation) {
@@ -187,6 +186,35 @@ function testBegin() {
     T(['begin', [native1], [native2], [native3]], 3),
   ]);
 }
+
+function testQuasiquote() {
+  var Q = 'quote';
+  var QQ = 'quasiquote';
+  var UQ = 'unquote';
+  var UQS = 'unquote-splicing';
+  RunTests([
+    T([QQ, 1], 1),
+    T([QQ, true], true),
+    T([QQ, new String("hello")], new String("hello")),
+    T([QQ, 'bananas'], 'bananas'),
+    T([QQ, [1, 2, 3]], [1, 2, 3]),
+    T([QQ, [1, 2, ['+', 1, 2]]], [1, 2, ['+', 1, 2]]),
+    T([QQ, [1, 2, [UQ, ['+', 1, 2]]]], [1, 2, 3]),
+    T([QQ, [1, 2, [UQS, [Q, [4, 5, 6]]]]], [1, 2, 4, 5, 6]),
+    T([QQ, [1, 2, [UQS, [Q, [4, 5, 6]]], 7]], [1, 2, 4, 5, 6, 7]),
+    T([QQ, ccc.Pair.makeList([1, 2], [UQ, ['+', 1, 2]])],
+       ccc.Pair.makeList([1, 2], 3)),
+    T([QQ, [QQ, [1, 2, [UQ, ['-', [UQ, ['+', 3, 4]]]], 5]]],
+      [QQ, [1, 2, [UQ, ['-', 7]], 5]]),
+    F([QQ]),
+    F([UQ, 1]),
+    F([UQS, []]),
+    F([QQ, 1, 2]),
+    F([QQ, [UQ, [UQ, 1]]]),
+  ]);
+}
+
+// Disabled tests for things that still need to be re-implemented.
 
 function DISABLED_testLet() {
   asyncTestCase.waitForAsync();

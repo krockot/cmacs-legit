@@ -60,13 +60,25 @@ ccc.Pair.prototype.toString = function() {
  */
 ccc.Pair.prototype.toStringInner_ = function() {
   var str = ' ' + ccc.core.stringify(this.car_);
-  if (this.cdr_ === ccc.NIL) {
+  var tail = this.cdr_;
+  if (ccc.isNil(tail))
     return str;
-  }
-  if (this.cdr_ instanceof ccc.Pair) {
-    return str + this.cdr_.toStringInner_();
-  }
-  return str + ' . ' + ccc.core.stringify(this.cdr_);
+  var count = 1;
+  tail.forEachProper(function(data, pair) {
+    str += ' ' + ccc.core.stringify(data);
+    tail = pair;
+    count++;
+  });
+  if (ccc.isNil(tail.cdr_))
+    return str;
+  if (!ccc.isPair(tail.cdr_))
+    return str + ' . ' + ccc.core.stringify(this.cdr_);
+  // We have a cycle. Try to output at least twice its length before terminating
+  // with an ellipsis.
+  tail = tail.cdr_;
+  for (var i = 0; i < count * 4; ++i, tail = tail.cdr_)
+    str += ' ' + ccc.core.stringify(tail.car_);
+  return str + ' ...';
 };
 
 

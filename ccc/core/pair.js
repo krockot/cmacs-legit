@@ -63,18 +63,20 @@ ccc.Pair.prototype.toStringInner_ = function() {
   var tail = this.cdr_;
   if (ccc.isNil(tail))
     return str;
-  var count = 1;
-  tail.forEachProper(function(data, pair) {
-    str += ' ' + ccc.core.stringify(data);
-    tail = pair;
-    count++;
-  });
-  if (ccc.isNil(tail.cdr_))
-    return str;
+  if (ccc.isPair(tail)) {
+    var count = 1;
+    tail.forEachProper(function(data, pair) {
+      str += ' ' + ccc.core.stringify(data);
+      tail = pair;
+      count++;
+    });
+    if (ccc.isNil(tail.cdr_))
+      return str;
+  }
   if (!ccc.isPair(tail.cdr_))
     return str + ' . ' + ccc.core.stringify(this.cdr_);
-  // We have a cycle. Try to output at least twice its length before terminating
-  // with an ellipsis.
+  // This should only be reached if we have a cycle. Output a few full cycles
+  // followed by an ellipsis.
   tail = tail.cdr_;
   for (var i = 0; i < count * 4; ++i, tail = tail.cdr_)
     str += ' ' + ccc.core.stringify(tail.car_);

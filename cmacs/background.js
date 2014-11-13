@@ -5,11 +5,9 @@ goog.provide('cmacs.background.main');
 goog.require('ccc.core');
 goog.require('ccc.core.stringify');
 goog.require('ccc.base.all');
-goog.require('ccc.parse.Parser');
-goog.require('ccc.parse.Scanner');
+goog.require('ccc.parse.evalSource');
 goog.require('goog.Promise');
 goog.require('goog.object');
-
 
 
 cmacs.background.main = function() {
@@ -21,25 +19,12 @@ cmacs.background.main = function() {
     return continuation(ccc.UNSPECIFIED);
   }));
   goog.global['evalCcc'] = function(code) {
-    var scanner = new ccc.parse.Scanner();
-    scanner.feed(code);
-    scanner.setEof();
-    var parser = new ccc.parse.Parser(scanner);
-    /** @param {?ccc.Data} lastValue */
-    var readData = function(lastValue) {
-      return parser.read().then(function(data) {
-        if (goog.isNull(data)) {
-          if (!goog.isNull(lastValue))
-            console.log(ccc.core.stringify(lastValue));
-          return null;
-        }
-        var thread = new ccc.Thread(ccc.evalSource(data, environment));
-        thread.run().then(readData, function(error) {
-          console.error('Error: ' + error.toString());
-        });
-      });
-    };
-    readData(null);
+    var thread = new ccc.Thread(ccc.parse.evalSource(code, environment));
+    thread.run(function(result) {
+      if (ccc.isError(result))
+        console.error('Error: ' + result);
+      console.log(ccc.core.stringify(result));
+    });
   };
 };
 

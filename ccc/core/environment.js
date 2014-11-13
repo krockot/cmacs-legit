@@ -32,6 +32,9 @@ ccc.Environment = function(opt_parent) {
 
   /** @private {number} */
   this.id_ = ++ccc.Environment.nextId_;
+
+  /** @private {!Array.<ccc.ThreadEntryPoint>} */
+  this.preludes_ = [];
 };
 goog.inherits(ccc.Environment, ccc.Object);
 
@@ -169,6 +172,43 @@ ccc.Environment.prototype.setLocalValue = function(index, value) {
 ccc.Environment.prototype.setActiveLocals = function(locals) {
   this.locals_ = locals;
 };
+
+
+/**
+ * Adds a prelude task to the environment. Libraries can add their own prelude
+ * tasks - typically such a task will parse and evaluate some initialization
+ * code provided by the library.
+ *
+ * An environment's preludes should be run to completion before the environment
+ * is considered usable.
+ *
+ * @param {ccc.ThreadEntryPoint} prelude
+ */
+ccc.Environment.prototype.addPrelude = function(prelude) {
+  this.preludes_.push(prelude);
+};
+
+
+/**
+ * Returns a thread entry point which corresponds to the execution of all of
+ * this environment's preludes to completion.
+ *
+ * @return {ccc.ThreadEntryPoint}
+ */
+ccc.Environment.prototype.evalPreludes = function() {
+  var preludes = this.preludes_;
+  return function(continuation) {
+    var evalNextPrelude = function(result) {
+      if (ccc.isError(result))
+        return new ccc.Error('Prelude: ' + result);
+      if (preludes.length == 0)
+        return continuation(ccc.UNSPECIFIED);
+      return preludes.shift()(evalNextPrelude);
+    };
+    return evalNextPrelude(ccc.UNSPECIFIED);
+  }
+};
+
 
 
 /**

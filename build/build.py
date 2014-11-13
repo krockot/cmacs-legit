@@ -3,6 +3,7 @@
 import inspect
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -40,10 +41,37 @@ def _InitializeOutput(app_path, out_path):
   app_out_path = os.path.join(out_path, 'app')
   shutil.copytree(app_path, app_out_path)
 
+def _BuildCccSources(src_paths, out_root):
+  for path in src_paths:
+    for root, dirs, files in os.walk(path):
+      prefix = os.path.commonprefix((root, out_root))
+      relative_path = root[len(prefix):]
+      out_dir = os.path.join(out_root, relative_path)
+      if not os.path.isdir(out_dir):
+        os.makedirs(out_dir)
+      for file in (file for file in files
+                   if os.path.splitext(file)[1] == '.ccc'):
+        out_filename = os.path.splitext(file)[0] + '.js'
+        out_path = os.path.join(out_dir, out_filename)
+        with open(os.path.join(root, file)) as f:
+          contents = f.read()
+          namespace = re.search(r'; @provide (\S+)', contents)
+          if namespace is None:
+            print 'WARNING: Ignoring ccc source with no @provide annotation.'
+            continue
+          namespace = namespace.groups()[0]
+          library = '.'.join(namespace.split('.')[:-1])
+          source = json.dumps(contents)
+          with open(out_path, 'w') as out_file:
+            out_file.writelines([
+              'goog.provide(\'%s\')\n\n' % namespace,
+              'goog.require(\'ccc.base\')\n\n\n',
+              '%s.addPrelude(%s)\n' % (library, source)])
 
 def _CompileJs(closure_library_root,
                closure_compiler_jar,
                src_paths,
+               generated_src_paths,
                externs,
                entry_point,
                output_filename,
@@ -86,12 +114,14 @@ def _CompileJs(closure_library_root,
       '!%s' % os.path.join(closure_library_root, '**_test.js'),
       '!%s' % os.path.join(closure_library_root, '**demo.js')] +
       [arg for pair in extern_args for arg in pair] + src_paths +
+      generated_src_paths +
         ['!%s' % os.path.join(path, '**_test.js') for path in src_paths])
 
 
 def _BuildJsOutputs(closure_library_root,
                     closure_compiler_jar,
                     src_paths,
+                    generated_src_paths,
                     externs,
                     out_path,
                     debug):
@@ -100,6 +130,7 @@ def _BuildJsOutputs(closure_library_root,
     if not _CompileJs(closure_library_root,
                       closure_compiler_jar,
                       src_paths,
+                      generated_src_paths,
                       externs,
                       namespace,
                       output_file,
@@ -153,15 +184,18 @@ def _BuildCmacs(version, debug):
                   _SOURCE_PATHS)
   externs = [os.path.join(root_path, 'externs', path) for path in _EXTERNS]
   out_path = os.path.join(root_path, 'out')
+  generated_src_paths = map(lambda path : os.path.join(out_path, path),
+                            _SOURCE_PATHS)
 
   closure_library_root = os.path.join(root_path, 'third_party',
       'closure-library')
   closure_compiler_jar = os.path.join(root_path, 'third_party',
       'closure-compiler', 'compiler.jar')
   _InitializeOutput(app_path, out_path)
+  _BuildCccSources(src_paths, out_path)
   _CalcDeps(src_paths, closure_library_root, out_path)
   _BuildJsOutputs(closure_library_root, closure_compiler_jar, src_paths,
-      externs, out_path, debug)
+      generated_src_paths, externs, out_path, debug)
   if not debug:
     print 'Packaging ZIP file with version %s' % version
     _UpdateManifest(out_path, version)

@@ -2,16 +2,10 @@
 
 goog.provide('ccc.parse.DataReader');
 
-goog.require('goog.Promise');
-
 
 
 /**
  * Data reader interface.
- *
- * {@code DataReader} consumers should call {@code read} when they want a new
- * Data object from the underlying stream. If no more Data objects are available
- * {@code read} returns {@code null}
  *
  * @interface
  */
@@ -19,6 +13,11 @@ ccc.parse.DataReader = function() {};
 
 
 /**
- * @type {function():!goog.Promise.<ccc.Data, !ccc.Error>}
+ * Reads a new {@code ccc.Data} object from the underlying stream. If no data
+ * objects are currently available, {@code read} returns {@code undefined}. If
+ * the underlying input stream has been terminated this returns {@code null}.
+ * If a parsing error occurred this returns a {@code ccc.Error}.
+ *
+ * @return {(?ccc.Data|!ccc.Error|undefined)}
  */
-ccc.parse.DataReader.prototype.read;
+ccc.parse.DataReader.prototype.read = function() {};

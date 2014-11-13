@@ -3,57 +3,40 @@
 goog.provide('ccc.parse.ScannerTest');
 goog.setTestOnly('ccc.parse.ScannerTest');
 
+goog.require('ccc.core');
 goog.require('ccc.parse.Scanner');
 goog.require('ccc.parse.Token');
 goog.require('ccc.parse.TokenType');
-goog.require('goog.Promise');
-goog.require('goog.testing.AsyncTestCase');
+goog.require('goog.array');
 goog.require('goog.testing.jsunit');
 
-
-var asyncTestCase = goog.testing.AsyncTestCase.createAndInstall(document.title);
 var T = ccc.parse.TokenType;
-
-var setUpPage = function() {
-  asyncTestCase.stepTimeout = 200;
-}
-
-var continueTesting = function() {
-  asyncTestCase.continueTesting();
-};
-
-var justFail = function(reason) {
-  console.error(reason);
-  fail(reason);
-};
 
 // Expect a specific token with optional details.
 var E = function(tokenType, opt_text, opt_line, opt_column) {
   return function(scanner) {
-    return scanner.readToken().then(function(token) {
-      assertNotNull('Ran out of tokens!', token);
-      assertEquals(tokenType, token.type);
-      if (goog.isDef(opt_text)) {
-        assertEquals(opt_text, token.text);
-      }
-      if (goog.isDef(opt_line)) {
-        assertEquals(opt_line, token.line);
-      }
-      if (goog.isDef(opt_column)) {
-        assertEquals(opt_column, token.column)
-      }
-      return true;
-    });
+    var token = scanner.readToken();
+    if (ccc.isError(token))
+      return fail(token);
+    assertNotNull('Ran out of tokens!', token);
+    assertEquals(tokenType, token.type);
+    if (goog.isDef(opt_text)) {
+      assertEquals(opt_text, token.text);
+    }
+    if (goog.isDef(opt_line)) {
+      assertEquals(opt_line, token.line);
+    }
+    if (goog.isDef(opt_column)) {
+      assertEquals(opt_column, token.column)
+    }
   };
 };
 
 // Expectation of an exception.
 var F = function(scanner) {
-  return new goog.Promise(function(resolve, reject) {
-    scanner.readToken().then(
-        reject.bind(null, 'Expected failure, got success.'),
-        resolve.bind(null, false));
-  });
+  var token = scanner.readToken();
+  if (!ccc.isError(token))
+    fail('Expected failure, got success.');
 };
 
 // Simple test utility to feed a string to a Scanner and check expectations.
@@ -61,33 +44,14 @@ var S = function(string, expectations) {
   var scanner = new ccc.parse.Scanner();
   scanner.feed(string);
   scanner.setEof();
-
-  return new goog.Promise(function(resolve, reject) {
-    var checkExpectations = function(expectations) {
-      if (expectations.length == 0) {
-        scanner.readToken().then(function(token) {
-          assertNull(token);
-          resolve(null);
-        }, reject);
-      } else {
-        var expectation = expectations.shift();
-        expectation(scanner).then(function(keepChecking) {
-          if (keepChecking)
-            checkExpectations(expectations);
-          else
-            resolve(null);
-        }, reject);
-      }
-    };
-    checkExpectations(expectations);
+  goog.array.forEach(expectations, function(expectSomeStuff) {
+    expectSomeStuff(scanner);
   });
 };
 
 // Sets up a set of asynchronous scanner tests and joins them together before
 // concluding a test.
-var RunTests = function(tests) {
-  asyncTestCase.waitForAsync();
-  goog.Promise.all(tests).then(continueTesting, justFail);
+var RunTests = function() {
 }
 
 // Actual tests below this line.

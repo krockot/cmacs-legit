@@ -47,20 +47,25 @@ var T = function(spec, opt_expectedOutputSpec, opt_environment) {
       ? opt_environment
       : new ccc.Environment());
   ccc.base.addToEnvironment(environment);
-  var source = ccc.core.build(spec);
-  var thread = new ccc.Thread(ccc.evalSource(source, environment));
-  return thread.run().then(function(result) {
-    logger.log(goog.log.Logger.Level.INFO, goog.string.format(
-        'Evaluation completed in %s thunks in %s ms.', thread.thunkCounter_,
-        thread.age_));
-    if (goog.isDef(opt_expectedOutputSpec)) {
-      var expectedOutput = ccc.core.build(opt_expectedOutputSpec);
-      if (!ccc.equal(result, expectedOutput))
-        return goog.Promise.reject('Object mismatch on result of ' +
-            ccc.core.stringify(source) + '\n' +
-            'Expected: ' + ccc.core.stringify(expectedOutput) +
-            '\nActual: ' + ccc.core.stringify(result) + '\n');
-    }
+  var data = ccc.core.build(spec);
+  var thread = new ccc.Thread(ccc.evalData(data, environment));
+  return new goog.Promise(function(resolve, reject) {
+    return thread.run(function(result) {
+      logger.log(goog.log.Logger.Level.INFO, goog.string.format(
+          'Evaluation completed in %s thunks in %s ms.', thread.thunkCounter_,
+          thread.age_));
+      if (ccc.isError(result))
+        return reject(result);
+      if (goog.isDef(opt_expectedOutputSpec)) {
+        var expectedOutput = ccc.core.build(opt_expectedOutputSpec);
+        if (!ccc.equal(result, expectedOutput))
+          return reject('Object mismatch on result of ' +
+              ccc.core.stringify(data) + '\n' +
+              'Expected: ' + ccc.core.stringify(expectedOutput) +
+              '\nActual: ' + ccc.core.stringify(result) + '\n');
+      }
+      resolve();
+    });
   });
 };
 

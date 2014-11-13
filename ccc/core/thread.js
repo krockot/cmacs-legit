@@ -3,7 +3,6 @@
 goog.provide('ccc.Thread');
 
 goog.require('ccc.Error');
-goog.require('goog.Promise');
 goog.require('goog.Timer');
 
 
@@ -41,8 +40,8 @@ ccc.Thread = function(entryPoint, opt_options) {
   /** @private {?ccc.Data} */
   this.result_ = null;
 
-  /** @private {!goog.promise.Resolver.<ccc.Data, !ccc.Error>} */
-  this.resolver_ = goog.Promise.withResolver();
+  /** @private {?function(ccc.Data)} */
+  this.callback_ = null;
 
   /** @private {number} */
   this.thunkCounter_ = 0;
@@ -58,17 +57,17 @@ ccc.Thread = function(entryPoint, opt_options) {
 /**
  * Run the thread.
  *
- * @return {!goog.Promise.<ccc.Data, !ccc.Error>}
+ * @param {function(ccc.Data)} callback
  */
-ccc.Thread.prototype.run = function() {
+ccc.Thread.prototype.run = function(callback) {
   if (this.running_)
     throw new Error('Thread already running');
   if (!goog.isNull(this.result_))
     throw new Error('Thread can only be run once');
+  this.callback_ = callback;
   this.running_ = true;
   this.startTime_ = Date.now();
   this.runSlice_(this.entryPoint_(goog.bind(this.runContinuation_, this)));
-  return this.resolver_.promise;
 };
 
 
@@ -121,10 +120,8 @@ ccc.Thread.prototype.runContinuation_ = function(result) {
   this.running_ = false;
   this.result_ = result;
   this.age_ = Date.now() - this.startTime_;
-  if (ccc.isError(result))
-    this.resolver_.reject(result);
-  else
-    this.resolver_.resolve(result);
+  goog.asserts.assert(!goog.isNull(this.callback_));
+  this.callback_(result);
   return ccc.Thread.HALTING_THUNK_;
 };
 
@@ -163,7 +160,7 @@ ccc.Thread.HALTING_THUNK_ = function() {
  * Any function which takes a {@code ccc.Continuation} and returns a
  * {@code ccc.Thunk} can be treated as an entry point.
  *
- * @typedef {function(!ccc.Continuation):!ccc.Thunk}
+ * @typedef {function(!ccc.Continuation):ccc.Thunk}
  */
 ccc.ThreadEntryPoint;
 

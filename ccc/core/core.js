@@ -54,7 +54,6 @@ ccc.Thunk;
 ccc.Continuation;
 
 
-
 /**
  * Returns a new {@code ccc.ThreadEntryPoint} at the start of the expansion
  * process for an input {@code ccc.Data}.
@@ -120,15 +119,19 @@ ccc.eval = function(data, environment) {
  * @param {!ccc.Environment} environment
  * @return {ccc.ThreadEntryPoint}
  */
-ccc.evalSource = function(data, environment) {
+ccc.evalData = function(data, environment) {
   return function(continuation) {
-    return ccc.expand(data, environment)(function(expandedData) {
-      if (ccc.isError(expandedData))
-        return continuation(expandedData.pass());
-      return ccc.compile(expandedData, environment)(function(compiledData) {
-        if (ccc.isError(compiledData))
-          return continuation(compiledData.pass());
-        return ccc.eval(compiledData, environment)(continuation);
+    return environment.evalPreludes()(function(result) {
+      if (ccc.isError(result))
+        return continuation(result.pass());
+      return ccc.expand(data, environment)(function(expandedData) {
+        if (ccc.isError(expandedData))
+          return continuation(expandedData.pass());
+        return ccc.compile(expandedData, environment)(function(compiledData) {
+          if (ccc.isError(compiledData))
+            return continuation(compiledData.pass());
+          return ccc.eval(compiledData, environment)(continuation);
+        });
       });
     });
   };

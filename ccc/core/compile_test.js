@@ -6,7 +6,7 @@ goog.setTestOnly('ccc.CompileTest');
 goog.require('ccc.core');
 goog.require('ccc.core.build');
 goog.require('ccc.core.stringify');
-goog.require('goog.Promise');
+goog.require('goog.array');
 goog.require('goog.debug.Console');
 goog.require('goog.log.Logger');
 goog.require('goog.string.format');
@@ -20,7 +20,6 @@ var logger = goog.log.getLogger('ccc.CompileTest');
 function setUpPage() {
   asyncTestCase.stepTimeout = 50;
   asyncTestCase.timeToSleepAfterFailure = 50;
-  goog.Promise.setUnhandledRejectionHandler(justFail);
   new goog.debug.Console().setCapturing(true);
 }
 
@@ -31,37 +30,56 @@ function continueTesting() {
 function justFail(reason) {
   console.error(goog.isDef(reason) && goog.isDef(reason.stack)
       ? reason.stack : reason);
-  setTimeout(goog.partial(fail, reason), 0);
+  fail(reason);
 }
 
-// Single expansion test. Takes an input object and an expected output object.
-function E(input, opt_expectedOutputSpec, opt_environment) {
-  var environment = (goog.isDef(opt_environment)
-      ? opt_environment
-      : new ccc.Environment(opt_environment));
-  var thread = new ccc.Thread(ccc.compile(ccc.core.build(input), environment));
-  return thread.run().then(function(result) {
-    if (!goog.isDef(opt_expectedOutputSpec))
-      return;
-    var expectedOutput = ccc.core.build(opt_expectedOutputSpec);
-    logger.log(goog.log.Logger.Level.INFO, goog.string.format(
-        'Compilation completed in %s thunks in %s ms.', thread.thunkCounter_,
-        thread.age_));
-    if (!ccc.equal(expectedOutput, result))
-      return goog.Promise.reject(new Error('Object mismatch.\n' +
-          'Expected: ' + ccc.core.stringify(expectedOutput) +
-          '\nActual: ' + ccc.core.stringify(result) + '\n'));
-  });
+// Single compilation test. Takes an input object and an expected output object.
+function E(input, opt_expectedOutputSpec, opt_environment, opt_followUp) {
+  return function(callback) {
+    var environment = (goog.isDef(opt_environment)
+        ? opt_environment
+        : new ccc.Environment(opt_environment));
+    var thread = new ccc.Thread(ccc.compile(ccc.core.build(input),
+        environment));
+    return thread.run(function(result) {
+      logger.log(goog.log.Logger.Level.INFO, goog.string.format(
+          'Compilation completed in %s thunks in %s ms.', thread.thunkCounter_,
+          thread.age_));
+      if (ccc.isError(result))
+        return callback(result);
+      if (!goog.isDef(opt_expectedOutputSpec))
+        return callback();
+      var expectedOutput = ccc.core.build(opt_expectedOutputSpec);
+      if (!ccc.equal(expectedOutput, result))
+        return callback(new ccc.Error('Object mismatch.\n' +
+            'Expected: ' + ccc.core.stringify(expectedOutput) +
+            '\nActual: ' + ccc.core.stringify(result) + '\n'));
+      callback(result);
+    });
+  };
 }
 
 function RunTest(test) {
   asyncTestCase.waitForAsync();
-  test.then(continueTesting, justFail);
+  test(function(result) {
+    if (ccc.isError(result))
+      fail(result);
+    continueTesting();
+  });
 }
 
-function RunTests(tests) {
+function RunTests(tests, opt_callback) {
   asyncTestCase.waitForAsync();
-  goog.Promise.all(tests).then(continueTesting, justFail);
+  var testsRemaining = tests.length;
+  goog.array.forEach(tests, function(test) {
+    test(function(result) {
+      if (ccc.isError(result))
+        fail(result);
+      testsRemaining--;
+      if (testsRemaining == 0)
+        goog.isDef(opt_callback) ? opt_callback(result) : continueTesting();
+    });
+  });
 }
 
 // Tests below this line
@@ -83,13 +101,16 @@ function testUnknownSymbolCompilation() {
   // Verify that compiling an unbound symbol introduces a new uninitialized
   // binding in global environment.
   RunTests([
-    E('hello', undefined, environment).then(function() {
-      var location = globalEnvironment.get('hello');
-      assertNotNull(location);
-      assert(location instanceof ccc.ImmediateLocation);
-      assertNull(location.getValue());
-    })
-  ]);
+    E('hello', undefined, environment),
+  ], function(result) {
+    if (ccc.isError(result))
+      fail(result);
+    var location = globalEnvironment.get('hello');
+    assertNotNull(location);
+    assert(location instanceof ccc.ImmediateLocation);
+    assertNull(location.getValue());
+    continueTesting();
+  });
 }
 
 function testKnownSymbolCompilation() {

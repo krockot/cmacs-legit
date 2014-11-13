@@ -3,6 +3,7 @@
 goog.provide('ccc.Library');
 
 goog.require('ccc.core');
+goog.require('ccc.parse.evalSource');
 goog.require('goog.asserts');
 goog.require('goog.object');
 
@@ -17,6 +18,9 @@ goog.require('goog.object');
 ccc.Library = function() {
   /** @private {!Object.<string, ccc.Data>} */
   this.bindings_ = {};
+
+  /** @private {string} */
+  this.prelude_ = '';
 };
 
 
@@ -40,6 +44,7 @@ ccc.Library.prototype.addToEnvironment = function(environment) {
   goog.object.forEach(this.bindings_, function(data, name) {
     environment.setValue(name, data);
   });
+  environment.addPrelude(ccc.parse.evalSource(this.prelude_, environment));
 };
 
 
@@ -138,6 +143,17 @@ ccc.Library.prototype.registerProcedures = function(specMap) {
   }, this);
 };
 
+
+/**
+ * Adds a blob of Ccc code to the prelude for this library. If a library is
+ * added to an environment, its prelude must be fully evaluated before other
+ * code.
+ *
+ * @param {string} code
+ */
+ccc.Library.prototype.addPrelude = function(code) {
+  this.prelude_ += code;
+};
 
 
 /**

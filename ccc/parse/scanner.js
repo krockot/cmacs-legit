@@ -2,14 +2,13 @@
 
 goog.provide('ccc.parse.Scanner');
 
+goog.require('ccc.core');
 goog.require('ccc.parse.Token');
 goog.require('ccc.parse.TokenReader');
 goog.require('ccc.parse.TokenType');
-goog.require('goog.Promise');
 goog.require('goog.array');
 goog.require('goog.asserts');
 goog.require('goog.object');
-goog.require('goog.promise.Resolver');
 
 
 /**
@@ -26,7 +25,7 @@ var LINE_TERMINATORS_ = '\n\v\f\r\x85\u2028\u2029';
  * The result of a single transition step.
  *
  * @typedef {{
- *   token: (!ccc.parse.TokenType|undefined),
+ *   token: (!ccc.parse.TokenType|!ccc.Error|undefined),
  *   state: (!Transition_|undefined),
  *   terminate: boolean,
  *   advance: boolean,
@@ -173,7 +172,14 @@ var START_STATE_ = (function() {
         return rule.match(input);
       });
       if (goog.isNull(match)) {
-        throw new Error('Unexpected \'' + input + '\' character in input.');
+        return {
+          state: undefined,
+          token: new ccc.Error('Unexpected \'' + input +
+              '\' character in input.'),
+          terminate: false,
+          advance: false,
+          discard: false
+        };
       }
       return {
         state: goog.isDef(match.state) ? S[match.state] : undefined,
@@ -530,13 +536,6 @@ ccc.parse.Scanner = function() {
   this.readCRLast_ = false;
 
   /**
-   * The pending readToken promise, if any. This will be resolved either once
-   * a new token is available or EOF is set.
-   * @private {goog.promise.Resolver.<ccc.parse.Token>}
-   */
-  this.pendingRead_ = null;
-
-  /**
    * Indicates if EOF has been set on the scanner.
    * @private {boolean}
    */
@@ -551,7 +550,6 @@ ccc.parse.Scanner = function() {
  */
 ccc.parse.Scanner.prototype.setEof = function() {
   this.eof_ = true;
-  this.tryResolveRead_();
 };
 
 
@@ -564,129 +562,77 @@ ccc.parse.Scanner.prototype.feed = function(input) {
   if (this.eof_)
     throw new Error('Cannot feed Scanner at EOF.');
   this.input_ += input;
-  this.tryResolveRead_();
-};
-
-
-/**
- * Tries to resolve a pending read if there is one.
- *
- * @return {!goog.Promise.<ccc.parse.Token>} The pending read's promise.
- * @private
- */
-ccc.parse.Scanner.prototype.tryResolveRead_ = function() {
-  if (goog.isNull(this.pendingRead_))
-    return goog.Promise.resolve(/** @type {ccc.parse.Token} */ (null));
-  try {
-    while (true) {
-      var c = this.input_.charAt(this.index_);
-      // We've run out of data! Do not try to perform a state transition unless
-      // we really hit EOF.
-      if (c == '' && !this.eof_) {
-        return this.pendingRead_.promise;
-      }
-      var result = this.state_(c);
-      // Clean break on EOF. Resolve to null to signal end of token stream.
-      if (result.terminate) {
-        return this.resolveReadWithToken_(null);
-      }
-      // Transition state if necessary.
-      var oldState = this.state_;
-      if (goog.isDef(result.state)) {
-        this.state_ = result.state;
-      }
-      // Either the input should be advanced or the state should change
-      // (or both). If neither happens, we have a problem.
-      goog.asserts.assert(result.advance || this.state_ != oldState ||
-          goog.isDef(result.token), 'Probably stuck in an infinite loop.');
-      // Advance the input if it's called for.
-      if (result.advance) {
-        // If we had a CR but not an LF, insert a newline for the CR.
-        // This needs to be done before a potential token position capture since
-        // the line adjustment was deferred in the last round.
-        if (this.readCRLast_ && c != '\n') {
-          this.line_++;
-          this.column_ = 1;
-        }
-        this.readCRLast_ = false;
-        // Mark the start of a new token's text if necessary.
-        if (!result.discard && goog.isNull(this.tokenIndex_)) {
-          this.tokenIndex_ = this.index_;
-          this.tokenLine_ = this.line_;
-          this.tokenColumn_ = this.column_;
-        }
-        this.index_++;
-        // If it's a newline, add a newline (unless it's CR)
-        if (LINE_TERMINATORS_.indexOf(c) >= 0) {
-          if (c == '\r') {
-            this.readCRLast_ = true;
-          } else {
-            this.line_++;
-            this.column_ = 1;
-          }
-        } else {
-          this.column_++;
-        }
-      }
-      // Finally emit a token if we need to.
-      if (goog.isDef(result.token)) {
-        goog.asserts.assert(!goog.isNull(this.tokenIndex_),
-            'Trying to emit an empty token: ' + result.token);
-        var token = new ccc.parse.Token(result.token,
-            this.input_.substring(this.tokenIndex_, this.index_),
-            this.tokenLine_,
-            this.tokenColumn_);
-        this.state_ = START_STATE_;
-        this.tokenIndex_ = null;
-        this.input_ = this.input_.substr(this.index_);
-        this.index_ = 0;
-        return this.resolveReadWithToken_(token);
-      }
-    }
-  } catch (e) {
-    e.message = '[Line ' + this.line_ + ', Col ' + this.column_ + '] ' +
-        e.message;
-    return this.rejectReadWithError_(e);
-  }
-};
-
-
-/**
- * Resolves the pending read and resets it to null.
- *
- * @param {ccc.parse.Token} token
- * @return {!goog.Promise.<ccc.parse.Token>} The resolved promise.
- * @private
- */
-ccc.parse.Scanner.prototype.resolveReadWithToken_ = function(token) {
-  goog.asserts.assert(!goog.isNull(this.pendingRead_));
-  var read = this.pendingRead_;
-  this.pendingRead_ = null;
-  read.resolve(token);
-  return read.promise;
-};
-
-
-/**
- * Rejects the pending read with an Error.
- *
- * @param {!Error} reason
- * @return {!goog.Promise.<ccc.parse.Token>} The rejected promise.
- * @private
- */
-ccc.parse.Scanner.prototype.rejectReadWithError_ = function(reason) {
-  goog.asserts.assert(!goog.isNull(this.pendingRead_));
-  var read = this.pendingRead_;
-  this.pendingRead_ = null;
-  read.reject(reason);
-  return read.promise;
 };
 
 
 /** @override */
 ccc.parse.Scanner.prototype.readToken = function() {
-  if (!goog.isNull(this.pendingRead_))
-    throw new Error('Read already pending.');
-  this.pendingRead_ = goog.Promise.withResolver();
-  return this.tryResolveRead_();
+  while (true) {
+    var c = this.input_.charAt(this.index_);
+    // We've run out of data! Do not try to perform a state transition unless
+    // we really hit EOF.
+    if (c == '' && !this.eof_)
+      return undefined;
+    var result = this.state_(c);
+    if (result.token instanceof ccc.isError) {
+      return new ccc.Error('[Line ' + this.line_ + ', Col ' + this.column_ +
+          '] ' + result.token);
+    }
+    // Clean break on EOF. Resolve to null to signal end of token stream.
+    if (result.terminate)
+      return null;
+    // Transition state if necessary.
+    var oldState = this.state_;
+    if (goog.isDef(result.state)) {
+      this.state_ = result.state;
+    }
+    // Either the input should be advanced or the state should change
+    // (or both). If neither happens, we have a problem.
+    goog.asserts.assert(result.advance || this.state_ != oldState ||
+        goog.isDef(result.token), 'Probably stuck in an infinite loop.');
+    // Advance the input if it's called for.
+    if (result.advance) {
+      // If we had a CR but not an LF, insert a newline for the CR.
+      // This needs to be done before a potential token position capture since
+      // the line adjustment was deferred in the last round.
+      if (this.readCRLast_ && c != '\n') {
+        this.line_++;
+        this.column_ = 1;
+      }
+      this.readCRLast_ = false;
+      // Mark the start of a new token's text if necessary.
+      if (!result.discard && goog.isNull(this.tokenIndex_)) {
+        this.tokenIndex_ = this.index_;
+        this.tokenLine_ = this.line_;
+        this.tokenColumn_ = this.column_;
+      }
+      this.index_++;
+      // If it's a newline, add a newline (unless it's CR)
+      if (LINE_TERMINATORS_.indexOf(c) >= 0) {
+        if (c == '\r') {
+          this.readCRLast_ = true;
+        } else {
+          this.line_++;
+          this.column_ = 1;
+        }
+      } else {
+        this.column_++;
+      }
+    }
+    // Emit a token if we've got one.
+    if (goog.isDef(result.token)) {
+      goog.asserts.assert(!goog.isNull(this.tokenIndex_),
+          'Trying to emit an empty token: ' + result.token);
+      var token = new ccc.parse.Token(
+          /** @type {ccc.parse.TokenType} */ (result.token),
+          this.input_.substring(this.tokenIndex_, this.index_),
+          this.tokenLine_,
+          this.tokenColumn_);
+      this.state_ = START_STATE_;
+      this.tokenIndex_ = null;
+      this.input_ = this.input_.substr(this.index_);
+      this.index_ = 0;
+      return token;
+    }
+  }
 };

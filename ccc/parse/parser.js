@@ -22,10 +22,10 @@ var ObjectBuilder_ = function(bracketType) {
   /** @public {number} */
   this.bracketType = bracketType;
 
-  /** @protected {!ccc.Data} */
+  /** @protected {ccc.Data} */
   this.tail_ = ccc.NIL;
 
-  /** @protected {!Array.<!ccc.Data>} */
+  /** @protected {!Array.<ccc.Data>} */
   this.elements_ = [];
 };
 
@@ -34,10 +34,10 @@ var ObjectBuilder_ = function(bracketType) {
  * Produces a new {@code ccc.Data} upon closing the form associated with
  * this builder. If this returns {@code undefined}, no object is produced.
  *
- * @return {!ccc.Data|undefined}
+ * @return {ccc.Data|undefined}
  */
 ObjectBuilder_.prototype.build = function() {
-  throw new Error('You are making a mistake');
+  return new ccc.Error('Reaching the unreachable.');
 };
 
 
@@ -46,7 +46,7 @@ ObjectBuilder_.prototype.build = function() {
  * the builder should produce an object immediately after this addition.
  * Default implementation always returns {@code false}.
  *
- * @param {!ccc.Data} data
+ * @param {ccc.Data} data
  * @return {boolean}
  */
 ObjectBuilder_.prototype.add = function(data) {
@@ -111,13 +111,13 @@ goog.inherits(TailBuilder_, ObjectBuilder_);
 /** @override */
 TailBuilder_.prototype.build = function() {
   if (this.elements_.length == 0) {
-    throw new Error('Missing tail element after dot');
+    return new ccc.Error('Missing tail element after dot');
   }
   if (this.targetBuilder_.elements_.length == 0) {
-    throw new Error('Unexpected token');
+    return new ccc.Error('Unexpected token');
   }
   if (this.elements_.length > 1) {
-    throw new Error('Unexpected object ' + this.elements_[1].toString());
+    return new ccc.Error('Unexpected object ' + this.elements_[1].toString());
   }
   this.targetBuilder_.tail_ = this.elements_[0];
   return this.targetBuilder_.build();
@@ -211,25 +211,19 @@ ccc.parse.Parser = function(tokenReader) {
 
 /** @override */
 ccc.parse.Parser.prototype.read = function() {
-  return this.tokenReader_.readToken().then(function(token) {
-    try {
-      var result = this.processToken_(token);
-      this.lastToken_ = token;
-      if (goog.isDef(result)) {
-        return result;
-      }
-    } catch (e) {
-      var message = e.message;
-      if (goog.isNull(token))
-        token = this.lastToken_;
-      if (!goog.isNull(token)) {
-        message = '[Line ' + token.line + ', Col ' + token.column + '] ' +
-            message + ' near "' + token.text + '"';
-      }
-      return goog.Promise.reject(new Error(message));
-    }
-    return this.read();
-  }, null, this);
+  var token = this.tokenReader_.readToken();
+  if (token instanceof ccc.Error)
+    return token;
+  if (!goog.isNull(token))
+    this.lastToken_ = /** @type {ccc.parse.Token} */ (token);
+  var result = this.processToken_(/** @type {ccc.parse.Token} */ (token));
+  if (result instanceof ccc.Error) {
+    if (goog.isNull(token))
+      return result;
+    return new ccc.Error('[Line ' + token.line + ', Col ' + token.column +
+        '] near "' + token.text + '": ' + result);
+  }
+  return result;
 };
 
 
@@ -239,7 +233,7 @@ ccc.parse.Parser.prototype.read = function() {
  * and {@code undefined} otherwise.
  *
  * @param {ccc.parse.Token} token
- * @return {?ccc.Data|undefined}
+ * @return {?ccc.Data|!ccc.Error|undefined}
  * @private
  */
 ccc.parse.Parser.prototype.processToken_ = function(token) {
@@ -247,7 +241,7 @@ ccc.parse.Parser.prototype.processToken_ = function(token) {
 
   if (goog.isNull(token)) {
     if (!goog.isNull(this.builder_))
-      throw new Error('Unexpected end of input');
+      return new ccc.Error('Unexpected end of input');
     return null;
   }
 
@@ -299,10 +293,10 @@ ccc.parse.Parser.prototype.processToken_ = function(token) {
       if (!(this.builder_ instanceof ListBuilder_) &&
           !(this.builder_ instanceof VectorBuilder_) &&
           !(this.builder_ instanceof TailBuilder_)) {
-        throw new Error('Unexpected "' + this.lastToken_.text + '"');
+        return new ccc.Error('Unexpected "' + this.lastToken_.text + '"');
       }
       if (this.builder_.bracketType != token.data.type) {
-        throw new Error('Unbalanced "' + token.text + '"');
+        return new ccc.Error('Unbalanced "' + token.text + '"');
       }
       goog.asserts.assert(this.builderStack_.length > 0,
           'Misplaced form closer');
@@ -312,7 +306,7 @@ ccc.parse.Parser.prototype.processToken_ = function(token) {
     case T.DOT:
       if (goog.isNull(this.builder_) ||
           !(this.builder_ instanceof ListBuilder_)) {
-        throw new Error('Unexpected token');
+        return new ccc.Error('Unexpected token');
       }
       this.builder_ = new TailBuilder_(this.builder_);
       break;
@@ -332,7 +326,7 @@ ccc.parse.Parser.prototype.processToken_ = function(token) {
       this.pushBuilder_(new WrapperBuilder_('quasiquote'));
       break;
     default:
-      throw new Error('Invalid token: ' + token.text);
+      return new ccc.Error('Invalid token: ' + token.text);
   }
 
   if (goog.isNull(production) || !goog.isDef(production)) {

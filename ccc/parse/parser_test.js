@@ -10,27 +10,10 @@ goog.require('ccc.parse.Parser');
 goog.require('ccc.parse.Token');
 goog.require('ccc.parse.TokenReader');
 goog.require('ccc.parse.TokenType');
-goog.require('goog.testing.AsyncTestCase');
+goog.require('goog.array');
 goog.require('goog.testing.jsunit');
 
-
 var K = ccc.parse.TokenType;
-var asyncTestCase = goog.testing.AsyncTestCase.createAndInstall(document.title);
-
-function setUpPage() {
-  asyncTestCase.stepTimeout = 50;
-  asyncTestCase.timeToSleepAfterFailure = 50;
-}
-
-function continueTesting() {
-  asyncTestCase.continueTesting();
-}
-
-function justFail(reason) {
-  console.error(goog.isDef(reason) && goog.isDef(reason.stack)
-      ? reason.stack : reason);
-  setTimeout(goog.partial(fail, reason), 0);
-}
 
 // Simplified token constructors for test setup.
 
@@ -73,16 +56,6 @@ var NUMERIC_LITERAL = function(value) {
   return new ccc.parse.Token(K.NUMERIC_LITERAL, value.toString(), 1, 1);
 };
 var DOT = function() { return new ccc.parse.Token(K.DOT, '.', 1, 1); };
-var SYNTAX = function() { return new ccc.parse.Token(K.SYNTAX, '#\'', 1, 1); };
-var QUASISYNTAX = function() {
-  return new ccc.parse.Token(K.QUASISYNTAX, '#`', 1, 1);
-};
-var UNSYNTAX = function() {
-  return new ccc.parse.Token(K.UNSYNTAX, '#,', 1, 1);
-};
-var UNSYNTAX_SPLICING = function() {
-  return new ccc.parse.Token(K.UNSYNTAX_SPLICING, '#,@', 1, 1);
-};
 
 // Test framework for the parser tests
 
@@ -94,69 +67,51 @@ var TestTokenReader = function(tokens) {
 /** @override */
 TestTokenReader.prototype.readToken = function() {
   if (this.tokens_.length == 0)
-    return goog.Promise.resolve(null);
-  return goog.Promise.resolve(this.tokens_.shift());
+    return null;
+  return this.tokens_.shift();
 };
 
 // Expect a specific object to match under equality (Object.equal).
 var E = function(matchSpec) {
   return function(parser) {
-    return parser.read().then(function(data) {
-      assertNotNull('Ran out of parsed objects!', data);
-      var match = ccc.core.build(matchSpec);
-      if (!ccc.equal(data, match)) {
-        fail('Object mismatch:\n' +
-             '  Expected: ' + ccc.core.stringify(match) +
-             '\n  Actual: ' + ccc.core.stringify(data) + '\n');
-      }
-      return true;
-    });
+    var data;
+    while (!goog.isDef(data))
+      data = parser.read();
+    if (ccc.isError(data))
+      fail(data);
+    assertNotNull('Ran out of parsed objects!', data);
+    var match = ccc.core.build(matchSpec);
+    if (!ccc.equal(data, match)) {
+      fail('Object mismatch:\n' +
+           '  Expected: ' + ccc.core.stringify(match) +
+           '\n  Actual: ' + ccc.core.stringify(data) + '\n');
+    }
   };
 };
 
 // Expect failure on read.
 var FAIL = function(parser) {
-  return new goog.Promise(function(resolve, reject) {
-    parser.read().then(
-        reject.bind(null, 'Expected failure, got success.'),
-        resolve.bind(null, false));
-  });
+  var data;
+  while (!goog.isDef(data))
+    data = parser.read();
+  if (!ccc.isError(data))
+    fail('Expected failure, got success.');
 };
 
-// Single asynchronous test which takes a token list and a set of top-level
-// object expectations.
+// Single test which takes a token list and a set of top-level object
+// expectations.
 var S = function(tokens, expectations) {
   var reader = new TestTokenReader(tokens);
   var parser = new ccc.parse.Parser(reader);
-  return new goog.Promise(function(resolve, reject) {
-    var checkExpectations = function(expectations) {
-      if (expectations.length == 0) {
-        parser.read().then(function(data) {
-          assertNull(data);
-          resolve(null);
-        }, reject);
-      } else {
-        var expectation = expectations.shift();
-        expectation(parser).then(function(keepChecking) {
-          if (keepChecking)
-            checkExpectations(expectations);
-          else
-            resolve(null);
-        }, reject);
-      }
-    };
-    checkExpectations(expectations);
+  goog.array.forEach(expectations, function(expectSomeThings) {
+    expectSomeThings(parser);
   });
 };
 
 var RunSingleTest = function(test) {
-  asyncTestCase.waitForAsync();
-  test.then(continueTesting, justFail);
 };
 
 var RunTests = function(tests) {
-  asyncTestCase.waitForAsync();
-  goog.Promise.all(tests).then(continueTesting, justFail);
 };
 
 // Tests below this line

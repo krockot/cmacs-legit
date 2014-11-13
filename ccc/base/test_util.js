@@ -37,22 +37,24 @@ function justFail(reason) {
 function T(spec, opt_expectedOutputSpec) {
   var environment = new ccc.Environment();
   ccc.base.addToEnvironment(environment);
-  var source = ccc.core.build(spec);
-  var thread = new ccc.Thread(ccc.evalSource(source, environment));
-  return thread.run().then(function(result) {
-    logger.log(goog.log.Logger.Level.INFO, goog.string.format(
-        'Evaluation completed in %s thunks in %s ms.', thread.thunkCounter_,
-        thread.age_));
-    if (ccc.isError(result))
-      return goog.Promise.reject(result);
-    if (goog.isDef(opt_expectedOutputSpec)) {
-      var expectedOutput = ccc.core.build(opt_expectedOutputSpec);
-      if (!ccc.equal(result, expectedOutput))
-        return goog.Promise.reject('Object mismatch on expression ' + source +
-            '\nExpected: ' + ccc.core.stringify(expectedOutput) +
-            '\nActual: ' + ccc.core.stringify(result) + '\n');
-    }
-    return result;
+  var data = ccc.core.build(spec);
+  var thread = new ccc.Thread(ccc.evalData(data, environment));
+  return new goog.Promise(function(resolve, reject) {
+    return thread.run(function(result) {
+      logger.log(goog.log.Logger.Level.INFO, goog.string.format(
+          'Evaluation completed in %s thunks in %s ms.', thread.thunkCounter_,
+          thread.age_));
+      if (ccc.isError(result))
+        return reject(result);
+      if (goog.isDef(opt_expectedOutputSpec)) {
+        var expectedOutput = ccc.core.build(opt_expectedOutputSpec);
+        if (!ccc.equal(result, expectedOutput))
+          return reject('Object mismatch on expression ' + data +
+              '\nExpected: ' + ccc.core.stringify(expectedOutput) +
+              '\nActual: ' + ccc.core.stringify(result) + '\n');
+      }
+      resolve();
+    });
   });
 };
 

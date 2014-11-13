@@ -1,0 +1,16 @@
+; The Cmacs Project.
+
+; @provide ccc.base.prelude
+
+; This prelude should be evaluated in any new environment which includes the
+; standard ccc base library.
+
+(defmacro or conditions
+  (if (null? conditions)
+    #f
+    `(if ,(car conditions) #t (or ,@(cdr conditions)))))
+
+(defmacro and conditions
+  (if (null? conditions)
+    #t
+    `(if ,(car conditions) (and ,@(cdr conditions)) #f)))

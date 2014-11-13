@@ -2,18 +2,10 @@
 
 goog.provide('ccc.parse.TokenReader');
 
-goog.require('ccc.parse.Token');
-goog.require('goog.Promise');
-
 
 
 /**
- * Asynchronous token reader interface.
- *
- * {@code TokenReader} consumers should call {@code readToken} when they
- * want a new Token from the underlying stream. If no more Tokens are
- * available, the promise {@code readToken} returns will resolve to
- * {@code null}.
+ * Token reader interface.
  *
  * @interface
  */
@@ -21,6 +13,12 @@ ccc.parse.TokenReader = function() {};
 
 
 /**
- * @type {function():!goog.Promise.<ccc.parse.Token>}
+ * Retrieves a token. Returns {@code null} if the end of the token stream has
+ * been reached and reading should terminate. Returns {@code undefined} if no
+ * tokens are currently available and the consumer should try again later.
+ *
+ * May also return a {@code ccc.Error} if the input is invalid.
+ *
+ * @return {?ccc.parse.Token|!ccc.Error|undefined}
  */
-ccc.parse.TokenReader.prototype.readToken;
+ccc.parse.TokenReader.prototype.readToken = function() {};

@@ -5,7 +5,6 @@ goog.provide('ccc.Pair');
 goog.require('ccc.Nil');
 goog.require('ccc.Object');
 goog.require('ccc.core.stringify');
-goog.require('goog.Promise');
 goog.require('goog.array');
 goog.require('goog.asserts');
 

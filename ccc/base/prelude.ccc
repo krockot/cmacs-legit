@@ -14,3 +14,6 @@
   (if (null? conditions)
     #t
     `(if ,(car conditions) (and ,@(cdr conditions)) #f)))
+
+(defmacro let (bindings expr0 . exprs)
+  `((lambda ,(map car bindings)  ,expr0 ,@exprs) ,@(map cadr bindings)))

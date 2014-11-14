@@ -23,3 +23,8 @@
     `((lambda () ,expr ,@exprs))
     `((lambda (,(caar bindings))
         (let* ,(cdr bindings) ,expr ,@exprs)) ,(cadar bindings))))
+
+(defmacro letrec (bindings expr . exprs)
+  `((lambda ,(map car bindings)
+      ,@(map (lambda (binding) `(set! ,(car binding) ,(cadr binding))) bindings)
+      ,expr ,@exprs) ,@(map (lambda (x) #?) bindings)))

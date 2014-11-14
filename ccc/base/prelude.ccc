@@ -5,6 +5,9 @@
 ; This prelude should be evaluated in any new environment which includes the
 ; standard ccc base library.
 
+(defmacro begin (expr . exprs)
+  `((lambda () ,expr ,@exprs)))
+
 (defmacro or conditions
   (if (null? conditions)
     #f

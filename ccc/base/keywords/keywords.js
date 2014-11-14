@@ -2,7 +2,6 @@
 
 goog.provide('ccc.base.keywords');
 
-goog.require('ccc.base.begin');
 goog.require('ccc.base.define');
 goog.require('ccc.base.defmacro');
 goog.require('ccc.base.if_');

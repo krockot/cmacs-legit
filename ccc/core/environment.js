@@ -197,6 +197,7 @@ ccc.Environment.prototype.addPrelude = function(prelude) {
  */
 ccc.Environment.prototype.evalPreludes = function() {
   var preludes = this.preludes_;
+  this.preludes_ = [];
   return function(continuation) {
     var evalNextPrelude = function(result) {
       if (ccc.isError(result))

@@ -76,7 +76,7 @@ ccc.Thread.prototype.run = function(callback) {
   *
   * @private {number}
   */
-ccc.Thread.DEFAULT_THUNKS_PER_SLICE_ = 100;
+ccc.Thread.DEFAULT_THUNKS_PER_SLICE_ = 5000;
 
 
 /**

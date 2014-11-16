@@ -10,22 +10,14 @@ import sys
 import tempfile
 import zipfile
 
-
 # A list of (namespace, output) pairs to compile. Each output file will contain
 # the compiled transitive closure of the given namespace's dependencies.
 _COMPILE_TARGETS = [
-  ('cmacs.background.main', 'background-compiled.js'),
-  ('cmacs.window.main', 'window-compiled.js'),
+  ('cmacs.app.main', 'main.js'),
 ]
-
 
 # List of source roots within the project.
 _SOURCE_PATHS = ['ccc', 'cmacs']
-
-
-_OUTPUT_ZIP_FILENAME = 'cmacs.zip'
-_MANIFEST_FILENAME = 'manifest.json'
-
 
 _EXTERNS = ['chrome_apis.js', 'hacks.js']
 
@@ -40,6 +32,7 @@ def _InitializeOutput(app_path, out_path):
     shutil.rmtree(out_path)
   app_out_path = os.path.join(out_path, 'app')
   shutil.copytree(app_path, app_out_path)
+
 
 def _BuildCccSources(src_paths, out_root):
   for path in src_paths:
@@ -67,6 +60,7 @@ def _BuildCccSources(src_paths, out_root):
               'goog.provide(\'%s\')\n\n' % namespace,
               'goog.require(\'ccc.base\')\n\n\n',
               '%s.addPrelude(%s)\n' % (library, source)])
+
 
 def _CompileJs(closure_library_root,
                closure_compiler_jar,
@@ -148,33 +142,6 @@ def _CalcDeps(src_paths, closure_library_root, out_path):
       '-o', 'deps'] + deps_roots)
 
 
-def _UpdateManifest(out_path, version):
-  with open(os.path.join(out_path, 'app', _MANIFEST_FILENAME)) as manifest_file:
-    manifest = json.load(manifest_file)
-  if 'key' in manifest:
-    del manifest['key']
-  manifest['version'] = version
-  with open(os.path.join(out_path, 'app', _MANIFEST_FILENAME),
-            'w') as manifest_file:
-    json.dump(manifest, manifest_file, indent=2)
-
-
-def _CreateZipFile(path, dest_dir):
-  tmpdir = tempfile.mkdtemp()
-  try:
-    filename = os.path.join(tmpdir, _OUTPUT_ZIP_FILENAME)
-    zip = zipfile.ZipFile(filename, 'w')
-    for root, dir, files in os.walk(path):
-      for file in files:
-        full_path = os.path.join(root, file)
-        arc_path = full_path[len(path):]
-        zip.write(full_path, arc_path)
-    zip.close()
-    shutil.copy(filename, os.path.join(dest_dir, _OUTPUT_ZIP_FILENAME))
-  finally:
-    shutil.rmtree(tmpdir)
-
-
 def _BuildCmacs(version, debug):
   build_script_path = os.path.dirname(os.path.abspath(inspect.getfile(
       inspect.currentframe())))
@@ -196,10 +163,6 @@ def _BuildCmacs(version, debug):
   _CalcDeps(src_paths, closure_library_root, out_path)
   _BuildJsOutputs(closure_library_root, closure_compiler_jar, src_paths,
       generated_src_paths, externs, out_path, debug)
-  if not debug:
-    print 'Packaging ZIP file with version %s' % version
-    _UpdateManifest(out_path, version)
-    _CreateZipFile(os.path.join(out_path, 'app'), out_path)
   print 'Success!'
 
 

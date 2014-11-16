@@ -1,6 +1,6 @@
 // The Cmacs Project.
 
-goog.provide('cmacs.background.main');
+goog.provide('cmacs.app.main');
 
 goog.require('ccc.core');
 goog.require('ccc.core.stringify');
@@ -10,7 +10,7 @@ goog.require('goog.Promise');
 goog.require('goog.object');
 
 
-cmacs.background.main = function() {
+cmacs.app.main = function() {
   var environment = new ccc.Environment();
   ccc.base.addToEnvironment(environment);
   environment.setValue('display', new ccc.NativeProcedure(
@@ -29,4 +29,4 @@ cmacs.background.main = function() {
 };
 
 
-cmacs.background.main();
+cmacs.app.main();

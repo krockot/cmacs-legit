@@ -31,3 +31,10 @@
   `((lambda ,(map car bindings)
       ,@(map (lambda (binding) `(set! ,(car binding) ,(cadr binding))) bindings)
       ,expr ,@exprs) ,@(map (lambda (x) #?) bindings)))
+
+(defmacro when (test expr . exprs)
+  `(if ,test (begin ,expr ,@exprs)))
+
+(defmacro unless (test expr . exprs)
+  `(if ,test #? (begin ,expr ,@exprs)))
+

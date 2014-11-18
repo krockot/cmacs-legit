@@ -32,6 +32,13 @@
       ,@(map (lambda (binding) `(set! ,(car binding) ,(cadr binding))) bindings)
       ,expr ,@exprs) ,@(map (lambda (x) #?) bindings)))
 
+(defmacro cond clauses
+  (if (null? clauses)
+    #?
+    `(if ,(caar clauses)
+       (begin ,@(cdar clauses))
+       (cond ,@(cdr clauses)))))
+
 (defmacro when (test expr . exprs)
   `(if ,test (begin ,expr ,@exprs)))
 

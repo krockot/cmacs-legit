@@ -44,3 +44,7 @@
 
 (defmacro unless (test expr . exprs)
   `(if ,test #? (begin ,expr ,@exprs)))
+
+(defmacro aif (name test consequent . alternate)
+  `(let ((,name ,test))
+      (if ,name ,consequent ,@alternate)))

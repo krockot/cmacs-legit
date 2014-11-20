@@ -51,4 +51,17 @@ ccc.base.registerProcedures({
       return symbol.name();
     }
   },
+
+  'gensym': {
+    args: [],
+    impl: /** @this {ccc.Library.ProcedureContext} */ function() {
+      while (true) {
+        var name = '#\0' + (Math.random() * 1e9 >>> 0).toString();
+        if (goog.isNull(this.environment.get(name))) {
+          this.environment.setValue(name, ccc.UNSPECIFIED);
+          return new ccc.Symbol(name);
+        }
+      }
+    }
+  },
 });

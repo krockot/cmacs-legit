@@ -230,3 +230,28 @@ goog.array.forEach(['aa', 'ad', 'da', 'dd', 'aaa', 'aad', 'ada', 'add', 'daa',
     'dad', 'dda', 'ddd', 'aaaa', 'aaad', 'aada', 'aadd', 'adaa', 'adad', 'adda',
     'addd', 'daaa', 'daad', 'dada', 'dadd', 'ddaa', 'ddad', 'ddda', 'dddd'],
     registerListAccessor_);
+
+
+/** @private */
+var registerListPredicate_ = function(name, predicateImpl) {
+  ccc.base.registerProcedure(name, {
+    args: [null, null],
+    impl: function(key, list) {
+      if (ccc.isNil(list))
+        return false;
+      while (ccc.isPair(list)) {
+        if (predicateImpl(key, list.car()))
+          return list;
+        list = list.cdr();
+      }
+      if (!ccc.isNil(list))
+        return new ccc.Error(name + ': Argument is not a proper list');
+      return false;
+    }
+  });
+};
+
+
+registerListPredicate_('memq', ccc.eq);
+registerListPredicate_('memv', ccc.eqv);
+registerListPredicate_('member', ccc.equal);

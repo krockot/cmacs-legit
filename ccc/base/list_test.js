@@ -231,3 +231,19 @@ function testListToVector() {
     F(['list->vector', 1, 2, 3]),
   ]);
 }
+
+function testListPredicates() {
+  RunTests([
+    T(['memq', 1, ['list', 1, 2, 3]], [1, 2, 3]),
+    T(['memq', 2, ['list', 1, 2, 3]], [2, 3]),
+    T(['memq', 3, ['list', 1, 2, 3]], [3]),
+    T(['memq', 4, ['list', 1, 2, 3]], false),
+    T(['memq', 1, ['cons', 1, 2]], new ccc.Pair(1, 2)),
+    T(['member', ['list', 1, 2], ['quote', [1, 2, [1, 2], 3]]], [[1, 2], 3]),
+    F(['memq']),
+    F(['memq', 1]),
+    F(['memq', 1, [1, 2, 3], 4]),
+    F(['memq', 1, 2]),
+    F(['memq', 2, ['cons', 1, 2]]),
+  ]);
+}

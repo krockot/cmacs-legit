@@ -48,3 +48,6 @@
 (defmacro aif (name test consequent . alternate)
   `(let ((,name ,test))
       (if ,name ,consequent ,@alternate)))
+
+(defmacro alambda (params body0 . body)
+  `(letrec ((self (lambda ,params ,body0 ,@body))) self))

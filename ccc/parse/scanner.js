@@ -574,7 +574,7 @@ ccc.parse.Scanner.prototype.readToken = function() {
     if (c == '' && !this.eof_)
       return undefined;
     var result = this.state_(c);
-    if (result.token instanceof ccc.isError) {
+    if (result.token instanceof ccc.Error) {
       return new ccc.Error('[Line ' + this.line_ + ', Col ' + this.column_ +
           '] ' + result.token);
     }

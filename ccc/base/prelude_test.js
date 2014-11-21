@@ -110,3 +110,27 @@ function testUnless() {
     T(['unless', true, 'never-evaluated'], ccc.UNSPECIFIED),
   ]);
 }
+
+function testAif() {
+  RunTests([
+    T(['aif', 'answer', 42, 'answer'], 42),
+    T(['aif', 'answer', false, 42, 'answer'], false),
+  ]);
+}
+
+function testAlambda() {
+  RunTests([
+    T([['alambda', ['x', 'n'],
+        ['if', ['zero?', 'x'],
+          'n',
+          ['self', ['-', 'x', 1], ['+', 'n', 'x']]]],
+       10, 0], 55),
+  ]);
+}
+
+function testAny() {
+  RunTests([
+    T(['any', 'x', ['negative?', 'x'], ['list', 1, 2, 3, 4]], false),
+    T(['any', 'x', ['negative?', 'x'], ['list', 1, 2, -3, 4]], true),
+  ]);
+}

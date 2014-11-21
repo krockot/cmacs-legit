@@ -64,4 +64,11 @@ ccc.base.registerProcedures({
       }
     }
   },
+
+  'error': {
+    args: [ccc.isString],
+    impl: function(message) {
+      return new ccc.Error(message);
+    }
+  },
 });

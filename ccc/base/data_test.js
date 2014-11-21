@@ -115,3 +115,9 @@ function testSymbolToString() {
     F(['symbol->string', ['quote', 'foo'], 1]),
   ]);
 }
+
+function testError() {
+  RunTests([
+    F(['error', new String('This is supposed to fail.')]),
+  ]);
+}

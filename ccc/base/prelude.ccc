@@ -11,12 +11,20 @@
 (defmacro or conditions
   (if (null? conditions)
     #f
-    `(if ,(car conditions) #t (or ,@(cdr conditions)))))
+    (if (not (pair? conditions))
+      (error "or: Invalid argument list")
+      (if (null? (cdr conditions))
+        (car conditions)
+        `(if ,(car conditions) #t (or ,@(cdr conditions)))))))
 
 (defmacro and conditions
   (if (null? conditions)
     #t
-    `(if ,(car conditions) (and ,@(cdr conditions)) #f)))
+    (if (not (pair? conditions))
+      (error "and: Invalid argument list")
+      (if (null? (cdr conditions))
+        (car conditions)
+        `(if ,(car conditions) (and ,@(cdr conditions)) #f)))))
 
 (defmacro let (bindings expr . exprs)
   `((lambda ,(map car bindings)  ,expr ,@exprs) ,@(map cadr bindings)))

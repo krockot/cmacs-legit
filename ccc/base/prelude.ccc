@@ -68,5 +68,5 @@
                           #f
                           (if (pair? items)
                             (if (,test (car items)) #t (,loop (cdr items)))
-                            #f)))))
+                            (error "any: Invalid argument"))))))
       (,loop ,items))))

@@ -30,7 +30,6 @@ class RequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     test_script_path = os.path.dirname(os.path.abspath(inspect.getfile(
         inspect.currentframe())))
     root_path = os.path.dirname(test_script_path)
-    out_path = os.path.join(root_path, 'out')
 
     if self.path == '/alltests.js':
       return self.get_all_tests(root_path)

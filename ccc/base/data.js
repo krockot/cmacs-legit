@@ -71,4 +71,12 @@ ccc.base.registerProcedures({
       return new ccc.Error(message);
     }
   },
+
+  'force': {
+    args: [ccc.isPromise],
+    thunk: true,
+    impl: /** @this {ccc.Library.ProcedureContext} */ function(promise) {
+      return promise.force(this.environment, this.continuation);
+    }
+  },
 });

@@ -13,6 +13,7 @@ goog.require('ccc.Nil');
 goog.require('ccc.Object');
 goog.require('ccc.Pair');
 goog.require('ccc.Procedure');
+goog.require('ccc.Promise');
 goog.require('ccc.Symbol');
 goog.require('ccc.Thread');
 goog.require('ccc.Transformer');

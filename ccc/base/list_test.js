@@ -247,3 +247,32 @@ function testListPredicates() {
     F(['memq', 2, ['cons', 1, 2]]),
   ]);
 }
+
+function testAny() {
+  RunTests([
+    T(['any', ['lambda', ['x'], ['negative?', 'x']], ['list', 1, 2, 3, 4]],
+      false),
+    T(['any', ['lambda', ['x'], ['negative?', 'x']], ['list', 1, 2, -3, 4]],
+      true),
+  ]);
+}
+
+function testAll() {
+  RunTests([
+    T(['all', ['lambda', ['z'], ['negative?', 'z']], ['list', 1, 2, 3]], false),
+    T(['all', ['lambda', ['z'], ['negative?', 'z']], ['list', -1, 2, 3]],
+      false),
+    T(['all', ['lambda', ['z'], ['negative?', 'z']], ['list', 1, -2, 3]],
+      false),
+    T(['all', ['lambda', ['z'], ['negative?', 'z']], ['list', 1, 2, -3]],
+      false),
+    T(['all', ['lambda', ['z'], ['negative?', 'z']], ['list', -1, 2, -3]],
+      false),
+    T(['all', ['lambda', ['z'], ['negative?', 'z']], ['list', 1, -2, -3]],
+      false),
+    T(['all', ['lambda', ['z'], ['negative?', 'z']], ['list', -1, -2, 3]],
+      false),
+    T(['all', ['lambda', ['z'], ['negative?', 'z']], ['list', -1, -2, -3]],
+      true),
+  ])
+}

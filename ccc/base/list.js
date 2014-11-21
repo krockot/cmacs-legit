@@ -205,6 +205,50 @@ ccc.base.registerProcedures({
       return new ccc.Vector(elements);
     }
   },
+
+  'any': {
+    args: [ccc.isApplicable, null],
+    thunk: true,
+    impl: /** @this {ccc.Library.ProcedureContext} */ function(
+        procedure, list) {
+      var environment = this.environment;
+      var doNextApplication = function(continuation, result) {
+        if (result !== false)
+          return continuation(result);
+        if (ccc.isNil(list))
+          return continuation(false);
+        if (!ccc.isPair(list))
+          return continuation(new ccc.Error('any: Invalid list argument'));
+        var args = new ccc.Pair(list.car(), ccc.NIL);
+        list = list.cdr();
+        return procedure.apply(environment, args, goog.partial(
+            doNextApplication, continuation));
+      }
+      return doNextApplication(this.continuation, false);
+    }
+  },
+
+  'all': {
+    args: [ccc.isApplicable, null],
+    thunk: true,
+    impl: /** @this {ccc.Library.ProcedureContext} */ function(
+        procedure, list) {
+      var environment = this.environment;
+      var doNextApplication = function(continuation, result) {
+        if (result === false)
+          return continuation(result);
+        if (ccc.isNil(list))
+          return continuation(true);
+        if (!ccc.isPair(list))
+          return continuation(new ccc.Error('all: Invalid list argument'));
+        var args = new ccc.Pair(list.car(), ccc.NIL);
+        list = list.cdr();
+        return procedure.apply(environment, args, goog.partial(
+            doNextApplication, continuation));
+      }
+      return doNextApplication(this.continuation, true);
+    }
+  },
 });
 
 

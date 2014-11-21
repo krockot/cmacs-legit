@@ -127,10 +127,3 @@ function testAlambda() {
        10, 0], 55),
   ]);
 }
-
-function testAny() {
-  RunTests([
-    T(['any', 'x', ['negative?', 'x'], ['list', 1, 2, 3, 4]], false),
-    T(['any', 'x', ['negative?', 'x'], ['list', 1, 2, -3, 4]], true),
-  ]);
-}

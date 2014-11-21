@@ -59,14 +59,3 @@
 
 (defmacro alambda (params body0 . body)
   `(letrec ((self (lambda ,params ,body0 ,@body))) self))
-
-(defmacro any (name test-expr items)
-  (let ((loop (gensym)) (test (gensym)))
-    `(letrec ((,test (lambda (,name) ,test-expr))
-              (,loop (lambda (items)
-                        (if (null? items)
-                          #f
-                          (if (pair? items)
-                            (if (,test (car items)) #t (,loop (cdr items)))
-                            (error "any: Invalid argument"))))))
-      (,loop ,items))))

@@ -5,8 +5,8 @@ goog.provide('ccc.PromiseGenerator');
 
 
 /**
- * A data type generates new {@code ccc.Promise} objects upon evaluation. This
- * is used to implement delay syntax.
+ * A data type which generates new {@code ccc.Promise} objects upon evaluation.
+ * This is used to implement delay syntax.
  *
  * @constructor
  * @extends {ccc.Object}

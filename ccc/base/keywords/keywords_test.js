@@ -170,28 +170,6 @@ function testLambda() {
   ]);
 }
 
-function testBegin() {
-  var count = 0;
-  var native1 = new ccc.NativeProcedure(
-      function(environment, args, continuation) {
-    assertEquals(0, count++);
-    return continuation(1);
-  });
-  var native2 = new ccc.NativeProcedure(
-      function(environment, args, continuation) {
-    assertEquals(1, count++);
-    return continuation(2);
-  });
-  var native3 = new ccc.NativeProcedure(
-      function(environment, args, continuation) {
-    assertEquals(2, count);
-    return continuation(3);
-  });
-  RunTests([
-    T(['begin', [native1], [native2], [native3]], 3),
-  ]);
-}
-
 function testQuasiquote() {
   var Q = 'quote';
   var QQ = 'quasiquote';

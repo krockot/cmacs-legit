@@ -34,8 +34,10 @@ function justFail(reason) {
   setTimeout(goog.partial(fail, reason), 0);
 }
 
-function T(spec, opt_expectedOutputSpec) {
-  var environment = new ccc.Environment();
+function T(spec, opt_expectedOutputSpec, opt_environment) {
+  var environment = (goog.isDef(opt_environment)
+      ? opt_environment
+      : new ccc.Environment());
   ccc.base.addToEnvironment(environment);
   var data = ccc.core.build(spec);
   var thread = new ccc.Thread(ccc.evalData(data, environment));

@@ -56,3 +56,31 @@ function testAnd() {
     T(['and', false, 'never-evaluated'], false),
   ]);
 }
+
+function testLet() {
+  var environment = new ccc.Environment();
+  environment.setValue('foo', 9);
+  RunTests([
+    T(['let', [['foo', 42]], 'foo'], 42).then(function() {
+      assertEquals(9, environment.get('foo').getValue());
+    }),
+    F(['let', [['bar', 42], ['foo', 'bar']], 'foo'])
+  ]);
+}
+
+function testLetSeq() {
+  RunTests([
+    T(['let*', [['foo', 42], ['bar', 'foo']], 'bar'], 42),
+  ]);
+}
+
+function testLetRec() {
+  RunTests([
+    T(['letrec',
+        [['f', ['lambda', ['x', 'n'],
+                  ['if', ['zero?', 'x'],
+                    'n',
+                    ['f', ['-', 'x', 1], ['+', 'n', 'x']]]]]],
+        ['f', 10, 0]], 55 ),
+  ]);
+}

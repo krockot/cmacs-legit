@@ -121,3 +121,16 @@ function testError() {
     F(['error', new String('This is supposed to fail.')]),
   ]);
 }
+
+function testForce() {
+  var count = 0;
+  var calledOnce = new ccc.NativeProcedure(function(e, a, c) {
+    assertEquals(1, ++count);
+    return c(ccc.UNSPECIFIED);
+  });
+  RunTests([
+    T(['force', ['delay', 1]], 1),
+    T(['let', [['promise', ['delay', [calledOnce], 42]]],
+          ['list', ['force', 'promise'], ['force', 'promise']]], [42, 42]),
+  ]);
+}

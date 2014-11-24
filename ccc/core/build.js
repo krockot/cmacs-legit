@@ -21,8 +21,8 @@ goog.require('ccc.core');
  * This should be used whenever a complex object is being constructed in JS
  * code, particularly with lots of symbols and nested lists.
  *
- * @param {*} spec
- * @return {!ccc.Data}
+ * @param {ccc.Data} spec
+ * @return {ccc.Data}
  */
 ccc.core.build = function(spec) {
   if (spec instanceof Array)

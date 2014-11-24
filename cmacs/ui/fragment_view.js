@@ -3,10 +3,13 @@
 goog.provide('cmacs.ui.FragmentView');
 
 goog.require('ccc.core');
+goog.require('ccc.core.build');
 goog.require('ccc.core.stringify');
+goog.require('cmacs.Cursor');
 goog.require('cmacs.Fragment');
 goog.require('goog.Disposable');
 goog.require('goog.dom');
+goog.require('goog.dom.classlist');
 
 
 
@@ -21,10 +24,14 @@ goog.require('goog.dom');
  */
 cmacs.ui.FragmentView = function(opt_fragment) {
   /** @private {!cmacs.Fragment} */
-  this.fragment_ = opt_fragment || new cmacs.Fragment(ccc.NIL);
+  this.fragment_ = opt_fragment || new cmacs.Fragment(ccc.core.build(
+      ['\u03bb', ['x'], 'x']));
 
   /** @private {Element} */
   this.domRoot_ = goog.dom.createDom('div', { 'class': 'fragment-view' });
+
+  /** @private {!cmacs.Cursor} */
+  this.cursor_ = new cmacs.Cursor(this.fragment_);
 
   this.updateDom_();
 };
@@ -56,5 +63,48 @@ cmacs.ui.FragmentView.prototype.getDom = function() {
  * @private
  */
 cmacs.ui.FragmentView.prototype.updateDom_ = function() {
-  this.domRoot_.innerHTML = ccc.core.stringify(this.fragment_.data());
+  while (this.domRoot_.firstChild)
+    this.domRoot_.removeChild(this.domRoot_.firstChild);
+  this.domRoot_.appendChild(createDataDom_(this.fragment_.getData(),
+      this.cursor_));
+};
+
+
+/**
+ * Creates a DOM view of some program data styled according to the current
+ * cursor position.
+ *
+ * @param {ccc.Data} data
+ * @param {!cmacs.Cursor} cursor
+ * @return {!Node}
+ * @private
+ */
+var createDataDom_ = function(data, cursor) {
+  var dom = goog.dom.createDom('span');
+  if (ccc.isVector(data)) {
+    var children = [];
+    dom.appendChild(goog.dom.createTextNode('#('));
+    for (var i = 0; i < data.size(); ++i) {
+      var childData = /** @type {ccc.Data} */ (data.get(i));
+      var childDom = createDataDom_(childData, cursor);
+      dom.appendChild(childDom);
+    }
+    dom.appendChild(goog.dom.createTextNode(')'));
+  } else if (ccc.isPair(data)) {
+    dom.appendChild(goog.dom.createTextNode('('));
+    while (ccc.isPair(data)) {
+      dom.appendChild(createDataDom_(data.car(), cursor));
+      if (ccc.isPair(data.cdr()))
+        dom.appendChild(goog.dom.createTextNode(' '));
+      data = data.cdr();
+    }
+    if (!ccc.isNil(data)) {
+      dom.appendChild(goog.dom.createTextNode(' . '));
+      dom.appendChild(createDataDom_(data, cursor));
+    }
+    dom.appendChild(goog.dom.createTextNode(')'));
+  } else {
+    dom.innerText = ccc.core.stringify(data);
+  }
+  return dom;
 };

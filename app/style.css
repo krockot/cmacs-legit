@@ -17,9 +17,16 @@ html, body {
 }
 
 .fragment-view {
-  border: solid yellow 1px;
   font-size: 3em;
   font-family: "Droid Sans Mono", "Deja Vu Sans Mono", monospace;
+}
+
+.fragment-view span {
+  padding-bottom: 0.15em;
+}
+
+.cursor {
+  border: solid 3px #56f;
 }
 
 .action-strip {
@@ -35,8 +42,4 @@ html, body {
   font-size: 0.7cm;
   margin: 0;  margin-bottom: 0.1cm;
   -webkit-tap-highlight-color: rgba(0,0,0,0);
-}
-
-.cursor {
-  border: solid 3px #56f;
 }

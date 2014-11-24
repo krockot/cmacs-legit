@@ -21,7 +21,19 @@ cmacs.Fragment = function(data) {
 
 /**
  * Retrieves the program data for this fragment.
+ *
+ * @return {ccc.Data}
  */
-cmacs.Fragment.prototype.data = function() {
+cmacs.Fragment.prototype.getData = function() {
   return this.data_;
+};
+
+
+/**
+ * Replaces the data in this fragment.
+ *
+ * @param {ccc.Data} data
+ */
+cmacs.Fragment.prototype.setData = function(data) {
+  this.data_ = data;
 };

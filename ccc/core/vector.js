@@ -95,6 +95,26 @@ ccc.Vector.prototype.set = function(index, data) {
 
 
 /**
+ * Erases an element at a given index.
+ *
+ * @param {number} index
+ */
+ccc.Vector.prototype.erase = function(index) {
+  this.elements_.splice(index, 1);
+};
+
+
+/**
+ * Appends an element to the vector.
+ *
+ * @param {ccc.Data} data
+ */
+ccc.Vector.prototype.append = function(data) {
+  this.elements_.push(data);
+};
+
+
+/**
  * Maps this vector to a new vector using the given transformation function.
  *
  * @param {function(ccc.Data):ccc.Data} transform

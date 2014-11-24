@@ -18,7 +18,8 @@ html, body {
 
 .fragment-view {
   border: solid yellow 1px;
-
+  font-size: 3em;
+  font-family: "Droid Sans Mono", "Deja Vu Sans Mono", monospace;
 }
 
 .action-strip {

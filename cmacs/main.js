@@ -1,16 +1,17 @@
 // The Cmacs Project.
 
-goog.provide('cmacs.app.main');
+goog.provide('cmacs.main');
 
 goog.require('ccc.core');
 goog.require('ccc.core.stringify');
 goog.require('ccc.base.all');
 goog.require('ccc.parse.evalSource');
+goog.require('cmacs.ui.Editor');
 goog.require('goog.Promise');
 goog.require('goog.object');
 
 
-cmacs.app.main = function() {
+cmacs.main = function() {
   var environment = new ccc.Environment();
   ccc.base.addToEnvironment(environment);
   environment.setValue('display', new ccc.NativeProcedure(
@@ -26,7 +27,9 @@ cmacs.app.main = function() {
       console.log(ccc.core.stringify(result));
     });
   };
+
+  return new cmacs.ui.Editor();
 };
 
 
-cmacs.app.main();
+cmacs.main();

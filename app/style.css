@@ -1,5 +1,41 @@
-body {
+html, body {
+  height: 100%;
+  margin: 0;
+}
+
+.editor-root {
   background-color: black;
-  text: #aaa;
-  font: "Droid Sans Mono", "Deja Vu Sans Mono", monospace;
+  color: #aaa;
+  font-family: "Droid Sans", "Deja Vu Sans", sans-serif;
+  height: 100%;
+  min-height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 0;
+}
+
+.fragment-view {
+  border: solid yellow 1px;
+
+}
+
+.action-strip {
+  width: 1cm;
+}
+
+.action-button {
+  background-color: white;
+  color: #666;
+  border-radius: 0.2cm;
+  width: 1cm;
+  height: 1cm;
+  font-size: 0.7cm;
+  margin: 0;  margin-bottom: 0.1cm;
+  -webkit-tap-highlight-color: rgba(0,0,0,0);
+}
+
+.cursor {
+  border: solid 3px #56f;
 }

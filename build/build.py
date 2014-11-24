@@ -13,7 +13,7 @@ import zipfile
 # A list of (namespace, output) pairs to compile. Each output file will contain
 # the compiled transitive closure of the given namespace's dependencies.
 _COMPILE_TARGETS = [
-  ('cmacs.app.main', 'main.js'),
+  ('cmacs.main', 'main.js'),
 ]
 
 # List of source roots within the project.

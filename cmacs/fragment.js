@@ -185,6 +185,31 @@ cmacs.Fragment.prototype.setChild = function(index, data) {
 
 
 /**
+ * Erases the i'th child.
+ *
+ * @param {number} index
+ */
+cmacs.Fragment.prototype.eraseChild = function(index) {
+  goog.asserts.assert(index >= 0 && index < this.children_.length);
+
+  if (this.type_ == cmacs.FragmentType.LIST &&
+      this.children_.length == 1) {
+    this.type_ = cmacs.FragmentType.LEAF;
+    this.data_ = ccc.NIL;
+    this.children_ = [];
+    return;
+  }
+
+  if (this.type_ == cmacs.FragmentType.IMPROPER_LIST &&
+      this.children_.length == 2) {
+    this.type_ = cmacs.FragmentType.LIST;
+  }
+
+  this.children_.splice(index, 1);
+};
+
+
+/**
  * Returns this fragment's parent, or {@code null} if it's a root fragment.
  *
  * @return {cmacs.Fragment}

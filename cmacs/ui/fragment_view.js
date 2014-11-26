@@ -127,10 +127,18 @@ var createFragmentDom_ = function(fragment, cursor) {
  * @param {!Event} e
  */
 cmacs.ui.FragmentView.prototype.onKeydown_ = function(e) {
+  var preventDefault = true;
   switch (e.keyCode) {
+    case 8:
+    case 46:
+      this.cursor_.erase();
+      break;
     case 37: this.cursor_.moveLeft(); break;
     case 38: this.cursor_.moveUp(); break;
     case 39: this.cursor_.moveRight(); break;
     case 40: this.cursor_.moveDown(); break;
+    default: preventDefault = false;
   }
+  if (preventDefault)
+    e.preventDefault();
 };

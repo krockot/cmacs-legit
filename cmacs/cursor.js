@@ -110,9 +110,37 @@ cmacs.Cursor.prototype.moveDown = function() {
   if (this.fragment_.getType() == cmacs.FragmentType.LEAF &&
       ccc.isNil(this.fragment_.getData())) {
     this.fragment_.setData(new ccc.Pair(ccc.NIL, ccc.NIL));
+  } else if (this.fragment_.getType() == cmacs.FragmentType.VECTOR &&
+      this.fragment_.getNumChildren() == 0) {
+    this.fragment_.appendData(ccc.NIL);
   }
 
   if (this.fragment_.getNumChildren() > 0) {
     this.setFragment(this.fragment_.getChild(0));
+  }
+};
+
+
+/**
+ * Erases whatever resides at the cursor position.
+ *
+ * If the cursor points to a top-level fragment, the fragment is replaced with
+ * NIL.
+ */
+cmacs.Cursor.prototype.erase = function() {
+  var parent = this.fragment_.getParent();
+  if (goog.isNull(parent)) {
+    this.fragment_.setData(ccc.NIL);
+    this.dispatchEvent(cmacs.Cursor.EventType.CHANGE);
+  } else {
+    var parentIndex = this.fragment_.getParentIndex();
+    parent.eraseChild(parentIndex);
+    if (parent.getNumChildren() == 0) {
+      this.setFragment(parent);
+    } else {
+      if (parentIndex == parent.getNumChildren())
+        parentIndex--;
+      this.setFragment(parent.getChild(parentIndex));
+    }
   }
 };

@@ -1,6 +1,11 @@
 html, body {
   height: 100%;
   margin: 0;
+  box-sizing: border-box;
+}
+
+*, *:before, *:after {
+  box-sizing: inherit;
 }
 
 .editor-root {
@@ -41,5 +46,5 @@ html, body {
   height: 1cm;
   font-size: 0.7cm;
   margin: 0;  margin-bottom: 0.1cm;
-  -webkit-tap-highlight-color: rgba(0,0,0,0);
+  tap-highlight-color: rgba(0,0,0,0);
 }

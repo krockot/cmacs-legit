@@ -10,6 +10,8 @@ goog.require('cmacs.Fragment');
 goog.require('goog.Disposable');
 goog.require('goog.dom');
 goog.require('goog.dom.classlist');
+goog.require('goog.events.EventHandler');
+goog.require('goog.events.EventType');
 
 
 
@@ -23,6 +25,8 @@ goog.require('goog.dom.classlist');
  * @constructor
  */
 cmacs.ui.FragmentView = function(opt_fragment) {
+  cmacs.ui.FragmentView.base(this, 'constructor');
+
   /** @private {!cmacs.Fragment} */
   this.fragment_ = opt_fragment || new cmacs.Fragment(ccc.core.build(
       ['\u03bb', ['x'], 'x']));
@@ -33,8 +37,16 @@ cmacs.ui.FragmentView = function(opt_fragment) {
   /** @private {!cmacs.Cursor} */
   this.cursor_ = new cmacs.Cursor(this.fragment_);
 
+  /** @private {!goog.events.EventHandler} */
+  this.eventHandler_ = new goog.events.EventHandler(this);
+  this.eventHandler_.listen(this.cursor_, cmacs.Cursor.EventType.CHANGE,
+      goog.bind(this.updateDom_, this));
+  this.eventHandler_.listen(window, goog.events.EventType.KEYDOWN,
+      goog.bind(this.onKeydown_, this));
+
   this.updateDom_();
 };
+goog.inherits(cmacs.ui.FragmentView, goog.Disposable);
 
 
 /**
@@ -42,6 +54,8 @@ cmacs.ui.FragmentView = function(opt_fragment) {
  * @protected
  */
 cmacs.ui.FragmentView.prototype.disposeInternal = function() {
+  cmacs.ui.FragmentView.base(this, 'disposeInternal');
+  this.eventHandler_.dispose();
   this.domRoot_ = null;
 };
 
@@ -65,46 +79,59 @@ cmacs.ui.FragmentView.prototype.getDom = function() {
 cmacs.ui.FragmentView.prototype.updateDom_ = function() {
   while (this.domRoot_.firstChild)
     this.domRoot_.removeChild(this.domRoot_.firstChild);
-  this.domRoot_.appendChild(createDataDom_(this.fragment_.getData(),
-      this.cursor_));
+  this.domRoot_.appendChild(createFragmentDom_(this.fragment_, this.cursor_));
 };
 
 
 /**
- * Creates a DOM view of some program data styled according to the current
+ * Creates a DOM view of some program fragment styled according to the current
  * cursor position.
  *
- * @param {ccc.Data} data
+ * @param {!cmacs.Fragment} fragment
  * @param {!cmacs.Cursor} cursor
  * @return {!Node}
  * @private
  */
-var createDataDom_ = function(data, cursor) {
+var createFragmentDom_ = function(fragment, cursor) {
   var dom = goog.dom.createDom('span');
-  if (ccc.isVector(data)) {
-    var children = [];
-    dom.appendChild(goog.dom.createTextNode('#('));
-    for (var i = 0; i < data.size(); ++i) {
-      var childData = /** @type {ccc.Data} */ (data.get(i));
-      var childDom = createDataDom_(childData, cursor);
-      dom.appendChild(childDom);
-    }
-    dom.appendChild(goog.dom.createTextNode(')'));
-  } else if (ccc.isPair(data)) {
-    dom.appendChild(goog.dom.createTextNode('('));
-    while (ccc.isPair(data)) {
-      dom.appendChild(createDataDom_(data.car(), cursor));
-      if (ccc.isPair(data.cdr()))
-        dom.appendChild(goog.dom.createTextNode(' '));
-      data = data.cdr();
-    }
-    if (!ccc.isNil(data)) {
-      dom.appendChild(goog.dom.createTextNode(' . '));
-      dom.appendChild(createDataDom_(data, cursor));
-    }
-    dom.appendChild(goog.dom.createTextNode(')'));
+  var type = fragment.getType();
+  var children = fragment.getChildren();
+
+  if (type == cmacs.FragmentType.LEAF) {
+    dom.innerText = ccc.core.stringify(fragment.getData());
   } else {
-    dom.innerText = ccc.core.stringify(data);
+    if (type == cmacs.FragmentType.VECTOR)
+      dom.appendChild(goog.dom.createTextNode('#('));
+    else
+      dom.appendChild(goog.dom.createTextNode('('));
+    var tailSize = type == cmacs.FragmentType.IMPROPER_LIST ? 1 : 0;
+    for (var i = 0; i < children.length - tailSize; ++i) {
+      if (i > 0)
+        dom.appendChild(goog.dom.createTextNode(' '));
+      dom.appendChild(createFragmentDom_(children[i], cursor));
+    }
+    if (tailSize == 1)
+      dom.appendChild(createFragmentDom_(children[children.length - 1],
+          cursor));
+    dom.appendChild(goog.dom.createTextNode(')'));
   }
+
+  if (cursor.getFragment() === fragment)
+    goog.dom.classlist.add(dom, 'cursor');
   return dom;
+};
+
+
+/**
+ * Hacky keypress handler for bad UI times.
+ *
+ * @param {!Event} e
+ */
+cmacs.ui.FragmentView.prototype.onKeydown_ = function(e) {
+  switch (e.keyCode) {
+    case 37: this.cursor_.moveLeft(); break;
+    case 38: this.cursor_.moveUp(); break;
+    case 39: this.cursor_.moveRight(); break;
+    case 40: this.cursor_.moveDown(); break;
+  }
 };

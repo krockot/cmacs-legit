@@ -16,13 +16,14 @@ goog.require('goog.dom.classlist');
  * @constructor
  */
 cmacs.ui.Editor = function() {
-  /** @private {Element} */
-  this.domRoot_ = goog.dom.createDom('div', { 'class': 'editor-root' });
-  goog.dom.appendChild(document.body, this.domRoot_);
+  cmacs.ui.Editor.base(this, 'constructor');
 
   /** @private {!cmacs.ui.FragmentView} */
   this.fragmentView_ = new cmacs.ui.FragmentView();
 
+  /** @private {Element} */
+  this.domRoot_ = goog.dom.createDom('div', { 'class': 'editor-root' });
+  goog.dom.appendChild(document.body, this.domRoot_);
   goog.dom.appendChild(this.domRoot_, this.fragmentView_.getDom());
 };
 goog.inherits(cmacs.ui.Editor, goog.Disposable);
@@ -33,6 +34,7 @@ goog.inherits(cmacs.ui.Editor, goog.Disposable);
  * @protected
  */
 cmacs.ui.Editor.prototype.disposeInternal = function() {
+  cmacs.ui.Editor.base(this, 'disposeInternal');
   this.domRoot_ = null;
   this.fragmentView_.dispose();
 };

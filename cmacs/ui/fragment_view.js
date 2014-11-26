@@ -28,8 +28,7 @@ cmacs.ui.FragmentView = function(opt_fragment) {
   cmacs.ui.FragmentView.base(this, 'constructor');
 
   /** @private {!cmacs.Fragment} */
-  this.fragment_ = opt_fragment || new cmacs.Fragment(ccc.core.build(
-      ['\u03bb', ['x'], 'x']));
+  this.fragment_ = opt_fragment || new cmacs.Fragment(ccc.NIL);
 
   /** @private {Element} */
   this.domRoot_ = goog.dom.createDom('div', { 'class': 'fragment-view' });

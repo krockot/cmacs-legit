@@ -83,9 +83,11 @@ cmacs.Cursor.prototype.moveRight = function() {
     return;
   var parentIndex = this.fragment_.getParentIndex();
   goog.asserts.assert(parentIndex < parent.getNumChildren());
-  if (parentIndex == parent.getNumChildren() - 1)
-    return;
-  this.setFragment(parent.getChild(parentIndex + 1));
+  if (parentIndex < parent.getNumChildren() - 1) {
+    this.setFragment(parent.getChild(parentIndex + 1));
+  } else {
+    this.setFragment(parent.appendData(ccc.NIL));
+  }
 };
 
 
@@ -101,12 +103,16 @@ cmacs.Cursor.prototype.moveUp = function() {
 
 
 /**
- * Moves the cursor down (really, in) one level. This may have the side-effect
- * of injecting a new NIL element in the newly entered data structure if it was
- * previously empty.
+ * Moves the cursor down (really, in) one level.
  */
 cmacs.Cursor.prototype.moveDown = function() {
-  if (this.fragment_.getNumChildren() == 0)
-    return;
-  this.setFragment(this.fragment_.getChild(0));
+  // Special case for entering an empty list: replace with a non-empty list.
+  if (this.fragment_.getType() == cmacs.FragmentType.LEAF &&
+      ccc.isNil(this.fragment_.getData())) {
+    this.fragment_.setData(new ccc.Pair(ccc.NIL, ccc.NIL));
+  }
+
+  if (this.fragment_.getNumChildren() > 0) {
+    this.setFragment(this.fragment_.getChild(0));
+  }
 };

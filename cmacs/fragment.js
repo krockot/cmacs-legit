@@ -96,6 +96,8 @@ cmacs.Fragment.getFragmentData = function(fragment) {
  * @param {ccc.Data} data
  */
 cmacs.Fragment.prototype.setData = function(data) {
+  this.data_ = null;
+  this.children_ = [];
   if (ccc.isPair(data)) {
     var element = data;
     var parentIndex = 0;
@@ -118,6 +120,7 @@ cmacs.Fragment.prototype.setData = function(data) {
       this.children_.push(new cmacs.Fragment(element, this, i));
     }
   } else {
+    this.type_ = cmacs.FragmentType.LEAF;
     this.data_ = data;
   }
 };
@@ -167,6 +170,21 @@ cmacs.Fragment.prototype.getChild = function(index) {
 
 
 /**
+ * Replaces the i'th child with new data. Returns the new child fragment.
+ *
+ * @param {number} index
+ * @param {ccc.Data} data
+ * @return {!cmacs.Fragment}
+ */
+cmacs.Fragment.prototype.setChild = function(index, data) {
+  goog.asserts.assert(index >= 0 && index < this.children_.length);
+  var child = new cmacs.Fragment(data, this, index);
+  this.children_[index] = child;
+  return child;
+};
+
+
+/**
  * Returns this fragment's parent, or {@code null} if it's a root fragment.
  *
  * @return {cmacs.Fragment}
@@ -183,4 +201,19 @@ cmacs.Fragment.prototype.getParent = function() {
  */
 cmacs.Fragment.prototype.getParentIndex = function() {
   return this.parentIndex_;
+};
+
+
+/**
+ * Appends a child to this fragment's children. It's invalid to call this on
+ * a leaf fragment. Returns the new child fragment.
+ *
+ * @param {ccc.Data} data
+ * @return {!cmacs.Fragment}
+ */
+cmacs.Fragment.prototype.appendData = function(data) {
+  goog.asserts.assert(this.type_ != cmacs.FragmentType.LEAF);
+  var child = new cmacs.Fragment(data, this, this.children_.length);
+  this.children_.push(child);
+  return child;
 };

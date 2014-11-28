@@ -96,9 +96,12 @@ cmacs.Cursor.prototype.moveRight = function() {
  */
 cmacs.Cursor.prototype.moveUp = function() {
   var parent = this.fragment_.getParent();
-  if (goog.isNull(parent))
-    return;
-  this.setFragment(parent);
+  if (goog.isNull(parent)) {
+    this.fragment_.setData(new ccc.Pair(this.fragment_.getData(), ccc.NIL));
+    this.dispatchEvent(cmacs.Cursor.EventType.CHANGE);
+  } else {
+    this.setFragment(parent);
+  }
 };
 
 

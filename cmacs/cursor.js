@@ -144,3 +144,14 @@ cmacs.Cursor.prototype.erase = function() {
     }
   }
 };
+
+
+/**
+ * Replaces whatever resides at the cursor position.
+ *
+ * @param {ccc.Data} data
+ */
+cmacs.Cursor.prototype.replace = function(data) {
+  this.fragment_.setData(data);
+  this.dispatchEvent(cmacs.Cursor.EventType.CHANGE);
+}

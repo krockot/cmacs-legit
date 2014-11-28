@@ -36,12 +36,17 @@ cmacs.ui.FragmentView = function(opt_fragment) {
   /** @private {!cmacs.Cursor} */
   this.cursor_ = new cmacs.Cursor(this.fragment_);
 
+  /** @private {?ccc.Symbol} */
+  this.symbolEntry_ = null;
+
   /** @private {!goog.events.EventHandler} */
   this.eventHandler_ = new goog.events.EventHandler(this);
   this.eventHandler_.listen(this.cursor_, cmacs.Cursor.EventType.CHANGE,
       goog.bind(this.updateDom_, this));
   this.eventHandler_.listen(window, goog.events.EventType.KEYDOWN,
-      goog.bind(this.onKeydown_, this));
+      goog.bind(this.onKeyDown_, this));
+  this.eventHandler_.listen(window, goog.events.EventType.KEYPRESS,
+      goog.bind(this.onKeyPress_, this));
 
   this.updateDom_();
 };
@@ -122,12 +127,14 @@ var createFragmentDom_ = function(fragment, cursor) {
 
 
 /**
- * Hacky keypress handler for bad UI times.
+ * Hacky keydown handler for bad UI times.
  *
  * @param {!Event} e
  */
-cmacs.ui.FragmentView.prototype.onKeydown_ = function(e) {
+cmacs.ui.FragmentView.prototype.onKeyDown_ = function(e) {
   var preventDefault = true;
+  if (!goog.isNull(this.symbolEntry_))
+    return;
   switch (e.keyCode) {
     case 8:
     case 46:
@@ -137,8 +144,33 @@ cmacs.ui.FragmentView.prototype.onKeydown_ = function(e) {
     case 38: this.cursor_.moveUp(); break;
     case 39: this.cursor_.moveRight(); break;
     case 40: this.cursor_.moveDown(); break;
+    case 76: this.cursor_.replace(new ccc.Symbol('\u03bb')); break;
+    case 83:
+      this.symbolEntry_ = new ccc.Symbol('');
+      this.cursor_.replace(this.symbolEntry_);
+      break;
     default: preventDefault = false;
   }
   if (preventDefault)
     e.preventDefault();
+};
+
+
+/**
+ * Moar hacks.
+ *
+ * @param {!Event} e
+ */
+cmacs.ui.FragmentView.prototype.onKeyPress_ = function(e) {
+  if (goog.isNull(this.symbolEntry_))
+    return;
+  if (e.charCode == 0)
+    return;
+  if (e.charCode == 13) {
+    this.symbolEntry_ = null;
+    return;
+  }
+  var chr = String.fromCharCode(e.charCode);
+  this.symbolEntry_.setName(this.symbolEntry_.name() + chr);
+  this.updateDom_();
 };

@@ -78,3 +78,13 @@ ccc.Symbol.prototype.compile = function(environment, continuation) {
 ccc.Symbol.prototype.name = function() {
   return this.name_;
 };
+
+
+/**
+ * Changes the name of this symbol.
+ *
+ * @param {string} name
+ */
+ccc.Symbol.prototype.setName = function(name) {
+  this.name_ = name;
+};

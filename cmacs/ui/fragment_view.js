@@ -133,23 +133,37 @@ var createFragmentDom_ = function(fragment, cursor) {
  */
 cmacs.ui.FragmentView.prototype.onKeyDown_ = function(e) {
   var preventDefault = true;
-  if (!goog.isNull(this.symbolEntry_))
-    return;
-  switch (e.keyCode) {
-    case 8:
-    case 46:
-      this.cursor_.erase();
-      break;
-    case 37: this.cursor_.moveLeft(); break;
-    case 38: this.cursor_.moveUp(); break;
-    case 39: this.cursor_.moveRight(); break;
-    case 40: this.cursor_.moveDown(); break;
-    case 76: this.cursor_.replace(new ccc.Symbol('\u03bb')); break;
-    case 83:
-      this.symbolEntry_ = new ccc.Symbol('');
-      this.cursor_.replace(this.symbolEntry_);
-      break;
-    default: preventDefault = false;
+  if (goog.isNull(this.symbolEntry_)) {
+    switch (e.keyCode) {
+      // Backspace and Delete: Erase data
+      case 8:
+      case 46:
+        this.cursor_.erase();
+        break;
+      // Arrow keys: Navigate data
+      case 37: this.cursor_.moveLeft(); break;
+      case 38: this.cursor_.moveUp(); break;
+      case 39: this.cursor_.moveRight(); break;
+      case 40: this.cursor_.moveDown(); break;
+      // L key: Insert lambda
+      case 76: this.cursor_.replace(new ccc.Symbol('\u03bb')); break;
+      // S key: Enter symbol entry mode
+      case 83:
+        this.symbolEntry_ = new ccc.Symbol('');
+        this.cursor_.replace(this.symbolEntry_);
+        break;
+      // Backslash key: Lift a data element to replace its parent
+      case 220:
+        var parent = this.cursor_.getFragment().getParent();
+        if (!goog.isNull(parent)) {
+          parent.setData(this.cursor_.getFragment().getData());
+          this.cursor_.setFragment(parent);
+        }
+        break;
+      default: preventDefault = false;
+    }
+  } else if (e.keyCode != 8) {
+    preventDefault = false;
   }
   if (preventDefault)
     e.preventDefault();

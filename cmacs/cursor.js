@@ -68,9 +68,11 @@ cmacs.Cursor.prototype.moveLeft = function() {
   if (goog.isNull(parent))
     return;
   var parentIndex = this.fragment_.getParentIndex();
-  if (parentIndex == 0)
-    return;
-  this.setFragment(parent.getChild(parentIndex - 1));
+  if (parentIndex == 0) {
+    this.setFragment(parent.insertData(ccc.NIL, 0));
+  } else {
+    this.setFragment(parent.getChild(parentIndex - 1));
+  }
 };
 
 

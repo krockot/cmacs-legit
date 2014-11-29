@@ -3,7 +3,7 @@
 goog.provide('cmacs.Fragment');
 
 goog.require('ccc.core');
-goog.require('goog.asserts');
+goog.require('goog.array');
 
 
 
@@ -242,3 +242,21 @@ cmacs.Fragment.prototype.appendData = function(data) {
   this.children_.push(child);
   return child;
 };
+
+
+/**
+ * Inserts a child in this fragment's children.
+ *
+ * @param {ccc.Data} data
+ * @param {number} index
+ * @return {!cmacs.Fragment}
+ */
+cmacs.Fragment.prototype.insertData = function(data, index) {
+  goog.asserts.assert(this.type_ != cmacs.FragmentType.LEAF);
+  var child = new cmacs.Fragment(data, this, index);
+  for (var i = index; i < this.children_.length; ++i)
+    this.children_[i].parentIndex_++;
+  this.children_.splice(index, 0, child);
+  return child;
+};
+

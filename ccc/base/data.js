@@ -28,11 +28,7 @@ ccc.base.registerProcedures({
 
   'not': {
     args: [null],
-    impl: function(x) {
-      if (x === false)
-        return true;
-      return false;
-    }
+    impl: function(x) { return x === false; }
   },
 
   'boolean?': {

@@ -132,7 +132,7 @@ var createFragmentDom_ = function(fragment, cursor) {
  * @param {!Event} e
  */
 cmacs.ui.FragmentView.prototype.onKeyDown_ = function(e) {
-  var preventDefault = true;
+  var preventDefault = false;
   if (goog.isNull(this.symbolEntry_)) {
     switch (e.keyCode) {
       // Backspace and Delete: Erase data
@@ -151,6 +151,7 @@ cmacs.ui.FragmentView.prototype.onKeyDown_ = function(e) {
       case 83:
         this.symbolEntry_ = new ccc.Symbol('');
         this.cursor_.replace(this.symbolEntry_);
+        preventDefault = true;
         break;
       // Backslash key: Lift a data element to replace its parent
       case 220:
@@ -160,10 +161,9 @@ cmacs.ui.FragmentView.prototype.onKeyDown_ = function(e) {
           this.cursor_.setFragment(parent);
         }
         break;
-      default: preventDefault = false;
+      default:
+        break;
     }
-  } else if (e.keyCode != 8) {
-    preventDefault = false;
   }
   if (preventDefault)
     e.preventDefault();
@@ -178,13 +178,18 @@ cmacs.ui.FragmentView.prototype.onKeyDown_ = function(e) {
 cmacs.ui.FragmentView.prototype.onKeyPress_ = function(e) {
   if (goog.isNull(this.symbolEntry_))
     return;
+  e.preventDefault();
   if (e.charCode == 0)
     return;
   if (e.charCode == 13) {
     this.symbolEntry_ = null;
     return;
   }
-  var chr = String.fromCharCode(e.charCode);
-  this.symbolEntry_.setName(this.symbolEntry_.name() + chr);
+  if (e.charCode == 8) {
+    this.symbolEntry_.setName(this.symbolEntry_.name().slice(0, -1));
+  } else {
+    var chr = String.fromCharCode(e.charCode);
+    this.symbolEntry_.setName(this.symbolEntry_.name() + chr);
+  }
   this.updateDom_();
 };

@@ -35,7 +35,13 @@ ccc.isNumber = function(data) {
  * @return {boolean}
  */
 ccc.isInteger = function(data) {
-  return Number.isInteger(data);
+  if (goog.isDef(Number.isInteger))
+    return Number.isInteger(data);
+  return typeof data === 'number' &&
+      isFinite(data) &&
+      data > -9007199254740992 &&
+      data < 9007199254740992 &&
+      Math.floor(data) === data;
 };
 
 
